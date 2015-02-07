@@ -1803,10 +1803,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
                 lower = Number.Parse(bounds[0]);
                 if (lower == null || lower.HasImaginaryComp())
+                {
+                    pParseErrors.Add("Only numbers for integral boundaries.");
                     return null;
+                }
                 upper = Number.Parse(bounds[1]);
                 if (upper == null || upper.HasImaginaryComp())
+                {
+                    pParseErrors.Add("Only numbers for integral boundaries.");
                     return null;
+                }
             }
 
             int startIndex = currentIndex + 1;
