@@ -1,0 +1,21 @@
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.exe.config
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.exe
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\obj\Debug\MathSolverWebsite.csprojResolveAssemblyReference.cache
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.exe
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Desktop\Main Console\NewMathSolver\bin\Debug\NewMathSolver.exe.config
+C:\Users\Andrew\Desktop\Main Console\NewMathSolver\obj\Debug\NewMathSolver.exe
+C:\Users\Andrew\Desktop\Main Console\NewMathSolver\obj\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Desktop\Mathologica\Main Console\NewMathSolver\bin\Debug\NewMathSolver.exe.config
+C:\Users\Andrew\Desktop\Mathologica\Main Console\NewMathSolver\obj\Debug\NewMathSolver.exe
+C:\Users\Andrew\Desktop\Mathologica\Main Console\NewMathSolver\obj\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Desktop\Mathologica\Main Console\NewMathSolver\obj\Debug\MathSolverWebsite.csprojResolveAssemblyReference.cache
+C:\Users\Andrew\Desktop\Mathologica\Main Console\NewMathSolver\bin\Debug\NewMathSolver.exe
+C:\Users\Andrew\Desktop\Mathologica\Main Console\NewMathSolver\bin\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\bin\Debug\NewMathSolver.exe.config
+C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\obj\Debug\NewMathSolver.exe
+C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\obj\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\bin\Debug\NewMathSolver.exe
+C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\bin\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\obj\Debug\MathSolverWebsite.csprojResolveAssemblyReference.cache

@@ -1,0 +1,18 @@
+C:\Users\Andrew\Documents\Projects\Math Solver Stuff\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.exe.config
+C:\Users\Andrew\Documents\Projects\Math Solver Stuff\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.exe
+C:\Users\Andrew\Documents\Projects\Math Solver Stuff\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Documents\Projects\Math Solver Stuff\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.csprojResolveAssemblyReference.cache
+C:\Users\Andrew\Documents\Projects\Math Solver Stuff\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.exe
+C:\Users\Andrew\Documents\Projects\Math Solver Stuff\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.pdb
+C:\Users\728812\Desktop\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.exe.config
+C:\Users\728812\Desktop\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.exe
+C:\Users\728812\Desktop\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.pdb
+C:\Users\728812\Desktop\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.exe
+C:\Users\728812\Desktop\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.pdb
+C:\Users\728812\Desktop\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.csprojResolveAssemblyReference.cache
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.exe.config
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.exe
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.exe
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\bin\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Desktop\NewMathSolver\NewMathSolver\obj\Debug\NewMathSolver.csprojResolveAssemblyReference.cache

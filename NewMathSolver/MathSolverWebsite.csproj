@@ -1,0 +1,175 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{8985208D-E54F-47B8-9D32-051D909F3FF9}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MathSolverWebsite</RootNamespace>
+    <AssemblyName>NewMathSolver</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>33px-Greek_uc_sigma.svg.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="MathSolverLibrary\AlgebraSolver.cs" />
+    <Compile Include="MathSolverLibrary\Core.cs" />
+    <Compile Include="MathSolverLibrary\Equation\EqSet.cs" />
+    <Compile Include="MathSolverLibrary\Equation\ExComp.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\AbsValFunction.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\AppliedFunction.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\AntiDerivativeHelper.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\CalcConstant.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Derivative.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Integral.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Limit.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\ChooseFunction.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\FactorialFunction.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\LogFunction.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\PowerFunction.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\SumFunction.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\TrigFunctions.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Group\AlgebraGroup.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Group\GroupHelper.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Operators\AdditionOperator.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Operators\DivisionOperator.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Operators\DotOperator.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Operators\MultiplicationOperator.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Operators\PowerOperator.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Operators\SubtractionOperator.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Simplifier.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\AlgebraComp.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\AlgebraFunction.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\AlgebraOperator.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\AlgebraTerm.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\AlgebraTermArray.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\Constant.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\FunctionDefinition.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\GeneralSolution.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\LinearAlg\Vector.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\Number.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\Solution.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\SpecialSolutions.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Term\AdvAlgebraTerm.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Term\AlgebraTermDetection.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Term\AlgebraTermGet.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Term\AlgebraTermHelper.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Term\AlgebraTermOps.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Term\Extensions\PolynomialExt.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Term\Extensions\SimpleFraction.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Term\Extensions\TermExtension.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Term\PolyInfo.cs" />
+    <Compile Include="MathSolverLibrary\Information Helpers\FuncDefHelper.cs" />
+    <Compile Include="MathSolverLibrary\Information Helpers\UnitCircle.cs" />
+    <Compile Include="MathSolverLibrary\Information Helpers\WorkMgr.cs" />
+    <Compile Include="MathSolverLibrary\MathHelper.cs" />
+    <Compile Include="MathSolverLibrary\MathSolver.cs" />
+    <Compile Include="MathSolverLibrary\Parsing\LexicalParser.cs" />
+    <Compile Include="MathSolverLibrary\Solving\AbsoluteValueSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\CubicSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\ExponentSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\FactorSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\FractionalSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\LinearSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\LogBaseSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\LogSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\MixedTermsSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\PolynomialSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\PowerSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\QuadraticSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\SolveMethod.cs" />
+    <Compile Include="MathSolverLibrary\Solving\SubstitutionSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\SystemOfEquationsSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\TrigSolve.cs" />
+    <Compile Include="MathSolverLibrary\TermType\EqualityCheckTermType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\EquationSystemTermType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\FunctionType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\LogTermType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\QuadraticTermType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\SimplifyTermType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\SinusodalTermType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\SolveTermType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\TermType.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="ClassDiagram1.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="33px-Greek_uc_sigma.svg.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.5">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.5 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
