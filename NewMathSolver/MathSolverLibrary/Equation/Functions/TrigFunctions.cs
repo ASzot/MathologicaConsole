@@ -57,11 +57,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return this;
         }
 
+		public static ExComp CreateDerivativeOf(ExComp ex)
+		{
+			return MulOp.Negate(AlgebraTerm.FromFraction(
+				Number.One,
+				PowOp.WeakTakeSqrt(AddOp.StaticWeakCombine(Number.One, MulOp.Negate(PowOp.StaticWeakCombine(ex, new Number(2.0)))))));
+		}
+
         public override ExComp GetDerivativeOf()
         {
-            return MulOp.Negate(AlgebraTerm.FromFraction(
-                Number.One,
-                PowOp.WeakTakeSqrt(AddOp.StaticWeakCombine(Number.One, MulOp.Negate(PowOp.StaticWeakCombine(InnerEx, new Number(2.0)))))));
+			return CreateDerivativeOf(InnerEx);
         }
 
         public override string GetDerivativeOfStr()
@@ -86,11 +91,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return asin.Evaluate(harshEval, ref pEvalData);
         }
 
+		public static ExComp CreateDerivativeOf(ExComp ex)
+		{
+			return MulOp.Negate(AlgebraTerm.FromFraction(
+				Number.One,
+				AddOp.StaticWeakCombine(Number.One, PowOp.StaticWeakCombine(ex, new Number(2.0)))));
+		}
+
         public override ExComp GetDerivativeOf()
         {
-            return MulOp.Negate(AlgebraTerm.FromFraction(
-                Number.One,
-                AddOp.StaticWeakCombine(Number.One, PowOp.StaticWeakCombine(InnerEx, new Number(2.0)))));
+			return CreateDerivativeOf(InnerEx);
         }
 
         public override string GetDerivativeOfStr()
@@ -119,13 +129,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return asin.Evaluate(harshEval, ref pEvalData);
         }
 
+		public static ExComp CreateDerivativeOf(ExComp ex)
+		{
+			return MulOp.Negate(
+				AlgebraTerm.FromFraction(
+				Number.One,
+				MulOp.StaticWeakCombine(new AbsValFunction(ex), PowOp.WeakTakeSqrt(AddOp.StaticWeakCombine(PowOp.StaticWeakCombine(ex, new Number(2.0)), MulOp.Negate(Number.One)))))
+				);
+		}
+
         public override ExComp GetDerivativeOf()
         {
-            return MulOp.Negate(
-                AlgebraTerm.FromFraction(
-                Number.One,
-                MulOp.StaticWeakCombine(new AbsValFunction(InnerEx), PowOp.WeakTakeSqrt(AddOp.StaticWeakCombine(PowOp.StaticWeakCombine(InnerEx, new Number(2.0)), MulOp.Negate(Number.One)))))
-                );
+			return CreateDerivativeOf(InnerEx);
         }
 
         public override string GetDerivativeOfStr()
@@ -154,11 +169,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return asin.Evaluate(harshEval, ref pEvalData);
         }
 
+		public static ExComp CreateDerivativeOf(ExComp ex)
+		{
+			return AlgebraTerm.FromFraction(
+				Number.One,
+				MulOp.StaticWeakCombine(new AbsValFunction(ex), PowOp.WeakTakeSqrt(AddOp.StaticWeakCombine(PowOp.StaticWeakCombine(ex, new Number(2.0)), MulOp.Negate(Number.One)))));
+		}
+
         public override ExComp GetDerivativeOf()
         {
-            return AlgebraTerm.FromFraction(
-                Number.One,
-                MulOp.StaticWeakCombine(new AbsValFunction(InnerEx), PowOp.WeakTakeSqrt(AddOp.StaticWeakCombine(PowOp.StaticWeakCombine(InnerEx, new Number(2.0)), MulOp.Negate(Number.One)))));
+			return CreateDerivativeOf(InnerEx);
         }
 
         public override string GetDerivativeOfStr()
@@ -219,11 +239,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return this;
         }
 
+		public static ExComp CreateDerivativeOf(ExComp ex)
+		{
+			return AlgebraTerm.FromFraction(
+				Number.One,
+				PowOp.WeakTakeSqrt(AddOp.StaticWeakCombine(Number.One, MulOp.Negate(PowOp.StaticWeakCombine(ex, new Number(2.0))))));
+		}
+
         public override ExComp GetDerivativeOf()
         {
-            return AlgebraTerm.FromFraction(
-                Number.One,
-                PowOp.WeakTakeSqrt(AddOp.StaticWeakCombine(Number.One, MulOp.Negate(PowOp.StaticWeakCombine(InnerEx, new Number(2.0))))));
+			return CreateDerivativeOf(InnerEx);
         }
 
         public override string GetDerivativeOfStr()
@@ -234,6 +259,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
     internal class ATanFunction : InverseTrigFunction
     {
+
         public ATanFunction(ExComp innerEx)
             : base(innerEx, "arctan", FunctionType.Sinusodal, typeof(ATanFunction))
         {
@@ -281,11 +307,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return this;
         }
 
+		public static ExComp CreateDerivativeOf(ExComp ex)
+		{
+			return AlgebraTerm.FromFraction(
+				Number.One,
+				AddOp.StaticWeakCombine(Number.One, PowOp.StaticWeakCombine(ex, new Number(2.0))));
+		}
+
         public override ExComp GetDerivativeOf()
         {
-            return AlgebraTerm.FromFraction(
-                Number.One,
-                AddOp.StaticWeakCombine(Number.One, PowOp.StaticWeakCombine(InnerEx, new Number(2.0))));
+			return CreateDerivativeOf(InnerEx);
         }
 
         public override string GetDerivativeOfStr()

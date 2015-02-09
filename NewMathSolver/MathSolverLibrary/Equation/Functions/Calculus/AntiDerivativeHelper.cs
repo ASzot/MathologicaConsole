@@ -73,23 +73,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             }
             else if (gp.Length == 2)      // Is this two functions multiplied together?
             {
+				ExComp ad = null;
                 // Are they two of the common antiderivatives?
                 if (gp[0] is TrigFunction && gp[1] is TrigFunction && (gp[0] as TrigFunction).InnerEx.IsEqualTo(dVar) && 
                     (gp[0] as TrigFunction).InnerEx.IsEqualTo(dVar))
                 {
-                    TrigFunction ad = null;
                     if ((gp[0] is SecFunction && gp[1] is TanFunction) ||
                         (gp[0] is TanFunction && gp[1] is SecFunction))
                         ad = new SecFunction(dVar);
                     else if ((gp[0] is CscFunction && gp[1] is CotFunction) ||
                         (gp[0] is CotFunction && gp[1] is CscFunction))
-                        ad = new CscFunction(dVar);
-                    if (ad == null)
-                        return null;
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + (gp[0] as TrigFunction).FinalToDispStr() +
-                        (gp[1] as TrigFunction).FinalToDispStr() + "\\d" + dVar.ToDispString() + "=" + ad.FinalToDispStr() + WorkMgr.EDM, 
-                        "Use the common antiderivative.");
+                        ad = MulOp.Negate(new CscFunction(dVar));
                 }
+				
+                if (ad != null)
+				{
+                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + gp[0].ToAlgTerm().FinalToDispStr() +
+                        gp[1].ToAlgTerm().FinalToDispStr() + "\\d" + dVar.ToDispString() + "=" + 
+						ad.ToAlgTerm().FinalToDispStr() + WorkMgr.EDM, 
+                        "Use the common antiderivative.");
+				}
+
 
                 atmpt = IntByParts(gp[0], gp[1], dVar, ref pEvalData);
                 if (atmpt != null)
@@ -121,6 +125,34 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             {
                 // Add one to the power and then divide by the power.
                 PowerFunction pf = single as PowerFunction;
+
+
+				if (pf.Power.IsEqualTo(Number.NegOne))
+				{
+					ExComp pfBase = pf.Base;
+					if (pfBase is PowerFunction)
+					{
+						PowerFunction pfBasePf = pfBase as PowerFunction;
+						if (pfBasePf.Power.Equals(new Number(0.5)) || pfBasePf.Power.Equals(AlgebraTerm.FromFraction(Number.One, new Number(2.0))))
+						{
+							// Is this arcsin or arccos?
+							ExComp compare = AddOp.StaticCombine(MulOp.Negate(PowOp.StaticCombine(dVar, new Number(2.0))), Number.One);
+
+
+							ExComp useBase;
+							if (pfBasePf.Base is AlgebraTerm)
+								useBase = (pfBasePf.Base as AlgebraTerm).RemoveRedundancies();
+							else
+								useBase = pfBasePf.Base;
+
+							if (useBase.IsEqualTo(compare))
+								return new ASinFunction(dVar);
+						}
+					}
+
+					if (pfBase.IsEqualTo(AddOp.StaticCombine(Number.One, PowOp.StaticCombine(dVar, new Number(2.0)))))
+						return new ATanFunction(dVar);
+				}
 
                 if (pf.Base.IsEqualTo(Constant.E) && pf.Power.IsEqualTo(dVar))
                 {
