@@ -12,17 +12,31 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
     {
         public static ExComp TakeAntiDerivativeGp(ExComp[] gp, AlgebraComp dVar, ref EvalData pEvalData)
         {
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + gp.FinalToMathAsciiString() + "\\d" + dVar.ToDispString() + WorkMgr.EDM,
+                "Evaluate the integral.");
+
             // Take out all of the constants.
             ExComp[] varTo, constTo;
             gp.GetConstVarTo(out varTo, out constTo, dVar);
-            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + constTo.FinalToMathAsciiString() + "\\int" + 
-                varTo.FinalToMathAsciiString() + WorkMgr.EDM, "Take out the constants.");
+
+            string constOutStr = "";
+            if (constTo.Length > 0)
+            {
+                constOutStr = constTo.FinalToMathAsciiString() + "\\int" +
+                    varTo.FinalToMathAsciiString() + "\\d" + dVar.ToDispString();
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + constOutStr + WorkMgr.EDM, "Take out the constants.");
+            }
+
             ExComp antiDeriv = TakeAntiDerivativeVarGp(varTo, dVar, ref pEvalData);
             if (antiDeriv == null) 
                 return null;
 
             if (constTo.Length != 0)
+            {
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + constOutStr + "=" + WorkMgr.ExFinalToAsciiStr(constTo.ToAlgTerm()) + 
+                    WorkMgr.ExFinalToAsciiStr(antiDeriv) + WorkMgr.EDM, "Multiply the constants back in.");
                 return MulOp.StaticCombine(antiDeriv, constTo.ToAlgTerm());
+            }
             else
                 return antiDeriv;
         }
@@ -36,7 +50,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             // Derivative of nothing is just the variable being integrated with respect to.
             if (gp.Length == 0)
+            {
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int\\d" + dVar.ToDispString() + "=" + dVar.ToDispString() + WorkMgr.EDM,
+                    "Use the antiderivative power rule.");
                 return dVar;
+            }
 
             ExComp atmpt = null;
 
@@ -50,7 +68,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             else if (gp.Length == 1 && gp[0] is AlgebraComp)
             {
                 pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "({0}^(1+1))/(1+1)=({0}^2)/(2)" + WorkMgr.EDM,
-                    "Use the antiderivative power rule stating " + WorkMgr.STM + "\\intx^n\\dx=(x^(n+1))/(n+1)" + WorkMgr.EDM, gp[0]);
+                    "Use the antiderivative power rule.", gp[0]);
                 return AlgebraTerm.FromFraction(new PowerFunction(gp[0], new Number(2.0)), new Number(2.0));
             }
             else if (gp.Length == 2)      // Is this two functions multiplied together?
@@ -66,7 +84,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     else if ((gp[0] is CscFunction && gp[1] is CotFunction) ||
                         (gp[0] is CotFunction && gp[1] is CscFunction))
                         ad = new CscFunction(dVar);
-
+                    if (ad == null)
+                        return null;
                     pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + (gp[0] as TrigFunction).FinalToDispStr() +
                         (gp[1] as TrigFunction).FinalToDispStr() + "\\d" + dVar.ToDispString() + "=" + ad.FinalToDispStr() + WorkMgr.EDM, 
                         "Use the common antiderivative.");
@@ -83,8 +102,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         private static ExComp IntByParts(ExComp ex0, ExComp ex1, AlgebraComp dVar, ref EvalData pEvalData)
         {
             // Integration by parts states \int{uv'}=uv-\int{vu'}
-
-
             return null;
         }
 
@@ -190,6 +207,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + (single as TrigFunction).FinalToDispStr() + "\\d" + dVar.ToDispString() + 
                     WorkMgr.EDM, 
                     "Use the common antiderivative.");
+
+                return ad;
             }
             else if (single is InverseTrigFunction)
             {

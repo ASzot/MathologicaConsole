@@ -61,7 +61,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
         public const string REALIMAG_NUM_PATTERN = @"^-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?$";
         public const string REALIMAG_OPPOW_NUM_PATTERN = @"^-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?(\^\(-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?\))?$";
 
-        private static TypePair<string, LexemeType>[] _rulesets =
+        public const int DIFF_RULE_INDEX = 24;
+
+        private TypePair<string, LexemeType>[] _rulesets =
         {
             new TypePair<string, LexemeType>(@"\+|\-|\^|\/|\*|circ", LexemeType.Operator),
             new TypePair<string, LexemeType>(@"\=", LexemeType.EqualsOp),
@@ -93,7 +95,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                                              LexemeType.Summation),
 			new TypePair<string, LexemeType>(@"lim_\((" + IDEN_MATCH + @")to(\-)?((inf)|(" + NUM_MATCH + @")|(" + IDEN_MATCH + @"))\)", 
                                              LexemeType.Limit),
-            new TypePair<string, LexemeType>(@"int(_(" + NUM_MATCH + @")\^(" + NUM_MATCH + @"))?", LexemeType.Integral),
+            new TypePair<string, LexemeType>(@"int", LexemeType.Integral),
             new TypePair<string, LexemeType>(@"\$d(" + IDEN_MATCH + @")", LexemeType.Differential),
             new TypePair<string, LexemeType>(@"(sum)|(inf)|(lim)", LexemeType.ErrorType),
         };
@@ -101,6 +103,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
         public LexicalParser(TermType.EvalData pEvalData)
         {
             p_EvalData = pEvalData;
+        }
+
+        private void ResetDiffParsing()
+        {
+            _rulesets[DIFF_RULE_INDEX] = new TypePair<string, LexemeType>(@"\$d(" + IDEN_MATCH + @")", LexemeType.Differential);
         }
 
         public static LexemeTable CompoundLexemeTable(LexemeTable lt0, LexemeTable lt1)
@@ -575,6 +582,58 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return leftRight;
         }
 
+        private static bool FixIntegralDif(ref LexemeTable lt, ref List<string> pParseErrors)
+        {
+            int diffCount = 0;
+            int intCount = 0;
+            for (int i = 0; i < lt.Count; ++i)
+            {
+                if (lt[i].Data1 == LexemeType.Differential)
+                    diffCount++;
+                else if (lt[i].Data1 == LexemeType.Integral)
+                {
+                    intCount++;
+                    // Search for the corresponding differential.
+                    int foundIndex = -1;
+                    int depth = 0;
+                    for (int j = i + 1; j < lt.Count; ++j)
+                    {
+                        if (lt[j].Data1 == LexemeType.Integral)
+                        {
+                            depth++;
+                        }
+                        if (lt[j].Data1 == LexemeType.Differential)
+                        {
+                            if (depth == 0)
+                            {
+                                foundIndex = j;
+                                break;
+                            }
+                            depth--;
+                        }
+                    }
+
+                    if (foundIndex < 0)
+                    {
+                        pParseErrors.Add("Couldn't find variable of integration.");
+                        return false;
+                    }
+
+                    lt.Insert(i, new Lexeme(LexemeType.StartPara, "("));
+                    lt.Insert(foundIndex + 2, new Lexeme(LexemeType.EndPara, ")"));
+                    ++i;
+                }
+            }
+
+            if (diffCount != intCount)
+            {
+                pParseErrors.Add("Lone differential.");
+                return false;
+            }
+
+            return true;
+        }
+
         private static bool ApplyOrderingToOp(string opToOrder, string[] breakingOps, LexemeTable lexemeTable)
         {
             int numBreakingOps = breakingOps.Count();
@@ -785,8 +844,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return true;
         }
 
-        private static bool ApplyOrderOfOperationsToLexemeTable(LexemeTable lexemeTable)
+        private static bool ApplyOrderOfOperationsToLexemeTable(LexemeTable lexemeTable, ref List<string> pParseErrors)
         {
+            // Integrals and differentials screw up the entire PEMDAS process so parantheses have to be put around integrals.
+            if (!FixIntegralDif(ref lexemeTable, ref pParseErrors))       // Will return false if there are mismatched integrals and differentials.
+                return false;
+
             string[] pBreakingOps = { "*", "/", "+", "-" };
             if (!ApplyOrderingToOp("^", pBreakingOps, lexemeTable))
                 return false;
@@ -801,7 +864,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return true;
         }
 
-        private static string CleanTexInput(string str)
+        private string CleanTexInput(string str)
         {
             str = str.Replace(@"\cdot", "*");
             str = str.Replace(@"\left", "");
@@ -818,9 +881,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             str = str.Replace('{', '(');
             str = str.Replace('}', ')');
             if (str.Contains("\\int"))
-            {
-                _rulesets[24] = new TypePair<string, LexemeType>("d(" + IDEN_MATCH + ")", LexemeType.Differential);
-            }
+                _rulesets[DIFF_RULE_INDEX] = new TypePair<string, LexemeType>("d(" + IDEN_MATCH + ")", LexemeType.Differential);
+            else
+                ResetDiffParsing();
 
             str = str.Replace("\\", "");
             str = str.Replace("->", "to");
@@ -1003,12 +1066,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return false;
         }
 
-        private AlgebraTerm LexemeTableToAlgebraTerm(List<TypePair<LexemeType, string>> lexemeTable, ref List<string> pParseErrors)
+        private AlgebraTerm LexemeTableToAlgebraTerm(LexemeTable lexemeTable, ref List<string> pParseErrors)
         {
+            if (lexemeTable.Count > 0 && lexemeTable[0].Data1 == LexemeType.Integral && 
+                lexemeTable[lexemeTable.Count - 1].Data1 == LexemeType.Differential)
+            {
+                int index = 0;
+                return ParseIntegral(ref index, lexemeTable, ref pParseErrors).ToAlgTerm();
+            }
+
             FixLexemeTableUserInput(ref lexemeTable);
             if (lexemeTable == null)
                 return null;
-            if (!ApplyOrderOfOperationsToLexemeTable(lexemeTable))
+            if (!ApplyOrderOfOperationsToLexemeTable(lexemeTable, ref pParseErrors))
                 return null;
 
             AlgebraTerm algebraTerm = new AlgebraTerm();
@@ -1791,29 +1861,33 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
         private ExComp ParseIntegral(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
         {
-            Number lower = null, upper = null;
-            if (lt[currentIndex].Data2.Contains("_"))
-            {
-                // This is a definite integral.
-                string boundsStr = lt[currentIndex].Data2.Remove(0, "int_".Length);
-                string[] bounds = boundsStr.Split('^');
+            ExComp lower = null, upper = null;
+            //if (lt[currentIndex].Data2.Contains("_"))
+            //{
+            //    // This is a definite integral.
+            //    string boundsStr = lt[currentIndex].Data2.Remove(0, "int_".Length);
+            //    string[] bounds = boundsStr.Split('^');
 
-                if (bounds.Length != 2)
-                    return null;
+            //    if (bounds.Length != 2)
+            //        return null;
 
-                lower = Number.Parse(bounds[0]);
-                if (lower == null || lower.HasImaginaryComp())
-                {
-                    pParseErrors.Add("Only numbers for integral boundaries.");
-                    return null;
-                }
-                upper = Number.Parse(bounds[1]);
-                if (upper == null || upper.HasImaginaryComp())
-                {
-                    pParseErrors.Add("Only numbers for integral boundaries.");
-                    return null;
-                }
-            }
+            //    LexemeTable lowerLt = CreateLexemeTable(bounds[0], ref pParseErrors);
+            //    if (lowerLt == null)
+            //        return null;
+            //    LexemeTable upperLt = CreateLexemeTable(bounds[1], ref pParseErrors);
+            //    if (upperLt == null)
+            //        return null;
+
+            //    AlgebraTerm lowerTerm = LexemeTableToAlgebraTerm(lowerLt, ref pParseErrors);
+            //    if (lowerLt == null)
+            //        return null;
+            //    AlgebraTerm upperTerm = LexemeTableToAlgebraTerm(upperLt, ref pParseErrors);
+            //    if (upperLt == null)
+            //        return null;
+
+            //    lower = lowerTerm.RemoveRedundancies();
+            //    upper = upperTerm.RemoveRedundancies();
+            //}
 
             int startIndex = currentIndex + 1;
             int endIndex = -1;
@@ -1839,6 +1913,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
             LexemeTable integralTerm = lt.GetRange(startIndex, endIndex);
             AlgebraTerm innerTerm = LexemeTableToAlgebraTerm(integralTerm, ref pParseErrors);
+            if (innerTerm == null)
+                return null;
 
             string withRespectVar = lt[endIndex + 1].Data2.Remove(0, lt[endIndex + 1].Data2.Length - 1);
 
