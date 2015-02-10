@@ -849,12 +849,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
         private bool ApplyOrderOfOperationsToLexemeTable(LexemeTable lexemeTable, ref List<string> pParseErrors, bool fixIntegrals)
         {
-            if (fixIntegrals)
-            {
-                // Integrals and differentials screw up the entire PEMDAS process so parantheses have to be put around integrals.
-                if (!FixIntegralDif(ref lexemeTable, ref pParseErrors))       // Will return false if there are mismatched integrals and differentials.
-                    return false;
-            }
+            //if (fixIntegrals)
+            //{
+            //    // Integrals and differentials screw up the entire PEMDAS process so parantheses have to be put around integrals.
+            //    if (!FixIntegralDif(ref lexemeTable, ref pParseErrors))       // Will return false if there are mismatched integrals and differentials.
+            //        return false;
+            //}
 
             string[] pBreakingOps = { "*", "/", "+", "-" };
             if (!ApplyOrderingToOp("^", pBreakingOps, lexemeTable))
@@ -1074,12 +1074,33 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
         private AlgebraTerm LexemeTableToAlgebraTerm(LexemeTable lexemeTable, ref List<string> pParseErrors, bool fixIntegrals = false)
         {
-            //if (lexemeTable.Count == 1 && lexemeTable[0].Data1 == LexemeType.Integral && 
-            //    lexemeTable[lexemeTable.Count - 1].Data1 == LexemeType.Differential)
-            //{
-            //    int index = 0;
-            //    return ParseIntegral(ref index, lexemeTable, ref pParseErrors).ToAlgTerm();
-            //}
+            if (lexemeTable.Count > 0 && lexemeTable[0].Data1 == LexemeType.Integral)
+            {
+                int depth = 0;
+                int endIndex = -1;
+                for (int i = 0; i < lexemeTable.Count; ++i)
+                {
+                    if (lexemeTable[i].Data1 == LexemeType.Differential)
+                    {
+                        depth--;
+                        if (depth == 0)
+                        {
+                            endIndex = i;
+                            break;
+                        }
+                    }
+                    else if (lexemeTable[i].Data1 == LexemeType.Integral)
+                        depth++;
+                }
+                if (endIndex == -1)
+                    return null;
+
+                if (endIndex == lexemeTable.Count - 1)
+                {
+                    int index = 0;
+                    return ParseIntegral(ref index, lexemeTable, ref pParseErrors).ToAlgTerm();
+                }
+            }
 
             FixLexemeTableUserInput(ref lexemeTable);
             if (lexemeTable == null)
@@ -1906,7 +1927,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 if (lt[currentIndex].Data1 == LexemeType.Differential) 
                 {
                     endIndex = currentIndex - 1;
-                    currentIndex = currentIndex + 1;
+                    currentIndex = currentIndex;
                     break;
                 }
             }

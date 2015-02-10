@@ -945,7 +945,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             if (baseTerm.IsOne())
                 return outsideTerm;
 
-            PowerFunction finalPowFunc = new PowerFunction(baseTerm, _power);
+            ExComp baseEx = baseTerm.MakeWorkable();
+            if (baseEx is AlgebraTerm)
+                baseEx = (baseEx as AlgebraTerm).RemoveRedundancies();
+            if (Number.One.IsEqualTo(baseEx))
+                return outsideTerm.WeakMakeWorkable();
+
+            ExComp finalPowFunc = PowOp.StaticCombine(baseEx, _power);
             ExComp finalTerm = MulOp.StaticCombine(outsideTerm.WeakMakeWorkable(), finalPowFunc);
 
             return finalTerm;

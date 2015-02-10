@@ -19,12 +19,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 double dPow = n2.RealComp;
 
                 bool imag = false;
+
+                // Given odd is false, even is not necessarily true as there can be decimals.
+                bool isOdd = false; 
                 if (dBase < 0.0)
                 {
                     double root = 1.0 / dPow;
                     if (root.IsInteger())
                     {
                         int rootInt = (int)root;
+                        isOdd = rootInt % 2 != 0;
+
                         if (rootInt == 2)
                         {
                             // Even root. We got an imaginary number.
@@ -41,9 +46,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                     negPow = true;
                 }
 
-                double result = Math.Pow(dBase, dPow);
+                double result;
+                if (isOdd)
+                    result = Math.Pow(Math.Abs(dBase), dPow);
+                else
+                    result = Math.Pow(dBase, dPow);
 
                 bool isResultInt = result.IsInteger();
+
+                if (isResultInt && isOdd && dBase < 0.0)
+                    result *= -1.0;
+                else if (!isResultInt)
+                    result = Math.Pow(dBase, dPow);
+
                 ExComp resultEx = null;
                 if (imag)
                 {
