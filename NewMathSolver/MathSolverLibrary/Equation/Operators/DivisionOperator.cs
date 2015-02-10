@@ -591,6 +591,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             if (ex2 is AlgebraTerm)
                 ex2 = (ex2 as AlgebraTerm).RemoveRedundancies();
 
+            if (ex1 is Functions.Calculus.CalcConstant)
+                return ex1;
+            else if (ex2 is Functions.Calculus.CalcConstant)
+                return ex2;
+
             if (ex2 is Number && (ex2 as Number) == 0.0)
                 return Number.Undefined;
             else if (ex1 is Number && (ex1 as Number) == 0.0)

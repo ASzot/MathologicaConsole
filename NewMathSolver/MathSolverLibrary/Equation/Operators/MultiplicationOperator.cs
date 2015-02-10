@@ -26,10 +26,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             if (ex2 is AlgebraTerm)
                 ex2 = (ex2 as AlgebraTerm).RemoveRedundancies();
 
-            //if (ex1 is Functions.Calculus.CalcConstant)
-            //    return ex1;
-            //else if (ex2 is Functions.Calculus.CalcConstant)
-            //    return ex2;
+            if (ex1 is Functions.Calculus.CalcConstant)
+                return ex1;
+            else if (ex2 is Functions.Calculus.CalcConstant)
+                return ex2;
 
             if (ex2 is PowerFunction && Number.Zero.IsEqualTo((ex2 as PowerFunction).Base) &&
                 Number.NegOne.IsEqualTo((ex2 as PowerFunction).Power))
@@ -228,11 +228,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 if (num == 1.0)
                     return term;
 
-                var groups = term.GetGroupsNoOps();
+                List<ExComp[]> groups = term.GetGroupsNoOps();
                 List<ExComp[]> combinedGroups = new List<ExComp[]>();
                 for (int i = 0; i < groups.Count; ++i)
                 {
                     var group = groups[i];
+                    if (group.Length == 1 && group[0] is Functions.Calculus.CalcConstant)
+                    {
+                        combinedGroups.Add(groups[i]);
+                        break;
+                    }
                     var groupToAdd = AlgebraTerm.RemoveCoeffs(group);
                     Number coeff = AlgebraTerm.GetCoeffTerm(group);
                     if (coeff == null)
