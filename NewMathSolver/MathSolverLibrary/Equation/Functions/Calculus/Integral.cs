@@ -10,6 +10,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 {
     class Integral : AppliedFunction
     {
+        private bool _failure = false;
         private AlgebraComp _dVar = null;
         private ExComp _lower = null;
         private ExComp _upper = null;
@@ -45,6 +46,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
             AlgebraTerm indefinite = Indefinite(ref pEvalData);
+            if (_failure)
+                return indefinite;      // Just 'this'
 
             if (_lower == null || _upper == null)
             {
@@ -121,6 +124,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 if (aderiv == null)
                 {
                     pEvalData.AddMsg("At this time only very simple integration works");
+                    _failure = true;
                     return this;
                 }
                 adGps[i] = aderiv;
