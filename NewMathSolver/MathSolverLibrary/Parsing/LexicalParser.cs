@@ -49,6 +49,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
     internal class LexicalParser
     {
         private TermType.EvalData p_EvalData;
+        private bool _fixIntegrals = true;
 
         public const string IDEN_MATCH = @"alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|rho|sigma|tau|usilon|phi|varphi|" +
                 "chi|psi|omega|Gamma|Theta|Lambda|Xi|Phsi|Psi|Omega|[a-zA-Z]";
@@ -403,7 +404,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     // We just have a simplify equation.
                     lexemeTables.Add(setLexemeTable);
 
-                    AlgebraTerm algebraTerm = LexemeTableToAlgebraTerm(setLexemeTable, ref pParseErrors);
+                    AlgebraTerm algebraTerm = LexemeTableToAlgebraTerm(setLexemeTable, ref pParseErrors, true);
                     if (algebraTerm == null)
                         return null;
                     ExComp final = algebraTerm.RemoveRedundancies(true);
@@ -446,7 +447,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         if (LexemeTableContains(lt, LexemeType.EqualsOp))
                             return null;
 
-                        AlgebraTerm algebraTerm = LexemeTableToAlgebraTerm(lt, ref pParseErrors);
+                        AlgebraTerm algebraTerm = LexemeTableToAlgebraTerm(lt, ref pParseErrors, true);
                         if (algebraTerm == null)
                             return null;
                         ExComp final = algebraTerm.RemoveRedundancies(true);
@@ -480,7 +481,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     if (LexemeTableContains(lexemeTable, LexemeType.EqualsOp))
                         return null;
 
-                    AlgebraTerm algebraTerm = LexemeTableToAlgebraTerm(lexemeTable, ref pParseErrors);
+                    AlgebraTerm algebraTerm = LexemeTableToAlgebraTerm(lexemeTable, ref pParseErrors, true);
                     if (algebraTerm == null)
                         return null;
                     ExComp final = algebraTerm.RemoveRedundancies(true);
@@ -582,7 +583,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return leftRight;
         }
 
-        private static bool FixIntegralDif(ref LexemeTable lt, ref List<string> pParseErrors)
+        private bool FixIntegralDif(ref LexemeTable lt, ref List<string> pParseErrors)
         {
             int diffCount = 0;
             int intCount = 0;
@@ -593,6 +594,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 else if (lt[i].Data1 == LexemeType.Integral)
                 {
                     intCount++;
+                    if (i > 0 && lt[i - 1].Data1 == LexemeType.StartPara)
+                        continue;
                     // Search for the corresponding differential.
                     int foundIndex = -1;
                     int depth = 0;
@@ -844,11 +847,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return true;
         }
 
-        private static bool ApplyOrderOfOperationsToLexemeTable(LexemeTable lexemeTable, ref List<string> pParseErrors)
+        private bool ApplyOrderOfOperationsToLexemeTable(LexemeTable lexemeTable, ref List<string> pParseErrors, bool fixIntegrals)
         {
-            // Integrals and differentials screw up the entire PEMDAS process so parantheses have to be put around integrals.
-            if (!FixIntegralDif(ref lexemeTable, ref pParseErrors))       // Will return false if there are mismatched integrals and differentials.
-                return false;
+            if (fixIntegrals)
+            {
+                // Integrals and differentials screw up the entire PEMDAS process so parantheses have to be put around integrals.
+                if (!FixIntegralDif(ref lexemeTable, ref pParseErrors))       // Will return false if there are mismatched integrals and differentials.
+                    return false;
+            }
 
             string[] pBreakingOps = { "*", "/", "+", "-" };
             if (!ApplyOrderingToOp("^", pBreakingOps, lexemeTable))
@@ -1066,19 +1072,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return false;
         }
 
-        private AlgebraTerm LexemeTableToAlgebraTerm(LexemeTable lexemeTable, ref List<string> pParseErrors)
+        private AlgebraTerm LexemeTableToAlgebraTerm(LexemeTable lexemeTable, ref List<string> pParseErrors, bool fixIntegrals = false)
         {
-            if (lexemeTable.Count > 0 && lexemeTable[0].Data1 == LexemeType.Integral && 
-                lexemeTable[lexemeTable.Count - 1].Data1 == LexemeType.Differential)
-            {
-                int index = 0;
-                return ParseIntegral(ref index, lexemeTable, ref pParseErrors).ToAlgTerm();
-            }
+            //if (lexemeTable.Count == 1 && lexemeTable[0].Data1 == LexemeType.Integral && 
+            //    lexemeTable[lexemeTable.Count - 1].Data1 == LexemeType.Differential)
+            //{
+            //    int index = 0;
+            //    return ParseIntegral(ref index, lexemeTable, ref pParseErrors).ToAlgTerm();
+            //}
 
             FixLexemeTableUserInput(ref lexemeTable);
             if (lexemeTable == null)
                 return null;
-            if (!ApplyOrderOfOperationsToLexemeTable(lexemeTable, ref pParseErrors))
+            if (!ApplyOrderOfOperationsToLexemeTable(lexemeTable, ref pParseErrors, fixIntegrals))
                 return null;
 
             AlgebraTerm algebraTerm = new AlgebraTerm();

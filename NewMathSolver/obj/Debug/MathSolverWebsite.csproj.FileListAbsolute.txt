@@ -25,3 +25,9 @@ C:\Users\728812\Desktop\mathologica-console\NewMathSolver\obj\Debug\NewMathSolve
 C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.exe
 C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.pdb
 C:\Users\728812\Desktop\mathologica-console\NewMathSolver\obj\Debug\MathSolverWebsite.csprojResolveAssemblyReference.cache
+C:\Users\Andrew\Desktop\Mathologica\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.exe.config
+C:\Users\Andrew\Desktop\Mathologica\mathologica-console\NewMathSolver\obj\Debug\NewMathSolver.exe
+C:\Users\Andrew\Desktop\Mathologica\mathologica-console\NewMathSolver\obj\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Desktop\Mathologica\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.exe
+C:\Users\Andrew\Desktop\Mathologica\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Desktop\Mathologica\mathologica-console\NewMathSolver\obj\Debug\MathSolverWebsite.csprojResolveAssemblyReference.cache

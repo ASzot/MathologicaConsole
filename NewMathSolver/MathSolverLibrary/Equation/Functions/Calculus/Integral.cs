@@ -48,7 +48,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             if (_lower == null || _upper == null)
             {
-                //// Add the constant.
+                // Add the constant.
                 //return AddOp.StaticWeakCombine(indefinite, new CalcConstant());
                 return indefinite;
             }

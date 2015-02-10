@@ -136,7 +136,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 						if (pfBasePf.Power.Equals(new Number(0.5)) || pfBasePf.Power.Equals(AlgebraTerm.FromFraction(Number.One, new Number(2.0))))
 						{
 							// Is this arcsin or arccos?
-							ExComp compare = AddOp.StaticCombine(MulOp.Negate(PowOp.StaticCombine(dVar, new Number(2.0))), Number.One);
+                            ExComp compare = AddOp.StaticCombine(MulOp.Negate(PowOp.StaticCombine(dVar, new Number(2.0))), Number.One).ToAlgTerm().RemoveRedundancies();
 
 
 							ExComp useBase;
