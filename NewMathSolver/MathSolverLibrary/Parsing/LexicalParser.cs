@@ -1926,8 +1926,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
                 if (lt[currentIndex].Data1 == LexemeType.Differential) 
                 {
-                    endIndex = currentIndex - 1;
-                    currentIndex = currentIndex;
+                    endIndex = currentIndex;
                     break;
                 }
             }
@@ -1938,12 +1937,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 return null;
             }
 
-            LexemeTable integralTerm = lt.GetRange(startIndex, endIndex);
+            LexemeTable integralTerm = lt.GetRange(startIndex, endIndex - startIndex);
             AlgebraTerm innerTerm = LexemeTableToAlgebraTerm(integralTerm, ref pParseErrors);
             if (innerTerm == null)
                 return null;
 
-            string withRespectVar = lt[endIndex + 1].Data2.Remove(0, lt[endIndex + 1].Data2.Length - 1);
+            string withRespectVar = lt[endIndex].Data2.Remove(0, lt[endIndex].Data2.Length - 1);
 
             AlgebraComp dVar = new AlgebraComp(withRespectVar);
 

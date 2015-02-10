@@ -176,7 +176,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             if (ex is Integral)
             {
                 Integral integral = ex as Integral;
-                return integral._dVar.IsEqualTo(this._dVar);
+                return integral._dVar.IsEqualTo(this._dVar) && integral.InnerEx.IsEqualTo(this.InnerEx);
             }
 
             return false;

@@ -96,6 +96,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 term.Add(comp);
                 return term;
             }
+
+            if (comp is Functions.Calculus.CalcConstant && matchingGroup.Length == 1 && matchingGroup[0] is Functions.Calculus.CalcConstant)
+                return term;
+
             term.RemoveGroup(matchingGroup);
 
             Number coeff1 = GetCoeffTerm(matchingGroup);
