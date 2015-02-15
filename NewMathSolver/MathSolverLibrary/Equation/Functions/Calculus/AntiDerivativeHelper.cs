@@ -12,7 +12,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
     {
         public static ExComp TakeAntiDerivativeGp(ExComp[] gp, AlgebraComp dVar, ref EvalData pEvalData)
         {
-            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + gp.FinalToMathAsciiString() + "\\d" + dVar.ToDispString() + WorkMgr.EDM,
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + gp.ToAlgTerm().FinalToDispStr() + ")\\d" + dVar.ToDispString() + WorkMgr.EDM,
                 "Evaluate the integral.");
 
             // Take out all of the constants.
@@ -20,11 +20,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             gp.GetConstVarTo(out varTo, out constTo, dVar);
 
             string constOutStr = "";
+            string constToStr = constTo.ToAlgTerm().FinalToDispStr();
             if (constTo.Length > 0)
             {
-                constOutStr = constTo.FinalToMathAsciiString() + "\\int" +
-                    varTo.FinalToMathAsciiString() + "\\d" + dVar.ToDispString();
-                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + constOutStr + WorkMgr.EDM, "Take out the constants.");
+                constOutStr = constToStr + "\\int(" +
+                    varTo.ToAlgTerm().FinalToDispStr() + ")\\d" + dVar.ToDispString();
+                if (constToStr != "1")
+                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + constOutStr + WorkMgr.EDM, "Take out the constants.");
             }
 
             ExComp antiDeriv = TakeAntiDerivativeVarGp(varTo, dVar, ref pEvalData);
@@ -33,8 +35,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             if (constTo.Length != 0)
             {
-                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + constOutStr + "=" + WorkMgr.ExFinalToAsciiStr(constTo.ToAlgTerm()) + 
-                    WorkMgr.ExFinalToAsciiStr(antiDeriv) + WorkMgr.EDM, "Multiply the constants back in.");
+                if (constToStr != "1")
+                {
+                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + constOutStr + "=" + WorkMgr.ExFinalToAsciiStr(constTo.ToAlgTerm()) +
+                        WorkMgr.ExFinalToAsciiStr(antiDeriv) + WorkMgr.EDM, "Multiply the constants back in.");
+                }
                 return MulOp.StaticCombine(antiDeriv, constTo.ToAlgTerm());
             }
             else
@@ -88,8 +93,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 				
                 if (ad != null)
 				{
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + gp[0].ToAlgTerm().FinalToDispStr() +
-                        gp[1].ToAlgTerm().FinalToDispStr() + "\\d" + dVar.ToDispString() + "=" + 
+                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + gp[0].ToAlgTerm().FinalToDispStr() +
+                        gp[1].ToAlgTerm().FinalToDispStr() + ")\\d" + dVar.ToDispString() + "=" + 
 						ad.ToAlgTerm().FinalToDispStr() + WorkMgr.EDM, 
                         "Use the common antiderivative.");
 				}
@@ -145,18 +150,28 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 							else
 								useBase = pfBasePf.Base;
 
-							if (useBase.IsEqualTo(compare))
-								return new ASinFunction(dVar);
+                            if (useBase.IsEqualTo(compare))
+                            {
+                                ASinFunction asin = new ASinFunction(dVar);
+                                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(\\frac{1}{sqrt{1-" + dVar.ToDispString() + "^2}})\\d" + dVar.ToDispString() +
+                                    "=" + asin.FinalToDispStr() + WorkMgr.EDM, "Use the common antiderivative.");
+                                return asin;
+                            }
 						}
 					}
 
-					if (pfBase.IsEqualTo(AddOp.StaticCombine(Number.One, PowOp.StaticCombine(dVar, new Number(2.0)))))
-						return new ATanFunction(dVar);
+                    if (pfBase.IsEqualTo(AddOp.StaticCombine(Number.One, PowOp.StaticCombine(dVar, new Number(2.0)))))
+                    {
+                        ATanFunction atan = new ATanFunction(dVar);
+                        pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(\\frac{1}{" + dVar.ToDispString() + "^2+1})\\d" + dVar.ToDispString() +
+                            "=" + atan.FinalToDispStr() + WorkMgr.EDM, "Use the common antiderivative.");
+                        return atan;
+                    }
 				}
 
                 if (pf.Base.IsEqualTo(Constant.E) && pf.Power.IsEqualTo(dVar))
                 {
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + pf.FinalToDispStr() + "\\d" + dVar.ToDispString() +
+                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + pf.FinalToDispStr() + ")\\d" + dVar.ToDispString() +
                         "=" + pf.FinalToDispStr() + WorkMgr.EDM, "Use the common antiderivative.");
                     return pf;
                 }
@@ -170,7 +185,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     // The special case for the power function anti-dervivative.
                     if (Number.NegOne.Equals(power))
                     {
-                        pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + pf.FinalToDispStr() + "\\d" + dVar.ToDispString() +
+                        pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + pf.FinalToDispStr() + ")\\d" + dVar.ToDispString() +
                             "=ln(|" + dVar + "|)" + WorkMgr.EDM, "This comes from the known derivative " + WorkMgr.STM + 
                             "\\frac{d}{dx}ln(x)=\\frac{1}{x}" + WorkMgr.EDM);
                         return LogFunction.Ln(new AbsValFunction(dVar));
@@ -178,7 +193,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
                     ExComp powChange = AddOp.StaticCombine(pf.Power, Number.One);
 
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + WorkMgr.ExFinalToAsciiStr(single) + "\\d" + dVar.ToDispString() +
+                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + WorkMgr.ExFinalToAsciiStr(single) + ")\\d" + dVar.ToDispString() +
                         "=" + dVar.ToDispString() + "^{" + WorkMgr.ExFinalToAsciiStr(AddOp.StaticWeakCombine(pf.Power, Number.One)) + "}" + WorkMgr.EDM,
                         "Use the power rule of antiderivatives.");
 
@@ -195,7 +210,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
                     if (ad != null)
                     {
-                        pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + pf.FinalToDispStr() + "\\d" + dVar.ToDispString() + "=" +
+                        pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + pf.FinalToDispStr() + ")\\d" + dVar.ToDispString() + "=" +
                             WorkMgr.ExFinalToAsciiStr(ad) + WorkMgr.EDM, "Use the common antiderivative.");
 
                         return ad;
@@ -236,7 +251,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 if (ad == null)
                     return null;
 
-                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int" + (single as TrigFunction).FinalToDispStr() + "\\d" + dVar.ToDispString() + 
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + (single as TrigFunction).FinalToDispStr() + ")\\d" + dVar.ToDispString() + 
                     WorkMgr.EDM, 
                     "Use the common antiderivative.");
 

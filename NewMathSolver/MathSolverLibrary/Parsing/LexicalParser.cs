@@ -1098,7 +1098,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 if (endIndex == lexemeTable.Count - 1)
                 {
                     int index = 0;
-                    return ParseIntegral(ref index, lexemeTable, ref pParseErrors).ToAlgTerm();
+                    ExComp parsedEx = ParseIntegral(ref index, lexemeTable, ref pParseErrors);
+                    if (parsedEx == null)
+                        return null;
+                    return parsedEx.ToAlgTerm();
                 }
             }
 

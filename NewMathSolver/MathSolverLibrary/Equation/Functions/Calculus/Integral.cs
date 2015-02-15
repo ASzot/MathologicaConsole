@@ -34,7 +34,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
         public static Integral ConstructIntegral(ExComp innerEx, AlgebraComp dVar, ExComp lower, ExComp upper)
         {
-
             Integral integral = new Integral(innerEx);
             integral._dVar = dVar;
             integral._lower = lower;
@@ -52,7 +51,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             if (_lower == null || _upper == null)
             {
                 // Add the constant.
-                return AddOp.StaticWeakCombine(indefinite, new CalcConstant());
+                ExComp retEx = AddOp.StaticWeakCombine(indefinite, new CalcConstant());
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + retEx.ToAlgTerm().FinalToDispStr() + WorkMgr.STM, 
+                    "Add in the constant of integration.");
+                return retEx;
             }
 
             AlgebraTerm upperEval = indefinite.Clone().ToAlgTerm().Substitute(_dVar, _upper);
