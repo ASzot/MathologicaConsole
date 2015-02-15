@@ -40,3 +40,6 @@ C:\Users\Andrew\Documents\Projects\Mathologica\MainConsole\NewMathSolver\obj\Deb
 C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.exe.config
 C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Debug\NewMathSolver.exe
 C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.exe
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.pdb
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Debug\MathSolverWebsite.csprojResolveAssemblyReference.cache

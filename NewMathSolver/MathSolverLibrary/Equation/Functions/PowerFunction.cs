@@ -892,10 +892,23 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             {
                 ExComp subComp = baseTerm[i];
 
+
                 if (subComp is Number && (subComp as Number).IsRealInteger())
                 {
                     Number nSubComp = subComp as Number;
                     int n = (int)nSubComp.RealComp;
+
+
+                    if (root % 2 == 0)
+                    {
+                        // This is an even root. Take out any negative terms in the radical.
+                        if (n < 0)
+                        {
+                            mulTerms.Add(new Number(0.0, 1.0));
+                            baseTerm[i] = -nSubComp;
+                            n = -n;
+                        }
+                    }
 
                     int[] divisors = n.GetDivisors(true);
 
@@ -951,8 +964,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             if (Number.One.IsEqualTo(baseEx))
                 return outsideTerm.WeakMakeWorkable();
 
-            ExComp finalPowFunc = PowOp.StaticCombine(baseEx, _power);
-            ExComp finalTerm = MulOp.StaticCombine(outsideTerm.WeakMakeWorkable(), finalPowFunc);
+            ExComp finalPowFunc = PowOp.StaticWeakCombine(baseEx, _power);
+            ExComp finalTerm = MulOp.StaticWeakCombine(outsideTerm.WeakMakeWorkable(), finalPowFunc);
 
             return finalTerm;
         }

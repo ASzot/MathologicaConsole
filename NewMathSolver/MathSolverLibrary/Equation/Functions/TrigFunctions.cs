@@ -518,6 +518,26 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         {
             return new TanFunction(InnerEx);
         }
+
+        public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
+        {
+            List<Restriction> rests = new List<Restriction>();
+
+            AlgebraTerm neTerm = Number.Zero.ToAlgTerm();
+            ExComp interval = Constant.Pi;
+
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + InnerTerm.FinalToDispStr() + "\\ne" + neTerm.FinalToDispStr() + WorkMgr.EDM,
+                "The inside of cot cannot equal " + WorkMgr.STM + "\\pi*n" + WorkMgr.EDM);
+
+            ExComp neEx = agSolver.Solve(varFor, InnerTerm, neTerm, ref pEvalData);
+            ExComp intervalEx = agSolver.Solve(varFor, InnerTerm, interval.ToAlgTerm(), ref pEvalData);
+            AlgebraComp iterVar = new AlgebraComp("n");
+            intervalEx = MulOp.StaticWeakCombine(intervalEx, iterVar);
+
+            rests.Add(new NotRestriction(varFor.ToAlgebraComp(), new GeneralSolution(neEx, intervalEx, iterVar)));
+
+            return rests;
+        }
     }
 
     internal class CscFunction : TrigFunction
@@ -593,6 +613,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         public override InverseTrigFunction GetInverseOf()
         {
             return new ACscFunction(InnerEx);
+        }
+
+        public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
+        {
+            // All numbers except for x = pi / 2 + pin.
+            List<Restriction> rests = new List<Restriction>();
+
+            AlgebraTerm neTerm = Number.Zero.ToAlgTerm();
+            ExComp interval = Constant.Pi;
+
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + InnerTerm.FinalToDispStr() + "\\ne" + neTerm.FinalToDispStr() + WorkMgr.EDM,
+                "The inside of csc cannot equal " + WorkMgr.STM + "\\pi*n" + WorkMgr.EDM);
+
+            ExComp neEx = agSolver.Solve(varFor, InnerTerm, neTerm, ref pEvalData);
+            ExComp intervalEx = agSolver.Solve(varFor, InnerTerm, interval.ToAlgTerm(), ref pEvalData);
+            AlgebraComp iterVar = new AlgebraComp("n");
+            intervalEx = MulOp.StaticWeakCombine(intervalEx, iterVar);
+
+            rests.Add(new NotRestriction(varFor.ToAlgebraComp(), new GeneralSolution(neEx, intervalEx, iterVar)));
+
+            return rests;
         }
 
         public override ExComp GetPeriod(AlgebraComp varFor, bool useRad)
@@ -758,6 +799,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         {
             return new CosFunction(InnerEx);
         }
+
+        public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
+        {
+            // All numbers except for x = pi / 2 + pin.
+            List<Restriction> rests = new List<Restriction>();
+
+            AlgebraTerm neTerm = AlgebraTerm.FromFraction(Constant.Pi, new Number(2.0));
+            ExComp interval = Constant.Pi;
+
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + InnerTerm.FinalToDispStr() + "\\ne" + neTerm.FinalToDispStr() + WorkMgr.EDM,
+                "The inside of sec cannot equal " + WorkMgr.STM + "\\frac{\\pi}{2}+\\pi*n" + WorkMgr.EDM);
+
+            ExComp neEx = agSolver.Solve(varFor, InnerTerm, neTerm, ref pEvalData);
+            ExComp intervalEx = agSolver.Solve(varFor, InnerTerm, interval.ToAlgTerm(), ref pEvalData);
+            AlgebraComp iterVar = new AlgebraComp("n");
+            intervalEx = MulOp.StaticWeakCombine(intervalEx, iterVar);
+
+            rests.Add(new NotRestriction(varFor.ToAlgebraComp(), new GeneralSolution(neEx, intervalEx, iterVar)));
+
+            return rests;
+        }
     }
 
     internal class SinFunction : TrigFunction
@@ -921,6 +983,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         public override string GetDerivativeOfStr()
         {
             return "sec^2(x)";
+        }
+
+        public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
+        {
+            // All numbers except for x = pi / 2 + pin.
+            List<Restriction> rests = new List<Restriction>();
+
+            AlgebraTerm neTerm = AlgebraTerm.FromFraction(Constant.Pi, new Number(2.0));
+            ExComp interval = Constant.Pi;
+
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + InnerTerm.FinalToDispStr() + "\\ne" + neTerm.FinalToDispStr() + WorkMgr.EDM, 
+                "The inside of tan cannot equal " + WorkMgr.STM + "\\frac{\\pi}{2}+\\pi*n" + WorkMgr.EDM);
+
+            ExComp neEx = agSolver.Solve(varFor, InnerTerm, neTerm, ref pEvalData);
+            ExComp intervalEx = agSolver.Solve(varFor, InnerTerm, interval.ToAlgTerm(), ref pEvalData);
+            AlgebraComp iterVar = new AlgebraComp("n");
+            intervalEx = MulOp.StaticWeakCombine(intervalEx, iterVar);
+
+            rests.Add(new NotRestriction(varFor.ToAlgebraComp(), new GeneralSolution(neEx, intervalEx, iterVar)));
+
+            return rests;
         }
 
         public override InverseTrigFunction GetInverseOf()
