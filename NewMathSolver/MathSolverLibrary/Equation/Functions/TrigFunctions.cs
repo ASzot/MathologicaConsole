@@ -76,8 +76,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
         {
-            List<Restriction> rests = new List<Restriction>();
-
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + this.FinalToDispStr() + WorkMgr.EDM, "The domain of " + WorkMgr.STM + "\\arccos(x)" +
                 WorkMgr.EDM + " is " + WorkMgr.STM + "-1 < x < 1" + WorkMgr.EDM);
 
@@ -106,6 +104,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
                 return result.Restrictions;
             }
+
+            List<Restriction> rests = new List<Restriction>();
 
             rests.Add(new AndRestriction(lower, Parsing.LexemeType.Less, varForCmp, Parsing.LexemeType.Less,
                 upper, ref pEvalData));
@@ -693,7 +693,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
         {
-            // All numbers except for x = pi / 2 + pin.
+            // All numbers except for x = pin.
             List<Restriction> rests = new List<Restriction>();
 
             AlgebraTerm neTerm = Number.Zero.ToAlgTerm();

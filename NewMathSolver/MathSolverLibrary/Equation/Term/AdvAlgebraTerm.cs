@@ -765,6 +765,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                     {
                         // There was a problem with solving.
                         restrictions = null;
+                        return;
                     }
                 }
 

@@ -910,7 +910,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                         }
                     }
 
-                    int[] divisors = n.GetDivisors(true);
+                    int[] divisors;
+                    if (root % 2 != 0)
+                        divisors = Math.Abs(n).GetDivisors(true);
+                    else
+                        divisors = n.GetDivisors(true);
 
                     for (int j = divisors.Length - 1; j >= 0; --j)
                     {
@@ -919,6 +923,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                         if (divisor.IsPerfectRoot(root, out rootResult))
                         {
                             n = n / divisor;
+                            if (n < 0 && root % 2 != 0)
+                            {
+                                rootResult = -rootResult;
+                                n = -n;
+                            }
                             baseTerm[i] = new Number(n);
                             Number outside = new Number(rootResult);
                             mulTerms.Add(outside);
