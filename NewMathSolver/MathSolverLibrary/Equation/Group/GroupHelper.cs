@@ -752,5 +752,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
             return finalStr;
         }
+
     }
 }

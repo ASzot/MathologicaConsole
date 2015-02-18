@@ -73,6 +73,44 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         {
             return "-(1)/(sqrt(1-x^2))";
         }
+
+        public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
+        {
+            List<Restriction> rests = new List<Restriction>();
+
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + this.FinalToDispStr() + WorkMgr.EDM, "The domain of " + WorkMgr.STM + "\\arccos(x)" +
+                WorkMgr.EDM + " is " + WorkMgr.STM + "-1 < x < 1" + WorkMgr.EDM);
+
+            AlgebraComp varForCmp = varFor.ToAlgebraComp();
+
+            ExComp lower = Number.NegOne;
+            ExComp upper = Number.One;
+
+            if (!InnerEx.IsEqualTo(varForCmp))
+            {
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + this.FinalToDispStr() + WorkMgr.EDM, "As the inside of " + WorkMgr.STM + "\\arccos" +
+                    WorkMgr.EDM + " is not " + WorkMgr.STM + varForCmp.ToDispString() + WorkMgr.EDM + " solve for the domain.");
+
+                List<ExComp> sides = new List<ExComp>();
+                sides.Add(lower);
+                sides.Add(InnerTerm);
+                sides.Add(upper);
+
+                List<Parsing.LexemeType> comparisons = new List<Parsing.LexemeType>();
+                comparisons.Add(Parsing.LexemeType.Less);
+                comparisons.Add(Parsing.LexemeType.Less);
+
+                SolveResult result = agSolver.SolveEquationInequality(sides, comparisons, varFor, ref pEvalData);
+                if (!result.Success)
+                    return null;
+
+                return result.Restrictions;
+            }
+
+            rests.Add(new AndRestriction(lower, Parsing.LexemeType.Less, varForCmp, Parsing.LexemeType.Less,
+                upper, ref pEvalData));
+            return rests;
+        }
     }
 
     internal class ACotFunction : InverseTrigFunction
@@ -254,6 +292,44 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         public override string GetDerivativeOfStr()
         {
             return "1/(sqrt(1-x^2))";
+        }
+
+        public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
+        {
+            List<Restriction> rests = new List<Restriction>();
+
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + this.FinalToDispStr() + WorkMgr.EDM, "The domain of " + WorkMgr.STM + "\\arcsin(x)" +
+                WorkMgr.EDM + " is " + WorkMgr.STM + "-1 < x < 1" + WorkMgr.EDM);
+
+            AlgebraComp varForCmp = varFor.ToAlgebraComp();
+
+            ExComp lower = Number.NegOne;
+            ExComp upper = Number.One;
+
+            if (!InnerEx.IsEqualTo(varForCmp))
+            {
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + this.FinalToDispStr() + WorkMgr.EDM, "As the inside of " + WorkMgr.STM + "\\arcsin" +
+                    WorkMgr.EDM + " is not " + WorkMgr.STM + varForCmp.ToDispString() + WorkMgr.EDM + " solve for the domain.");
+
+                List<ExComp> sides = new List<ExComp>();
+                sides.Add(lower);
+                sides.Add(InnerTerm);
+                sides.Add(upper);
+
+                List<Parsing.LexemeType> comparisons = new List<Parsing.LexemeType>();
+                comparisons.Add(Parsing.LexemeType.Less);
+                comparisons.Add(Parsing.LexemeType.Less);
+
+                SolveResult result = agSolver.SolveEquationInequality(sides, comparisons, varFor, ref pEvalData);
+                if (!result.Success)
+                    return null;
+
+                return result.Restrictions;
+            }
+
+            rests.Add(new AndRestriction(lower, Parsing.LexemeType.Less, varForCmp, Parsing.LexemeType.Less,
+                upper, ref pEvalData));
+            return rests;
         }
     }
 

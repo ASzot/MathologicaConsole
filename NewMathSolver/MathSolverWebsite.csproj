@@ -78,6 +78,7 @@
     <Compile Include="MathSolverLibrary\Equation\Functions\TrigFunctions.cs" />
     <Compile Include="MathSolverLibrary\Equation\Group\AlgebraGroup.cs" />
     <Compile Include="MathSolverLibrary\Equation\Group\GroupHelper.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Group\GroupUtil.cs" />
     <Compile Include="MathSolverLibrary\Equation\Operators\AdditionOperator.cs" />
     <Compile Include="MathSolverLibrary\Equation\Operators\DivisionOperator.cs" />
     <Compile Include="MathSolverLibrary\Equation\Operators\DotOperator.cs" />

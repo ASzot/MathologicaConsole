@@ -521,54 +521,51 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
             if (ex is AlgebraFunction)
                 return false;
-            if (ex is AlgebraTerm)
+            else if (!(ex is AlgebraTerm))
+                return false;
+
+            AlgebraTerm term = ex as AlgebraTerm;
+
+            if (this.TermCount != term.TermCount)
+                return false;
+
+            List<ExComp[]> gps1 = this.GetGroups();
+            List<ExComp[]> gps2 = term.GetGroups();
+
+            if (gps1.Count != gps2.Count)
+                return false;
+
+            List<TypePair<ExComp[], bool>> matches = new List<TypePair<ExComp[], bool>>();
+            for (int i = 0; i < gps1.Count; ++i)
+                matches.Add(new TypePair<ExComp[], bool>(gps1[i], false));
+
+            for (int i = 0; i < gps2.Count; ++i)
             {
-                AlgebraTerm term = ex as AlgebraTerm;
-                if (term.TermCount == 0)
-                    term.Add(Number.Zero);
-                if (this.TermCount == term.TermCount)
+                bool matchFound = false;
+                for (int j = 0; j < matches.Count; ++j)
                 {
-                    var checkPairs = (from comp in term._subComps
-                                      select new TypePair<bool, ExComp>(false, comp)).ToList();
+                    if (matches[j].Data2)
+                        continue;
 
-                    for (int i = 0; i < this._subComps.Count; ++i)
+                    if (Equation.Group.GroupUtil.GpsEqual(gps2[i], matches[j].Data1))
                     {
-                        ExComp comp = this._subComps[i];
-                        bool matchFound = false;
-
-                        // There might be a match in the components of the other term which is being compared.
-                        for (int j = 0; j < checkPairs.Count; ++j)
-                        {
-                            TypePair<bool, ExComp> checkPair = checkPairs[j];
-                            if (checkPair.Data1)
-                                continue;
-
-                            if (comp.GetType() == checkPair.Data2.GetType())
-                            {
-                                if (comp.IsEqualTo(checkPair.Data2))
-                                {
-                                    checkPairs[j].Data1 = true;
-                                    matchFound = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!matchFound)
-                            return false;
+                        matchFound = true;
+                        matches[j].Data2 = true;
+                        break;
                     }
-
-                    foreach (TypePair<bool, ExComp> checkPair in checkPairs)
-                    {
-                        if (!checkPair.Data1)
-                            return false;
-                    }
-
-                    return true;
                 }
+
+                if (!matchFound)
+                    return false;
             }
 
-            return false;
+            foreach (TypePair<ExComp[], bool> match in matches)
+            {
+                if (!match.Data2)
+                    return false;
+            }
+
+            return true;
         }
 
         public virtual bool IsOne()

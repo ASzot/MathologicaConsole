@@ -22,8 +22,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 return term;
 
             AlgebraTerm groupTerm = group.ToTerm();
-            var op = new Operators.SubOp();
-            ExComp combined = op.Combine(term, groupTerm);
+            ExComp combined = Operators.SubOp.StaticCombine(term, groupTerm);
             if (combined is AlgebraTerm)
                 return combined as AlgebraTerm;
             else

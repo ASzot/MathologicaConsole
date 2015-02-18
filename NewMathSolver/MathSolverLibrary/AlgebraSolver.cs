@@ -1250,7 +1250,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}{1}{2}{3}{4}" + WorkMgr.EDM, "To solve this compound inequality solve the middle expression for the outer ones just as regular inequalities.",
                 left0, Restriction.ComparisonOpToStr(comparison0), right, Restriction.ComparisonOpToStr(comparison1), left1);
 
-            SolveResult solve0 = SolveRegInequality(left0, right, comparison0, solveFor, ref pEvalData);
+            SolveResult solve0 = SolveRegInequality(left0, right.Clone().ToAlgTerm(), comparison0, solveFor, ref pEvalData);
             SolveResult solve1 = SolveRegInequality(right, left1, comparison1, solveFor, ref pEvalData);
 
             if (!solve0.Success || !solve1.Success)
