@@ -155,7 +155,7 @@ namespace MathSolverWebsite
 
         private const int TEST_NUM = 126;
 
-        private static Version _version = new Version(0, 3, 9, 8);
+        private static Version _version = new Version(1, 2, 5, 3);
 
         private static void DisplayHelpScreen()
         {
@@ -163,12 +163,9 @@ namespace MathSolverWebsite
             Console.WriteLine("Mathologica:");
             Console.ResetColor();
             Console.WriteLine("Version: " + _version.ToString());
-            Console.WriteLine("Created by Andrew Szot");
             Console.WriteLine("Enter 'help' to see this text again");
             Console.WriteLine("Enter 'quit' to quit");
             Console.WriteLine("Enter 'clear' to clear the screen");
-            Console.WriteLine("Enter 'diagnostic' for solving system diagnostic");
-            Console.WriteLine("Enter 'diagnostic_v' for solving system diagnostic with verbose failures");
             Console.WriteLine("Enter math input to evaluate");
             Console.WriteLine();
             Console.WriteLine("Output will be in standard TeX markup language.");
@@ -247,7 +244,6 @@ namespace MathSolverWebsite
         private static void Main(string[] args)
         {
             MathSolverLibrary.Information_Helpers.FuncDefHelper funcDefHelper = new MathSolverLibrary.Information_Helpers.FuncDefHelper();
-
 
             SetConsoleWindow();
 

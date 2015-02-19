@@ -1,0 +1,10 @@
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Release\MathSolverWebsite.csprojResolveAssemblyReference.cache
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\bin\Release\Mathologica Console.exe.config
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\bin\Release\Mathologica Console.exe.manifest
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\bin\Release\Mathologica Console.application
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\bin\Release\Mathologica Console.exe
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\bin\Release\Mathologica Console.pdb
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Release\Mathologica Console.exe.manifest
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Release\Mathologica Console.application
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Release\Mathologica Console.exe
+C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Release\Mathologica Console.pdb
