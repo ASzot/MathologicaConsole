@@ -526,6 +526,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return deriv;
         }
 
+        private ExComp ApplyPower(PowerFunction pfGpCmp, ref TermType.EvalData pEvalData)
+        {
+            bool powHas = ContainsVarOfInterest(pfGpCmp.Power);
+            bool baseHas = ContainsVarOfInterest(pfGpCmp.Base);
+
+            if (powHas && baseHas)
+            {
+                return ApplyPowBaseDeriv(pfGpCmp, ref pEvalData);
+            }
+            else if (powHas)
+            {
+                return ApplyPowerRulePower(pfGpCmp, ref pEvalData);
+            }
+            else if (baseHas)
+            {
+                return ApplyPowerRuleBase(pfGpCmp, ref pEvalData);
+            }
+            else
+                return CreateDeriv(pfGpCmp, _withRespectTo, _derivOf);
+        }
+
         private bool ContainsVarOfInterest(ExComp ex)
         {
             AlgebraTerm term = ex.ToAlgTerm();
@@ -575,22 +596,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             if (ex is PowerFunction)
             {
-                PowerFunction pfGpCmp = ex as PowerFunction;
-                bool powHas = ContainsVarOfInterest(pfGpCmp.Power);
-                bool baseHas = ContainsVarOfInterest(pfGpCmp.Base);
-
-                if (powHas && baseHas)
-                {
-                    return ApplyPowBaseDeriv(pfGpCmp, ref pEvalData);
-                }
-                else if (powHas)
-                {
-                    return ApplyPowerRulePower(pfGpCmp, ref pEvalData);
-                }
-                else if (baseHas)
-                {
-                    return ApplyPowerRuleBase(pfGpCmp, ref pEvalData);
-                }
+                return ApplyPower(ex as PowerFunction, ref pEvalData);
             }
             else if (ex is AbsValFunction)
             {
@@ -617,6 +623,21 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             {
                 // Split it up by the addition signs.
                 AlgebraTerm term = ex as AlgebraTerm;
+                AlgebraTerm[] numDen = term.GetNumDenFrac();
+                if (numDen != null)
+                {
+                    ExComp numEx = numDen[0].RemoveRedundancies();
+                    ExComp denEx = numDen[1].RemoveRedundancies();
+
+                    if (Number.One.IsEqualTo(numEx) && denEx is PowerFunction)
+                    {
+                        PowerFunction pfDen = denEx as PowerFunction;
+                        pfDen.Power = MulOp.Negate(pfDen.Power);
+
+                        return ApplyPower(pfDen, ref pEvalData);
+                    }
+                }
+
                 var gps = term.GetGroupsNoOps();
                 AlgebraTerm final = new AlgebraTerm();
 
