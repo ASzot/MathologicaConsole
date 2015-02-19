@@ -55,14 +55,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 AlgebraFunction func1 = ex1 as AlgebraFunction;
                 AlgebraFunction func2 = ex2 as AlgebraFunction;
 
-                if (func1 is Functions.PowerFunction &&
+                if (func1 is Functions.PowerFunction && func1 is Functions.PowerFunction &&
                     (func1 as Functions.PowerFunction).IsDenominator())
                 {
                     ExComp divBy = (func1 as Functions.PowerFunction).FlipFrac();
 
                     return DivOp.StaticCombine(func2, divBy);
                 }
-                else if (func2 is Functions.PowerFunction &&
+                else if (func2 is Functions.PowerFunction && func2 is Functions.PowerFunction &&
                     (func2 as Functions.PowerFunction).IsDenominator())
                 {
                     ExComp divBy = (func2 as Functions.PowerFunction).FlipFrac();

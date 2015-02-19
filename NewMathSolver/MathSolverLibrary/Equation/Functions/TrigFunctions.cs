@@ -122,6 +122,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
+            if (Number.Zero.IsEqualTo(InnerEx))
+            {
+                return AlgebraTerm.FromFraction(Constant.Pi, new Number(2.0));
+            }
+
             AlgebraTerm recipInner = AlgebraTerm.FromFraction(Number.One, InnerEx);
             recipInner = recipInner.MakeFormattingCorrect();
 

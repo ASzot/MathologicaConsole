@@ -106,7 +106,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     {
                         LogFunction logFunc = subComp as LogFunction;
 
-                        if (logFunc.Contains(varFor))
+                        if (logFunc.InnerTerm.Contains(varFor))
                             appliedFuncs.Add(FunctionType.Logarithm);
                         if (logFunc.Base.IsEqualTo(varFor) || (logFunc.Base is AlgebraTerm && (logFunc.Base as AlgebraTerm).Contains(varFor)))
                             appliedFuncs.Add(FunctionType.LogarithmBase);

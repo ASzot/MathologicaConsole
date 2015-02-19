@@ -385,6 +385,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return orderedTolkensList;
         }
 
+        /// <summary>
+        /// Checks that the coefficients are always at the front of the algebra group.
+        /// 4x^(2)y will pass x^(2)4y will not.
+        /// </summary>
+        /// <returns></returns>
+        private static bool CheckCoeffCorrectness(LexemeTable lexTable)
+        {
+            for (int i = 0; i < lexTable.Count; ++i)
+            {
+                if (lexTable[i].Data1 == LexemeType.Operator && lexTable[i].Data2 == "^" &&
+                    i < lexTable.Count - 1 &&
+                    lexTable[i + 1].Data1 == LexemeType.Number && lexTable[i + 1].Data2.Length > 1)
+                    return false;
+            }
+
+            return true;
+        }
+
         public List<EquationSet> ParseInput(string inputStr, out List<LexemeTable> lexemeTables, ref List<string> pParseErrors)
         {
             string[] equationSets = inputStr.Split(';');
@@ -394,7 +412,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
             foreach (string equationSet in equationSets)
             {
-                var setLexemeTable = CreateLexemeTable(equationSet, ref pParseErrors);
+                LexemeTable setLexemeTable = CreateLexemeTable(equationSet, ref pParseErrors);
+                if (!CheckCoeffCorrectness(setLexemeTable))
+                {
+                    pParseErrors.Add("Invalid number placement.");
+                    return null;
+                }
+
                 if (setLexemeTable == null || setLexemeTable.Count == 0)
                     return null;
                 if (setLexemeTable == null)

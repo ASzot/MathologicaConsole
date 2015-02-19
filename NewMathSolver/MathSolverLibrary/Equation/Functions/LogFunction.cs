@@ -84,6 +84,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return lf;
         }
 
+        public override bool Contains(AlgebraComp varFor)
+        {
+            return InnerTerm.Contains(varFor) || Base.ToAlgTerm().Contains(varFor);
+        }
+
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
             double dInnerVal = double.NaN;
@@ -175,14 +180,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             string finalStr = @"\log" + baseStr + "(" + InnerTerm.FinalToDispStr() + ")";
 
             return finalStr;
-        }
-
-        public override List<FunctionType> GetAppliedFunctionsNoPow(AlgebraComp varFor)
-        {
-            List<FunctionType> appliedFuncs = base.GetAppliedFunctionsNoPow(varFor);
-            if (_baseEx.IsEqualTo(varFor) || (_baseEx is AlgebraTerm && (_baseEx as AlgebraTerm).Contains(varFor)))
-                appliedFuncs.Add(Equation.FunctionType.LogarithmBase);
-            return appliedFuncs;
         }
 
         public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
