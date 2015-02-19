@@ -413,7 +413,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             foreach (string equationSet in equationSets)
             {
                 LexemeTable setLexemeTable = CreateLexemeTable(equationSet, ref pParseErrors);
-                if (!CheckCoeffCorrectness(setLexemeTable))
+                if (!MathSolver.PLAIN_TEXT && !CheckCoeffCorrectness(setLexemeTable))
                 {
                     pParseErrors.Add("Invalid number placement.");
                     return null;
