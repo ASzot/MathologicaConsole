@@ -40,7 +40,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             AlgebraTerm[] leftNumDen;
             AlgebraTerm[] rightNumDen;
 
-            if (gps.Count == 2)
+            if (gps.Count == 2 && right.IsZero())
             {
                 AlgebraTerm gp0 = gps[0].ToAlgTerm();
                 AlgebraTerm gp1 = MulOp.Negate(gps[1].ToAlgTerm()).ToAlgTerm();

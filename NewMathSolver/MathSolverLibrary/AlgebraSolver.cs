@@ -1066,9 +1066,20 @@ namespace MathSolverWebsite.MathSolverLibrary
                 pEvalData.WorkMgr.FromSides(left, right,
                     "The above equation has only one root, " +
                     WorkMgr.STM + WorkMgr.ExFinalToAsciiStr(result.Solutions[0].Result) + WorkMgr.EDM + ", with a multiplicity of two.");
-                return (Restriction.IsGreaterThan(comparison) == !switchSign ?
-                    SolveResult.InequalitySolved(Restriction.AllNumbers(solveForComp, ref pEvalData)) :
-                    SolveResult.NoSolutions());
+                if (Restriction.IsGreaterThan(comparison) == !switchSign)
+                {
+                    if (!Restriction.IsEqualTo(comparison))
+                        return SolveResult.InequalitySolved(Restriction.ConstructAllBut(result.Solutions[0].Result, solveForComp, ref pEvalData));
+                    else
+                        return SolveResult.InequalitySolved(Restriction.AllNumbers(solveForComp, ref pEvalData));
+                }
+                else 
+                {
+                    if (Restriction.IsEqualTo(comparison))
+                        return SolveResult.InequalitySolved(Restriction.FromOnly(result.Solutions[0].Result, solveForComp, ref pEvalData));
+                    else
+                        return SolveResult.NoSolutions();
+                }
             }
             else if (result.Solutions.Count != 0)
             {
@@ -1217,7 +1228,7 @@ namespace MathSolverWebsite.MathSolverLibrary
 
                 return SolveResult.InequalitySolved(ranges.ToArray());
             }
-
+           
             pEvalData.AddFailureMsg("Couldn't solve inequality.");
             return SolveResult.Failure();
         }
@@ -1235,7 +1246,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                 simpEx = (simpEx as AlgebraTerm).HarshEvaluation().RemoveRedundancies();
 
             if (!(simpEx is Number) || (simpEx is Number && (simpEx as Number).HasImaginaryComp()))
-                return false;
+                return null;
 
             return (simpEx as Number).RealComp > 0.0;
         }

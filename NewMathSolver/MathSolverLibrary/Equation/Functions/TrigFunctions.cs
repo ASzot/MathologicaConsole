@@ -77,7 +77,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
         {
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + this.FinalToDispStr() + WorkMgr.EDM, "The domain of " + WorkMgr.STM + "\\arccos(x)" +
-                WorkMgr.EDM + " is " + WorkMgr.STM + "-1 < x < 1" + WorkMgr.EDM);
+                WorkMgr.EDM + " is " + WorkMgr.STM + "-1 \\le x \\le 1" + WorkMgr.EDM);
 
             AlgebraComp varForCmp = varFor.ToAlgebraComp();
 
@@ -95,8 +95,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                 sides.Add(upper);
 
                 List<Parsing.LexemeType> comparisons = new List<Parsing.LexemeType>();
-                comparisons.Add(Parsing.LexemeType.Less);
-                comparisons.Add(Parsing.LexemeType.Less);
+                comparisons.Add(Parsing.LexemeType.LessEqual);
+                comparisons.Add(Parsing.LexemeType.LessEqual);
 
                 SolveResult result = agSolver.SolveEquationInequality(sides, comparisons, varFor, ref pEvalData);
                 if (!result.Success)
@@ -107,7 +107,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
             List<Restriction> rests = new List<Restriction>();
 
-            rests.Add(new AndRestriction(lower, Parsing.LexemeType.Less, varForCmp, Parsing.LexemeType.Less,
+            rests.Add(new AndRestriction(lower, Parsing.LexemeType.LessEqual, varForCmp, Parsing.LexemeType.LessEqual,
                 upper, ref pEvalData));
             return rests;
         }
@@ -304,7 +304,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             List<Restriction> rests = new List<Restriction>();
 
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + this.FinalToDispStr() + WorkMgr.EDM, "The domain of " + WorkMgr.STM + "\\arcsin(x)" +
-                WorkMgr.EDM + " is " + WorkMgr.STM + "-1 < x < 1" + WorkMgr.EDM);
+                WorkMgr.EDM + " is " + WorkMgr.STM + "-1 \\le x \\le 1" + WorkMgr.EDM);
 
             AlgebraComp varForCmp = varFor.ToAlgebraComp();
 
@@ -322,8 +322,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                 sides.Add(upper);
 
                 List<Parsing.LexemeType> comparisons = new List<Parsing.LexemeType>();
-                comparisons.Add(Parsing.LexemeType.Less);
-                comparisons.Add(Parsing.LexemeType.Less);
+                comparisons.Add(Parsing.LexemeType.LessEqual);
+                comparisons.Add(Parsing.LexemeType.LessEqual);
 
                 SolveResult result = agSolver.SolveEquationInequality(sides, comparisons, varFor, ref pEvalData);
                 if (!result.Success)
@@ -332,7 +332,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                 return result.Restrictions;
             }
 
-            rests.Add(new AndRestriction(lower, Parsing.LexemeType.Less, varForCmp, Parsing.LexemeType.Less,
+            rests.Add(new AndRestriction(lower, Parsing.LexemeType.LessEqual, varForCmp, Parsing.LexemeType.LessEqual,
                 upper, ref pEvalData));
             return rests;
         }

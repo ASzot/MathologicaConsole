@@ -1437,6 +1437,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                                     useDenGroup.RemoveAt(k--);
                                     if (modifiedDens[i] == null)
                                     {
+                                        if (useDenGroup.Count == 0)
+                                            useDenGroup.Add(new Number(1.0));
                                         modifiedDens[i] = useDenGroup;
                                     }
                                 }

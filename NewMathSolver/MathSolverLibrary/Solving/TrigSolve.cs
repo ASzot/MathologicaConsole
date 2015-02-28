@@ -45,10 +45,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             if (Number.IsUndef(evaluated))
             {
-                pEvalData.WorkMgr.FromSides(innerEx, evaluated, "The " + trigFunc.FuncName + " function is undefined at the angle " +
-                    (right is AlgebraTerm ? (right as AlgebraTerm).FinalToDispStr() : right.ToMathAsciiString()));
+                if (inverseTrigFunc is ATanFunction && AlgebraTerm.FromFraction(Number.One, solveFor.ToAlgebraComp()).IsEqualTo(inverseTrigFunc.InnerEx))
+                    return Number.Zero;
+                else
+                {
+                    pEvalData.WorkMgr.FromSides(innerEx, evaluated, "The " + trigFunc.FuncName + " function is undefined at the angle " +
+                        WorkMgr.STM + (right is AlgebraTerm ? (right as AlgebraTerm).FinalToDispStr() : right.ToMathAsciiString()) + WorkMgr.EDM);
 
-                return Number.Undefined;
+                    return Number.Undefined;
+                }
             }
 
             pEvalData.WorkMgr.FromSides(innerEx, evaluated, "The trig function and its inverse cancel leaving just the inner term.");

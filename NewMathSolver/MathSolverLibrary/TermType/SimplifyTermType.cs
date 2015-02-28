@@ -17,6 +17,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         public SimplifyTermType(ExComp term)
         {
             _term = term;
+            _agSolver = new AlgebraSolver();
         }
 
         public SimplifyTermType(ExComp term, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar)

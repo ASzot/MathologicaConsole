@@ -119,7 +119,6 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             else
             {
                 promptStr = "Find zeros for ";
-
                 tt_simp = new SimplifyTermType(left != null ? left : right);
             }
 
