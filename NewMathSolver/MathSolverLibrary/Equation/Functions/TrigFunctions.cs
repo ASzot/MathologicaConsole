@@ -417,7 +417,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override ExComp CancelWith(TrigFunction tf)
         {
-            if (tf is SecFunction)
+            if (tf is SecFunction && tf.InnerEx.IsEqualTo(this.InnerEx))
                 return Number.One;
             if (tf is TanFunction)
             {
@@ -513,7 +513,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override ExComp CancelWith(TrigFunction tf)
         {
-            if (tf is TanFunction)
+            if (tf is TanFunction && tf.InnerEx.IsEqualTo(this.InnerEx))
                 return Number.One;
             if (tf is SinFunction)
             {
@@ -632,7 +632,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override ExComp CancelWith(TrigFunction tf)
         {
-            if (tf is SinFunction)
+            if (tf is SinFunction && tf.InnerEx.IsEqualTo(this.InnerEx))
                 return Number.One;
             if (tf is TanFunction)
             {
@@ -794,7 +794,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override ExComp CancelWith(TrigFunction tf)
         {
-            if (tf is CosFunction)
+            if (tf is CosFunction && tf.InnerEx.IsEqualTo(this.InnerEx))
                 return Number.One;
             if (tf is CotFunction)
             {
@@ -914,7 +914,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override ExComp CancelWith(TrigFunction tf)
         {
-            if (tf is CscFunction)
+            if (tf is CscFunction && tf.InnerEx.IsEqualTo(this.InnerEx))
                 return Number.One;
             if (tf is CotFunction)
             {
@@ -1010,7 +1010,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override ExComp CancelWith(TrigFunction tf)
         {
-            if (tf is CotFunction)
+            if (tf is CotFunction && tf.InnerEx.IsEqualTo(this.InnerEx))
                 return Number.One;
             if (tf is CosFunction)
             {
