@@ -445,6 +445,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         private ExComp _harshSimpCompare0;
         private ExComp _harshSimpCompare1;
 
+        /// <summary>
+        /// Initializes the AndRestriction class. Will fix all incorrect usages of inequalities and infinity. (Like 2 \lt x \le oo) 
+        /// </summary>
+        /// <param name="compare0"></param>
+        /// <param name="comparison0"></param>
+        /// <param name="varFor"></param>
+        /// <param name="comparison1"></param>
+        /// <param name="compare1"></param>
+        /// <param name="pEvalData"></param>
         public AndRestriction(ExComp compare0, LexemeType comparison0, AlgebraComp varFor, LexemeType comparison1, ExComp compare1, ref TermType.EvalData pEvalData)
             : base(varFor)
         {
@@ -453,6 +462,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
             Compare0 = compare0;
             Compare1 = compare1;
+
+            if (Compare0 is Number && (Compare0 as Number).IsInfinity() && Restriction.IsEqualTo(Comparison0))
+                Comparison0 = Comparison0 == LexemeType.LessEqual ? LexemeType.Less : LexemeType.Greater;
+            if (Compare1 is Number && (Compare1 as Number).IsInfinity() && Restriction.IsEqualTo(Comparison1))
+                Comparison1 = Comparison1 == LexemeType.LessEqual ? LexemeType.Less : LexemeType.Greater;
 
             _harshSimpCompare0 = Simplifier.HarshSimplify(compare0.Clone().ToAlgTerm(), ref pEvalData, false);
             _harshSimpCompare1 = Simplifier.HarshSimplify(compare1.Clone().ToAlgTerm(), ref pEvalData, false);

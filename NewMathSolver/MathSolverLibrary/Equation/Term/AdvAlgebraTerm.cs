@@ -339,7 +339,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             ExComp nfC = c / cdGcf;
             ExComp nfD = d / cdGcf;
 
-            if (nfA != nfC || nfB != nfD)
+            if (!nfA.IsEqualTo(nfC) || !nfB.IsEqualTo(nfD))
                 return null;
 
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "({0}{1}^3+{2}{1}^2)+({3}{1}+{4})" + WorkMgr.EDM,

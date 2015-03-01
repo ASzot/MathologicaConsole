@@ -1215,6 +1215,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                             lower = Number.NegInfinity;
                         else
                             lower = roots[i - 1].Data2;
+
                         upper = Number.PosInfinity;
                     }
 
