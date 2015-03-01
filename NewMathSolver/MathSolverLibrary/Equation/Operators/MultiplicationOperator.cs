@@ -35,6 +35,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 Number.NegOne.IsEqualTo((ex2 as PowerFunction).Power))
                 return Number.Undefined;
 
+            if (ex1 is PowerFunction && Number.Zero.IsEqualTo((ex1 as PowerFunction).Base) &&
+                Number.NegOne.IsEqualTo((ex1 as PowerFunction).Power))
+                return Number.Undefined;
+
             if (Number.Zero.IsEqualTo(ex1) || Number.Zero.IsEqualTo(ex2))
                 return Number.Zero;
 

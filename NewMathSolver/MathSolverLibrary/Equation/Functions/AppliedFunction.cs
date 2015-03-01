@@ -75,6 +75,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return CreateInstance(compoundedFractions);
         }
 
+        public override AlgebraTerm ConvertImaginaryToVar()
+        {
+            AlgebraTerm converted = InnerTerm.ConvertImaginaryToVar();
+            base.AssignTo(converted);
+            return this;
+        }
+
         public override List<FunctionType> GetAppliedFunctionsNoPow(AlgebraComp varFor)
         {
             List<FunctionType> appliedFuncs = new List<FunctionType>();

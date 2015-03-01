@@ -11,6 +11,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             if (ex2 is AlgebraTerm)
                 ex2 = (ex2 as AlgebraTerm).RemoveRedundancies();
 
+
+            if (Number.IsUndef(ex1) || Number.IsUndef(ex2))
+                return Number.Undefined;
+
             if (Number.Zero.IsEqualTo(ex1))
                 return ex2;
             if (Number.Zero.IsEqualTo(ex2))

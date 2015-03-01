@@ -527,6 +527,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             {
                 for (int j = 0; j < groups[i].Length; ++j)
                 {
+                    if (groups[i][j] is AlgebraTerm)
+                    {
+                        groups[i][j] = (groups[i][j] as AlgebraTerm).ConvertImaginaryToVar();
+                    }
                     if (groups[i][j] is Number)
                     {
                         Number num = (groups[i][j] as Number);
