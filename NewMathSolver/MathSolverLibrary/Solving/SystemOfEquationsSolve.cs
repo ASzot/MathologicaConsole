@@ -168,7 +168,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 combineOp = new SubOp();
 
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM + "</br>" + WorkMgr.STM + "{4}({2}={3})" + WorkMgr.EDM,
-                ((combineOp is AddOp) ? "Add" : "Subtract") + " the equations from each other eliminating " + WorkMgr.STM + elimAgComp.ToMathAsciiString() + WorkMgr.EDM + " from the resulting equation.",
+                ((combineOp is AddOp) ? "Add" : "Subtract") + " the equations eliminating " + WorkMgr.STM + elimAgComp.ToMathAsciiString() + WorkMgr.EDM + " from the resulting equation.",
                 eq0Left, eq0Right, eq1Left, eq1Right, combineOp);
 
             AlgebraTerm finalLeft = combineOp.Combine(eq0Left, eq1Left).ToAlgTerm();
@@ -317,6 +317,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 pEvalData.WorkMgr.FromSides(eqSet.Left, eqSet.Right, "Solve for " + WorkMgr.STM + solveFor.ToMathAsciiString() + WorkMgr.EDM + " in this equation.");
 
                 ExComp result = p_agSolver.SolveEq(solveFor, eqSet.LeftTerm, eqSet.RightTerm, ref pEvalData, true);
+                if (result == null)
+                    return SolveResult.Failure();
                 if (result is AlgebraTermArray || result is GeneralSolution || result is NoSolutions || result is AllSolutions)
                 {
                     pEvalData.AddFailureMsg("Can't solve equations due to the complexity of the equations. The ability to solve this type of problem might be added sometime in the future.");
@@ -328,7 +330,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 if (iterGenerations.Count > 1)
                     pEvalData.WorkMgr.FromSides(solveForComp, result, "Using the solved equation substitute the result into the other equations.");
 
-                solveResult.Solutions.Add(new Solution(solveForComp, result));
+                solveResult.Solutions.Add(new Solution(solveForComp, result.Clone()));
 
                 iterGenerations.RemoveAt(i);
 
