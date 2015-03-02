@@ -149,7 +149,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             left = appliedTrigFunc.InnerTerm;
 
             AlgebraTermArray rightArray = new AlgebraTermArray(rights.ToList());
-            AlgebraTermArray solvedArray = rightArray.SimulSolve(left, solveFor, p_agSolver, ref pEvalData);
+            bool allSols;
+            AlgebraTermArray solvedArray = rightArray.SimulSolve(left, solveFor, p_agSolver, ref pEvalData, out allSols);
+            if (allSols)
+                return new AllSolutions();
             if (solvedArray == null)
                 return null;
 

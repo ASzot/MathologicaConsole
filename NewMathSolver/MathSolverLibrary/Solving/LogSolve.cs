@@ -37,8 +37,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                     return new NoSolutions();
             }
 
-            left = left.CompoundLogs(solveForComp);
-            right = right.CompoundLogs(solveForComp);
+            bool leftLogsCombined = false;
+            left = left.CompoundLogs(out leftLogsCombined, solveForComp);
+            bool rightLogsCombined = false;
+            right = right.CompoundLogs(out rightLogsCombined, solveForComp);
+
+            if (leftLogsCombined || rightLogsCombined)
+                pEvalData.WorkMgr.FromSides(left, right, "Combine logarithms.");
 
             var leftGroups = left.GetGroups();
             var rightGroups = right.GetGroups();

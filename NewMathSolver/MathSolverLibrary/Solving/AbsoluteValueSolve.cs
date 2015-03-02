@@ -65,7 +65,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 AlgebraTermArray termArray = new AlgebraTermArray(solve1, solve2);
                 string[] solveDescs = { "Solve for the positive case.", "Solve for the negative case" };
                 termArray.SolveDescs = solveDescs;
-                AlgebraTermArray solvedTermArray = termArray.SimulSolve(innerTerm, solveFor, p_agSolver, ref pEvalData);
+                bool allSols;
+                AlgebraTermArray solvedTermArray = termArray.SimulSolve(innerTerm, solveFor, p_agSolver, ref pEvalData, out allSols);
+                if (allSols)
+                    return new AllSolutions();
                 if (solvedTermArray == null)
                     return null;
 
@@ -89,7 +92,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 AlgebraTerm solve2 = MulOp.Negate(groupTerm1).ToAlgTerm();
 
                 AlgebraTermArray termArray = new AlgebraTermArray(solve1, solve2);
-                AlgebraTermArray solvedArray = termArray.SimulSolve(groupTerm0, solveFor, p_agSolver, ref pEvalData);
+                bool allSols;
+                AlgebraTermArray solvedArray = termArray.SimulSolve(groupTerm0, solveFor, p_agSolver, ref pEvalData, out allSols);
+                if (allSols)
+                    return new AllSolutions();
                 if (solvedArray == null)
                     return null;
 

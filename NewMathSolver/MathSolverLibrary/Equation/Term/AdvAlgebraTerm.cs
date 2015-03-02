@@ -27,6 +27,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
 
         public static AlgebraTerm CompoundLogs(this AlgebraTerm term, AlgebraComp solveForComp = null)
         {
+            bool garbage;
+            return CompoundLogs(term, out garbage, solveForComp);
+        }
+
+        public static AlgebraTerm CompoundLogs(this AlgebraTerm term, out bool hasCombined, AlgebraComp solveForComp = null)
+        {
+            hasCombined = false;
             int varLogCount = -1;
             if (solveForComp != null)
             {
@@ -145,6 +152,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                     {
                         found = true;
                         ExComp combInner = MulOp.StaticCombine(logFunc.InnerEx, combinedLog.InnerEx);
+                        hasCombined = true;
                         combinedLogs[i] = new LogFunction(combInner);
                         combinedLogs[i].Base = logFunc.Base;
                     }

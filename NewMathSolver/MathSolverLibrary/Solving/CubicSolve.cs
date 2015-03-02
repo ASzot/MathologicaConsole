@@ -128,7 +128,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             AlgebraTerm zeroTerm = Number.Zero.ToAlgTerm();
 
             AlgebraTermArray factorsArray = new AlgebraTermArray(factors);
-            AlgebraTermArray solutions = factorsArray.SimulSolve(zeroTerm, solveFor, p_agSolver, ref pEvalData, true);
+            bool allSols = false;
+            AlgebraTermArray solutions = factorsArray.SimulSolve(zeroTerm, solveFor, p_agSolver, ref pEvalData, out allSols, true);
+
+            if (allSols)
+                return new AllSolutions();
+
             if (solutions == null)
                 return null;
 

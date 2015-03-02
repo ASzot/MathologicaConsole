@@ -227,10 +227,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (minVal == -1)
                 return;
 
-            n1Pow = new Number();
-            n2Pow = new Number();
-            nBase = new Number();
-
             nBase = new Number(minVal);
             double dPow1 = Math.Log(i1, minVal);
             double dPow2 = Math.Log(i2, minVal);

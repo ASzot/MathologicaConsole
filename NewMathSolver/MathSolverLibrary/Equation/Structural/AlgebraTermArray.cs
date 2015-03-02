@@ -118,8 +118,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             }
         }
 
-        public AlgebraTermArray SimulSolve(AlgebraTerm otherSide, AlgebraVar solveFor, AlgebraSolver solver, ref TermType.EvalData pEvalData, bool switchSides = false)
+        public AlgebraTermArray SimulSolve(AlgebraTerm otherSide, AlgebraVar solveFor, AlgebraSolver solver, ref TermType.EvalData pEvalData, out bool allSols, bool switchSides = false)
         {
+            allSols = false;
+
             List<AlgebraTerm> solvedTerms = new List<AlgebraTerm>();
             int termCount = _terms.Count;
             int startNegDivCount = pEvalData.NegDivCount;
@@ -147,8 +149,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 ExComp solved = solver.SolveEq(solveFor, left, right, ref pEvalData, false, true);
                 if (solved == null)
                     return null;
-                if (solved is SpecialSolution)
+                else if (solved is NoSolutions)
                     continue;
+                else if (solved is AllSolutions)
+                {
+                    allSols = true;
+                    return null;
+                }
                 if (solved is AlgebraTermArray)
                 {
                     AlgebraTermArray mergeArray = solved as AlgebraTermArray;

@@ -132,7 +132,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                             descs[i] = "Solve with the found " + (i + 1).ToString() + (i + 1).GetCountingPrefix() + " root.";
                     }
                     rights.SolveDescs = descs;
-                    AlgebraTermArray solutions = rights.SimulSolve(left, solveFor, p_agSolver, ref pEvalData);
+                    bool allSols;
+                    AlgebraTermArray solutions = rights.SimulSolve(left, solveFor, p_agSolver, ref pEvalData, out allSols);
+                    if (allSols)
+                        return new AllSolutions();
                     if (solutions == null)
                         return null;
 
