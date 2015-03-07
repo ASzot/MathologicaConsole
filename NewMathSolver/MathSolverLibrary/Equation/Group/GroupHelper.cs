@@ -753,5 +753,36 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return finalStr;
         }
 
+        public static ExComp[] AccumulateTerms(this ExComp[] group)
+        {
+            ExComp accum = AccumulateTermsRecur(group.ToList());
+            if (accum is AlgebraTerm)
+            {
+                AlgebraTerm acumTerm = accum as AlgebraTerm;
+                var groups = acumTerm.GetGroupsNoOps();
+                if (groups.Count == 1)
+                    return groups[0];
+                else
+                    return null;
+            }
+
+            return new ExComp[] { accum };
+        }
+
+        private static ExComp AccumulateTermsRecur(List<ExComp> exs)
+        {
+            if (exs.Count == 1)
+                return exs[0];
+            else if (exs.Count == 2)
+            {
+                return Operators.MulOp.StaticCombine(exs[0], exs[1]);
+            }
+
+            ExComp combined = Operators.MulOp.StaticCombine(exs[0], exs[1]);
+            exs.RemoveRange(0, 2);
+            exs.Insert(0, combined);
+
+            return AccumulateTermsRecur(exs);
+        }
     }
 }

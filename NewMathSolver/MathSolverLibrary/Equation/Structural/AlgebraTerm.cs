@@ -367,8 +367,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             var numFracGroups = (from fracGp in fracGroups
                                  select fracGp.GetNumerator()).ToList();
 
-            var divOp = new Operators.DivOp();
 
+            for (int i = 0; i < denFracGroups.Count; ++i)
+            {
+                ExComp[] denFracGroup = denFracGroups[i];
+                if (denFracGroup.Length <= 1)
+                    continue;
+                ExComp[] tmpGp = denFracGroup.AccumulateTerms();
+                if (tmpGp == null)
+                    continue;
+                denFracGroups[i] = tmpGp;
+            }
             var lcfDen = GroupHelper.LCF(denFracGroups);
             AlgebraTerm lcfTerm = lcfDen.ToAlgTerm();
 
@@ -379,7 +388,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 ExComp[] denGroup = denFracGroups[i];
                 AlgebraTerm denGroupTerm = denGroup.ToAlgTerm();
 
-                ExComp mulTerm = divOp.Combine(lcfTerm.Clone(), denGroupTerm);
+                ExComp mulTerm = Operators.DivOp.StaticCombine(lcfTerm.Clone(), denGroupTerm);
                 numMulTerms.Add(mulTerm);
             }
 
@@ -394,8 +403,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
                 if (!(mulTerm is Number && (mulTerm as Number) == 1.0))
                 {
-                    var mulOp = new Operators.MulOp();
-                    ExComp combined = mulOp.Combine(term, mulTerm);
+                    ExComp combined = MulOp.StaticCombine(term, mulTerm);
                     modifiedNumTerms.Add(combined);
                 }
                 else
@@ -411,7 +419,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
             finalNumTerm = finalNumTerm.ApplyOrderOfOperations();
             ExComp finalNum = finalNumTerm.MakeWorkable();
-            ExComp finalFrac = divOp.Combine(finalNum, lcfTerm);
+            ExComp finalFrac = Operators.DivOp.StaticCombine(finalNum, lcfTerm);
 
             AlgebraTerm finalTerm = new AlgebraTerm(finalFrac);
 
