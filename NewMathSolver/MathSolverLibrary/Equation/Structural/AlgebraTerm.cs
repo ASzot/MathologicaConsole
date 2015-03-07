@@ -323,6 +323,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             valid = false;
 
+            for (int i = 0; i < _subComps.Count; ++i)
+            {
+                if (_subComps[i] is AlgebraTerm)
+                {
+                    bool tmpValid;
+                    _subComps[i] = (_subComps[i] as AlgebraTerm).CompoundFractions(out tmpValid);
+                    if (tmpValid)
+                        valid = tmpValid;
+                }
+            }
+
             var groups = GetGroupsNoOps();
 
             var fracGroups = (from gp in groups

@@ -1496,20 +1496,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             // We have d/dx
 
             ExComp innerEx;
-            if (lt[currentIndex].Data1 == LexemeType.StartPara)
-                innerEx = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
-            else
+            // Just takes the derivative of the rest of the expression.
+            var remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
+            if (remainingLt.Count == 0)
             {
-                // Just takes the derivative of the rest of the expression.
-                var remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
-                if (remainingLt.Count == 0)
-                {
-                    pParseErrors.Add("Nothing following derivative.");
-                    return null;
-                }
-                currentIndex = lt.Count - 1;
-                innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
+                pParseErrors.Add("Nothing following derivative.");
+                return null;
             }
+            currentIndex = lt.Count - 1;
+            innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
 
             if (innerEx == null)
             {
@@ -1589,20 +1584,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             // We have d/dx
 
             ExComp innerEx;
-            if (lt[currentIndex].Data1 == LexemeType.StartPara)
-                innerEx = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
-            else
+            // Just takes the derivative of the rest of the expression.
+            var remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
+            if (remainingLt.Count == 0)
             {
-                // Just takes the derivative of the rest of the expression.
-                var remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
-                if (remainingLt.Count == 0)
-                {
-                    pParseErrors.Add("Nothing following derivative.");
-                    return null;
-                }
-                currentIndex = lt.Count - 1;
-                innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
+                pParseErrors.Add("Nothing following derivative.");
+                return null;
             }
+            currentIndex = lt.Count - 1;
+            innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
 
             if (innerEx == null)
             {
