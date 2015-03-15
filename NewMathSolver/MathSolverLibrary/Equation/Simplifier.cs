@@ -77,9 +77,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static ExComp Simplify(AlgebraTerm term, ref TermType.EvalData pEvalData)
         {
+            bool noPowEval = term.ContainsOneOfFuncs(typeof(Functions.Calculus.Derivative), typeof(Functions.Calculus.Integral));
+
             term.EvaluateFunctions(false, ref pEvalData);
 
-            term = term.EvaluatePowers(ref pEvalData);
+            if (!noPowEval)
+                term = term.EvaluatePowers(ref pEvalData);
 
             term = term.ApplyOrderOfOperations();
             term = term.MakeWorkable().ToAlgTerm();

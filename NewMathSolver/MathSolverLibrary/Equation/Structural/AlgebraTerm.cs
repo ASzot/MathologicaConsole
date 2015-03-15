@@ -1257,6 +1257,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public virtual AlgebraTerm Substitute(ExComp subOut, ExComp subIn)
         {
+            if (this.IsEqualTo(subOut))
+                return subIn.ToAlgTerm();
+
             List<ExComp> finalSubComps = new List<ExComp>();
 
             foreach (ExComp subComp in _subComps)
@@ -1280,6 +1283,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public virtual AlgebraTerm Substitute(ExComp subOut, ExComp subIn, ref bool success)
         {
+            if (this.IsEqualTo(subOut))
+            {
+                success = true;
+                return subIn.ToAlgTerm();
+            }
+
             List<ExComp> finalSubComps = new List<ExComp>();
 
             foreach (ExComp subComp in _subComps)

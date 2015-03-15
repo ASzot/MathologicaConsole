@@ -96,13 +96,14 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                     if (solveKey != null)
                         tmpCmds.Add("Derivative d/d" + solveKey);
                 }
+
+                if (logOptionsCount != 0)
+                {
+                    tmpCmds.Add("Condense logs");
+                    tmpCmds.Add("Expand logs");
+                }
             }
 
-            if (logOptionsCount != 0)
-            {
-                tmpCmds.Add("Condense logs");
-                tmpCmds.Add("Expand logs");
-            }
 
             _cmds = tmpCmds.ToArray();
 

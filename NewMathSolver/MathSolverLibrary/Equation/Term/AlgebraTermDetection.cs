@@ -7,7 +7,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 {
     partial class AlgebraTerm
     {
-
         public static Number GetCoeffTerm(ExComp[] group)
         {
             foreach (ExComp comp in group)

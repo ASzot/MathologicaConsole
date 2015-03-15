@@ -10,7 +10,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 {
     static class AntiDerivativeHelper
     {
-        public static ExComp TakeAntiDerivativeGp(ExComp[] gp, AlgebraComp dVar, ref EvalData pEvalData)
+        public static ExComp TakeAntiDerivativeGp(ExComp[] gp, AlgebraComp dVar, ref IntegrationInfo pIntInfo, ref EvalData pEvalData)
         {
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + gp.ToAlgTerm().FinalToDispStr() + ")\\d" + dVar.ToDispString() + WorkMgr.EDM,
                 "Evaluate the integral.");
@@ -29,7 +29,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + constOutStr + WorkMgr.EDM, "Take out the constants.");
             }
 
-            ExComp antiDeriv = TakeAntiDerivativeVarGp(varTo, dVar, ref pEvalData);
+            ExComp antiDeriv = TakeAntiDerivativeVarGp(varTo, dVar, ref pIntInfo, ref pEvalData);
             if (antiDeriv == null) 
                 return null;
 
@@ -46,7 +46,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return antiDeriv;
         }
 
-        private static ExComp TakeAntiDerivativeVarGp(ExComp[] gp, AlgebraComp dVar, ref EvalData pEvalData)
+        private static ExComp TakeAntiDerivativeVarGp(ExComp[] gp, AlgebraComp dVar, ref IntegrationInfo pIntInfo, ref EvalData pEvalData)
         {
             // For later make a method that makes the appropriate substitutions.
             // If the inside of a function isn't just a variable and the derivative
@@ -90,19 +90,201 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                         (gp[0] is CotFunction && gp[1] is CscFunction))
                         ad = MulOp.Negate(new CscFunction(dVar));
                 }
-				
-                if (ad != null)
-				{
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + gp[0].ToAlgTerm().FinalToDispStr() +
-                        gp[1].ToAlgTerm().FinalToDispStr() + ")\\d" + dVar.ToDispString() + "=" + 
-						ad.ToAlgTerm().FinalToDispStr() + WorkMgr.EDM, 
-                        "Use the common antiderivative.");
-				}
 
+                if (ad != null)
+                {
+                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + gp[0].ToAlgTerm().FinalToDispStr() +
+                        gp[1].ToAlgTerm().FinalToDispStr() + ")\\d" + dVar.ToDispString() + "=" +
+                        ad.ToAlgTerm().FinalToDispStr() + WorkMgr.EDM,
+                        "Use the common antiderivative.");
+                }
+            }
+
+            if (pIntInfo.USubCount < IntegrationInfo.MAX_U_SUB_COUNT)
+            {
+                atmpt = AttemptUSub(gp, dVar, ref pIntInfo, ref pEvalData);
+                if (atmpt != null)
+                    return atmpt;
+            }
+
+            if (gp.Length == 2)
+            {
+                ExComp[] den = gp.GetDenominator();
+                if (den != null && den.Length == 1)
+                {
+                    ExComp[] num = gp.GetNumerator();
+                    if (num.Length == 1)
+                    {
+                        atmpt = AttemptPartialFractions(num[0], den[0], dVar, ref pEvalData);
+                        if (atmpt != null)
+                            return atmpt;
+                    }
+                }
 
                 atmpt = IntByParts(gp[0], gp[1], dVar, ref pEvalData);
                 if (atmpt != null)
                     return atmpt;
+            }
+            
+
+            return null;
+        }
+
+        private static ExComp AttemptPartialFractions(ExComp num, ExComp den, AlgebraComp dVar, ref EvalData pEvalData)
+        {
+            return null;
+        }
+
+        private static List<ExComp> GetPotentialU(ExComp[] group, AlgebraComp dVar)
+        {
+            List<ExComp> potentialU = new List<ExComp>();
+
+            for (int i = 0; i < group.Length; ++i)
+            {
+                ExComp innerEx = null;
+                ExComp gpCmp = group[i];
+                if (gpCmp is PowerFunction)
+                {
+                    ExComp baseEx = ((PowerFunction)gpCmp).Base;
+                    if (!(baseEx is AlgebraComp) && baseEx.ToAlgTerm().Contains(dVar))
+                    {
+                        potentialU.Add(baseEx);
+                        var groups = baseEx.ToAlgTerm().GetGroups();
+                        if (groups.Count == 1)
+                        {
+                            List<ExComp> additionalBase = GetPotentialU(groups[0], dVar);
+                            potentialU.AddRange(additionalBase);
+                        }
+                    }
+
+                    ExComp powerEx = ((PowerFunction)gpCmp).Power;
+                    if (!(powerEx is AlgebraComp) && powerEx.ToAlgTerm().Contains(dVar))
+                    {
+                        potentialU.Add(powerEx);
+                        var groups = powerEx.ToAlgTerm().GetGroups();
+                        if (groups.Count == 1)
+                        {
+                            List<ExComp> additionalPower = GetPotentialU(powerEx.ToAlgTerm().SubComps.ToArray(), dVar);
+                            potentialU.AddRange(additionalPower);
+                        }
+                    }
+
+                }
+                else if (gpCmp is BasicAppliedFunc)
+                    innerEx = ((BasicAppliedFunc)gpCmp).InnerEx;
+
+                if (innerEx == null || innerEx is AlgebraComp || !innerEx.ToAlgTerm().Contains(dVar))
+                    continue;
+
+                potentialU.Add(innerEx);
+            }
+
+            return potentialU;
+        }
+
+        private static ExComp AttemptUSub(ExComp[] group, AlgebraComp dVar, ref IntegrationInfo pIntInfo, ref EvalData pEvalData)
+        {
+            // looking for f'(x)g(f(x))
+
+            List<ExComp> potentialUs = GetPotentialU(group, dVar);
+
+            foreach (ExComp potentialU in potentialUs)
+            {
+                ExComp attempt = TryU(group, potentialU, dVar, ref pIntInfo, ref pEvalData);
+                if (attempt != null)
+                    return attempt;
+            }
+
+            return null;
+        }
+
+        private static ExComp TryU(ExComp[] group, ExComp uatmpt, AlgebraComp dVar, ref IntegrationInfo pIntInfo, ref EvalData pEvalData)
+        {
+            Derivative derivative = Derivative.CreateDeriv(uatmpt, dVar, null);
+            ExComp evaluated = derivative.Evaluate(false, ref pEvalData);
+
+            if (evaluated is Derivative)
+                return null;
+
+            AlgebraTerm term = group.ToAlgNoRedunTerm();
+            AlgebraComp subInVar;
+            if (term.Contains(new AlgebraComp("u")))
+            {
+                if (term.Contains(new AlgebraComp("w")))
+                    subInVar = new AlgebraComp("v");
+                else
+                    subInVar = new AlgebraComp("w");
+            }
+            else
+                subInVar = new AlgebraComp("u");
+
+            bool success = false;
+            term = term.Substitute(uatmpt, subInVar, ref success);
+            if (!success)
+                return null;
+            var updatedGroups = term.GetGroupsNoOps();
+            // The group count started as one and should not have been altered by substitutions.
+            if (updatedGroups.Count != 1)
+                return null;
+
+            group = updatedGroups[0];
+
+            var groups = evaluated.ToAlgTerm().GetGroupsNoOps();
+            ExComp constEx = null;
+
+            if (groups.Count == 1)
+            {
+                ExComp[] singularGp = groups[0];
+                ExComp[] varTo, constTo;
+                singularGp.GetConstVarTo(out varTo, out constTo, dVar);
+
+                constEx = AlgebraTerm.FromFraction(Number.One, constTo.ToAlgTerm());
+
+                if (varTo.Length == 0)
+                {
+                    ExComp innerAntiDeriv = TakeAntiDerivativeGp(group.ToArray(), subInVar, ref pIntInfo, ref pEvalData);
+                    if (innerAntiDeriv == null)
+                        return null;
+
+                    // Sub back in the appropriate values.
+                    innerAntiDeriv = innerAntiDeriv.ToAlgTerm().Substitute(subInVar, uatmpt);
+
+                    return MulOp.StaticCombine(innerAntiDeriv, constEx);
+                }
+
+                evaluated = varTo.ToAlgTerm().RemoveRedundancies();
+            }
+            else
+            {
+                ExComp[] groupGcf = evaluated.ToAlgTerm().GetGroupGCF();
+                ExComp[] varTo, constTo;
+                groupGcf.GetConstVarTo(out varTo, out constTo, dVar);
+
+                AlgebraTerm constToAg = constTo.ToAlgTerm();
+                evaluated = DivOp.StaticCombine(evaluated, constToAg.Clone());
+                constEx = AlgebraTerm.FromFraction(Number.One, constToAg);
+            }
+
+            for (int j = 0; j < group.Length; ++j)
+            {
+                if (group[j].IsEqualTo(evaluated))
+                {
+                    List<ExComp> groupList = group.ToList();
+                    groupList.RemoveAt(j);
+
+                    pIntInfo.IncSubCount();
+                    ExComp innerAntiDeriv = TakeAntiDerivativeGp(groupList.ToArray(), subInVar, ref pIntInfo, ref pEvalData);
+                    if (innerAntiDeriv == null)
+                        return null;
+
+                    // Sub back in the appropriate values.
+                    innerAntiDeriv = innerAntiDeriv.ToAlgTerm().Substitute(subInVar, uatmpt);
+
+                    if (constEx != null)
+                        return MulOp.StaticCombine(constEx, innerAntiDeriv);
+                    else
+                        return innerAntiDeriv;
+                }
             }
 
             return null;
@@ -135,6 +317,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 				if (pf.Power.IsEqualTo(Number.NegOne))
 				{
 					ExComp pfBase = pf.Base;
+
 					if (pfBase is PowerFunction)
 					{
 						PowerFunction pfBasePf = pfBase as PowerFunction;
@@ -158,6 +341,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                                 return asin;
                             }
 						}
+
+                        // See if it is just the regular (1/x^(1/2)) or something like that.
+                        if (IsDerivAcceptable(pfBasePf, dVar) && !pfBasePf.Power.ToAlgTerm().Contains(dVar))
+                        {
+                            ExComp power = MulOp.Negate(pfBasePf.Power);
+                            ExComp powChange = AddOp.StaticCombine(power, Number.One);
+                            if (powChange is AlgebraTerm)
+                                powChange = (powChange as AlgebraTerm).CompoundFractions();
+
+                            pfBasePf.Power = powChange;
+                            return DivOp.StaticCombine(pfBasePf, powChange);
+                        }
 					}
 
                     if (pfBase.IsEqualTo(AddOp.StaticCombine(Number.One, PowOp.StaticCombine(dVar, new Number(2.0)))))
@@ -176,14 +371,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     return pf;
                 }
 
-                if (!(pf.Power is Number))
-                    return null;       
-                Number power = pf.Power as Number;
-
-                if (IsDerivAcceptable(pf, dVar))
+                if (IsDerivAcceptable(pf, dVar) && !pf.Power.ToAlgTerm().Contains(dVar))
                 {
                     // The special case for the power function anti-dervivative.
-                    if (Number.NegOne.Equals(power))
+                    if (Number.NegOne.Equals(pf.Power))
                     {
                         pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + pf.FinalToDispStr() + ")\\d" + dVar.ToDispString() +
                             "=ln(|" + dVar + "|)" + WorkMgr.EDM, "This comes from the known derivative " + WorkMgr.STM + 
@@ -192,6 +383,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     }
 
                     ExComp powChange = AddOp.StaticCombine(pf.Power, Number.One);
+                    if (powChange is AlgebraTerm)
+                        powChange = (powChange as AlgebraTerm).CompoundFractions();
 
                     pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + WorkMgr.ExFinalToAsciiStr(single) + ")\\d" + dVar.ToDispString() +
                         "=" + dVar.ToDispString() + "^{" + WorkMgr.ExFinalToAsciiStr(AddOp.StaticWeakCombine(pf.Power, Number.One)) + "}" + WorkMgr.EDM,

@@ -25,6 +25,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             return term;
         }
 
+
+        public static bool ContainsOneOfFuncs(this AlgebraTerm term, params Type[] types)
+        {
+            if (types.Contains(term.GetType()))
+                return true;
+
+            for (int i = 0; i < term.SubComps.Count; ++i)
+            {
+                if (types.Contains(term.SubComps[i].GetType()))
+                    return true;
+
+                if (term.SubComps[i] is AlgebraTerm && (term.SubComps[i] as AlgebraTerm).ContainsOneOfFuncs(types))
+                    return true;
+            }
+
+            return false;
+        }
+
         public static AlgebraTerm CompoundLogs(this AlgebraTerm term, AlgebraComp solveForComp = null)
         {
             bool garbage;

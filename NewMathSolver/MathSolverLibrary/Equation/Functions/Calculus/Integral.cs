@@ -122,7 +122,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             ExComp[] adGps = new ExComp[gps.Count];
             for (int i = 0; i < gps.Count; ++i)
             {
-                ExComp aderiv = AntiDerivativeHelper.TakeAntiDerivativeGp(gps[i], _dVar, ref pEvalData);
+                IntegrationInfo integrationInfo = new IntegrationInfo();
+                ExComp aderiv = AntiDerivativeHelper.TakeAntiDerivativeGp(gps[i], _dVar, ref integrationInfo, ref pEvalData);
                 if (aderiv == null)
                 {
                     pEvalData.AddMsg("At this time only very simple integration works");
@@ -147,6 +148,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             return finalTerm;
         }
+
+
+
+
+
 
         protected override AlgebraTerm CreateInstance(params ExComp[] args)
         {
