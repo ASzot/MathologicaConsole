@@ -175,6 +175,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 
             if (Number.One.IsEqualTo(ex2))
                 return ex1;
+            if (Number.One.IsEqualTo(ex1))
+                return ex1;
             if (Number.Zero.IsEqualTo(ex2))
                 return Number.One;
 
