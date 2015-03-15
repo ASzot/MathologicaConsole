@@ -427,6 +427,11 @@ namespace MathSolverWebsite.MathSolverLibrary
         {
         }
 
+        public void ClearLinearSolveRepeatCount()
+        {
+            _linearSolveRepeatCount = 0;
+        }
+
         public static Dictionary<string, int> GetIdenOccurances(List<TypePair<LexemeType, string>> lexemeTable)
         {
             Dictionary<string, int> occurances = new Dictionary<string, int>();

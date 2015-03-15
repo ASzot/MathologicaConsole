@@ -78,15 +78,15 @@ namespace MathSolverWebsite.MathSolverLibrary
             finalHtml += "<tr>";
             finalHtml += "<td></td>";
             finalHtml += "<td></td>";
-            foreach (ExComp mulEx in muls)
-                finalHtml += "<td>" + STM + WorkMgr.ExFinalToAsciiStr(mulEx) + EDM + "</td>";
+            foreach (ExComp resultEx in results)
+                finalHtml += "<td>" + STM + WorkMgr.ExFinalToAsciiStr(resultEx) + EDM + "</td>";
             finalHtml += "</tr>";
 
             finalHtml += "<tr>";
             finalHtml += "<td></td>";
             finalHtml += "<td></td>";
-            foreach (ExComp resultEx in results)
-                finalHtml += "<td>" + STM + WorkMgr.ExFinalToAsciiStr(resultEx) + EDM + "</td>";
+            foreach (ExComp mulEx in muls)
+                finalHtml += "<td>" + STM + WorkMgr.ExFinalToAsciiStr(mulEx) + EDM + "</td>";
             finalHtml += "</tr>";
 
             finalHtml += "</table>";

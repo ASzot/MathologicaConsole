@@ -39,6 +39,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             DivideByVariableCoeffs(ref nonZeroTerm, ref zero, solveForComp, ref pEvalData);
 
             var groups = nonZeroTerm.GetGroupsNoOps();
+
+            p_agSolver.ClearLinearSolveRepeatCount();
             if (groups.Count != 1)
                 return p_agSolver.Solve(solveFor, left, right, ref pEvalData);
 
@@ -73,6 +75,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                         leftSolve = pfFactor.Base.ToAlgTerm();
                     }
                 }
+
+                p_agSolver.ClearLinearSolveRepeatCount();
                 ExComp solved = p_agSolver.SolveEq(solveFor, leftSolve, Number.Zero.ToAlgTerm(), ref pEvalData, true);
                 for (int i = 0; i < mulplicity; ++i)
                 {
