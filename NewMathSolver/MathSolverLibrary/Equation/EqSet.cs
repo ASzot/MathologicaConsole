@@ -156,6 +156,15 @@ namespace MathSolverWebsite.MathSolverLibrary
             return new EquationSet(clonedSides, _comparisonOps);
         }
 
+        public ExComp[] GetFuncDefComps()
+        {
+            if ((Left is FunctionDefinition && !(Right is FunctionDefinition)) ||
+                Left is AlgebraComp)
+                return new ExComp[] { Left, Right };
+
+            return null;
+        }
+
         public bool ContainsVar(AlgebraComp varFor)
         {
             foreach (ExComp side in _sides)
@@ -271,8 +280,8 @@ namespace MathSolverWebsite.MathSolverLibrary
             AlgebraComp withRespectTo = new AlgebraComp(withRespectToStr);
             AlgebraComp derivOf = new AlgebraComp(derivativeOfStr);
 
-            var derivLeft = Equation.Functions.Calculus.Derivative.CreateDeriv(Left, withRespectTo, derivOf);
-            var derivRight = Equation.Functions.Calculus.Derivative.CreateDeriv(Right, withRespectTo, derivOf);
+            var derivLeft = Equation.Functions.Calculus.Derivative.ConstructDeriv(Left, withRespectTo, derivOf);
+            var derivRight = Equation.Functions.Calculus.Derivative.ConstructDeriv(Right, withRespectTo, derivOf);
 
             pEvalData.WorkMgr.FromSides(derivLeft, derivRight, "Take the implicit derivative of each side.");
             pEvalData.WorkMgr.FromFormatted("`{0}`", "First take the derivative of the left side.", Left);

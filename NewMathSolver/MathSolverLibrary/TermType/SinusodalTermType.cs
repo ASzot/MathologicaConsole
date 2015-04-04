@@ -18,6 +18,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private FunctionTermType tt_func = null;
         private SimplifyTermType tt_simp = null;
         private SolveTermType tt_solve = null;
+        private string _graphStr;
 
         public SinusodalTermType()
         {
@@ -53,6 +54,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 }
                 return SolveResult.Simplified(_period);
             }
+            else if (command == "Graph")
+            {
+                if (pEvalData.AttemptSetGraphData(_graphStr))
+                    return SolveResult.Solved();
+                else
+                    return SolveResult.Failure();
+            }
             else if (tt_func != null && tt_func.IsValidCommand(command))
                 return tt_func.ExecuteCommand(command, ref pEvalData);
             else if (tt_solve != null && tt_solve.IsValidCommand(command))
@@ -64,7 +72,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         }
 
         public bool Init(EquationInformation eqInfo, ExComp left, ExComp right, List<TypePair<LexemeType, string>> lexemeTable,
-            Dictionary<string, int> solveVars, string probSolveVar)
+            Dictionary<string, int> solveVars, string probSolveVar, ref EvalData pEvalData)
         {
             if (probSolveVar == null)
                 return false;
@@ -163,26 +171,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             foreach (AlgebraGroup innerConstantTerm in innerConstantTerms)
                 _phaseShift = AddOp.StaticCombine(_phaseShift, innerConstantTerm.ToTerm()).ToAlgTerm();
 
-            var innerVarTerms = _trigFunc.InnerTerm.GetGroupsVariableTo(solveForComp);
-            if (innerVarTerms.Count == 1)
-            {
-                var innerVarTerm = innerVarTerms[0];
-                var possibleDen = innerVarTerm.Group.GetDenominator();
-                if (!possibleDen.GroupContains(solveForComp))
-                {
-                    var varComps = innerVarTerm.GetVariableGroupComps(solveForComp);
-                    if (varComps.GroupCount == 1)
-                    {
-                        var varComp = varComps.Group[0];
-                        if (varComp is AlgebraComp)
-                        {
-                            ExComp bVal = innerVarTerm.Group.GetUnrelatableTermsOfGroup(solveForComp).ToAlgTerm();
-                            _period = DivOp.StaticCombine(Constant.TwoPi, bVal);
-                        }
-                    }
-                }
-            }
-
+            _period = _trigFunc.GetPeriod(solveForComp, pEvalData.UseRad);
             if (_period == null)
                 _coeff = null;
 
@@ -209,6 +198,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             {
                 tt_simp.SetToSimpOnly();
                 tmpCmds.Add(SimplifyTermType.KEY_SIMPLIFY);
+            }
+
+            if (!tmpCmds.Contains("Graph"))
+            {
+                _graphStr = overall.ToJavaScriptString(pEvalData.UseRad);
+                if (_graphStr != null)
+                    tmpCmds.Add("Graph");
             }
 
             _cmds = tmpCmds.ToArray();

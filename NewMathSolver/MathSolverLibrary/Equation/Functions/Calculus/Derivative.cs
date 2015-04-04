@@ -24,12 +24,22 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             }
         }
 
+        public AlgebraComp DerivOf
+        {
+            get { return _derivOf; }
+        }
+
+        public int Order
+        {
+            get { return _order; }
+        }
+
         public Derivative(ExComp innerEx)
             : base(innerEx, FunctionType.Derivative, typeof(Derivative))
         {
         }
 
-        public static Derivative CreateDeriv(ExComp innerEx, AlgebraComp withRespect, AlgebraComp derivOf)
+        public static Derivative ConstructDeriv(ExComp innerEx, AlgebraComp withRespect, AlgebraComp derivOf)
         {
             Derivative deriv = new Derivative(innerEx);
             deriv._withRespectTo = withRespect;
@@ -117,6 +127,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             ca_derivSymb = "d/(d" + _withRespectTo.ToDispString() + ")";
 
             ExComp final = InnerEx;
+            if (final is Integral && _derivOf == null && _order == 1)
+            {
+                Integral finalInt = final as Integral;
+                if (finalInt.DVar.IsEqualTo(_withRespectTo) && finalInt.IsDefinite)
+                {
+                    pEvalData.WorkMgr.FromSides(this, null, "The derivative and the integral cancel.");
+                    return finalInt.InnerTerm;
+                }
+            }
             pEvalData.WorkMgr.FromFormatted("`{0}`", "Find the " + (_order).ToString() + MathHelper.GetCountingPrefix(_order) + " derivative of the above.", InnerEx);
             for (int i = 0; i < _order; ++i)
             {
@@ -223,15 +242,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 InnerEx.ToMathAsciiString() + "])";
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            string orderStr = _order == 1 ? "" : "^" + _order.ToString();
-            if (!_isDefined)
-            {
-                return "(d" + orderStr + _derivOf.ToSearchString() + ")/(d" + _withRespectTo.ToSearchString() + orderStr + ")";
-            }
-            return "(d" + orderStr + ")/(d" + _withRespectTo.ToSearchString() + orderStr + ")[" +
-                InnerEx.ToSearchString() + "]";
+            return null;
         }
 
         public override string ToString()
@@ -334,7 +347,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             if (log.Base.ToAlgTerm().Contains(_withRespectTo))
             {
                 // Terms in the form log_x(y) cannot have the derivative be taken with respect to x.
-                return CreateDeriv(log, _withRespectTo, _derivOf);
+                return ConstructDeriv(log, _withRespectTo, _derivOf);
             }
 
             bool useChainRule = ShouldApplyChainRule(log.InnerEx);
@@ -544,7 +557,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return ApplyPowerRuleBase(pfGpCmp, ref pEvalData);
             }
             else
-                return CreateDeriv(pfGpCmp, _withRespectTo, _derivOf);
+                return ConstructDeriv(pfGpCmp, _withRespectTo, _derivOf);
         }
 
         private bool ContainsVarOfInterest(ExComp ex)
@@ -617,7 +630,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             else if (ex is AlgebraFunction)
             {
                 // An unaccounted for function.
-                return CreateDeriv(ex, _withRespectTo, _derivOf);
+                return ConstructDeriv(ex, _withRespectTo, _derivOf);
             }
             else if (ex is AlgebraTerm)
             {
@@ -669,13 +682,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             }
 
             // Whatever this is, the derivative of it can't be taken.
-            return CreateDeriv(ex, _withRespectTo, _derivOf);
+            return ConstructDeriv(ex, _withRespectTo, _derivOf);
         }
 
         private ExComp TakeDerivativeOfGp(ExComp[] gp, ref TermType.EvalData pEvalData)
         {
             if (_withRespectTo == null)
-                return Derivative.CreateDeriv(gp.ToAlgTerm(), _withRespectTo, _derivOf);
+                return Derivative.ConstructDeriv(gp.ToAlgTerm(), _withRespectTo, _derivOf);
 
             ExComp[] varTo, constTo;
             if (_derivOf == null)
@@ -762,7 +775,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             }
 
             if (derivTerm == null)
-                return Derivative.CreateDeriv(gp.ToAlgTerm(), _withRespectTo, _derivOf);
+                return Derivative.ConstructDeriv(gp.ToAlgTerm(), _withRespectTo, _derivOf);
 
             if (constTo.Length == 0)
                 return derivTerm;

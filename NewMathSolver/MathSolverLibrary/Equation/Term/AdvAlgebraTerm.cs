@@ -235,7 +235,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 if (powFunc.Power is Number && powFunc.Base is AlgebraTerm)
                 {
                     if (powFunc.Base.ToAlgTerm().TermCount == 1)
-                        return term;
+                    {
+                        if (powFunc.Base is PowerFunction && !(powFunc.Base as PowerFunction).Power.IsEqualTo(Number.NegOne) &&
+                            !(powFunc.Power.IsEqualTo(Number.NegOne)))
+                        {
+                            term = new PowerFunction((powFunc.Base as PowerFunction).Base,
+                                MulOp.StaticCombine(powFunc.Power, (powFunc.Base as PowerFunction).Power));
+                            return term;
+                        }
+                    }
 
                     Number powNum = powFunc.Power as Number;
                     bool makeDen = false;

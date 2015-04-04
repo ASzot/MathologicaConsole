@@ -6,10 +6,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 {
     internal class Number : ExComp
     {
-        private const double EPSILON_ACCEPT = 1E-10;
-        private const int ROUND_COUNT = 7;
+        private const double EPSILON_ACCEPT = 1E-7;
+        private const int ROUND_COUNT = 9;
         private double d_imagComp;
         private double d_realComp;
+
+        public const int FINAL_ROUND_COUNT = 4;
 
         public static Number ImagOne
         {
@@ -136,7 +138,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (dDecimal < EPSILON_ACCEPT)
                 return nextIntD * (d < 0.0 ? -1.0 : 1.0);
 
-            return d;
+            return Math.Round(d, ROUND_COUNT);
         }
 
         public static Number GCF(List<Number> numbers)
@@ -712,6 +714,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             double real = (n1.RealComp * n2.RealComp) - (n1.ImagComp * n2.ImagComp);
             double imag = (n1.RealComp * n2.ImagComp) + (n1.ImagComp * n2.RealComp);
 
+            real = EpsilonCorrect(real);
+            imag = EpsilonCorrect(imag);
+
             return new Number(real, imag);
         }
 
@@ -888,6 +893,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             AssignTo(result);
         }
 
+        public void Round(int digits)
+        {
+            d_realComp = Math.Round(d_realComp, digits);
+            d_imagComp = Math.Round(d_imagComp, digits);
+        }
+
         public override AlgebraTerm ToAlgTerm()
         {
             return new AlgebraTerm(this);
@@ -927,11 +938,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return d_realComp.ToString();
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
             if (HasImaginaryComp())
             {
-                return d_realComp.ToString() + "+i" + d_imagComp.ToString();
+                return null;
             }
             return d_realComp.ToString();
         }

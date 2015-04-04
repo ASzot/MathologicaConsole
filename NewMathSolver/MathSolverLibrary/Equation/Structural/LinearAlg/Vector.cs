@@ -53,9 +53,9 @@
             return "(" + _x.ToMathAsciiString() + "," + _y.ToMathAsciiString() + ")";
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return "(" + _x.ToSearchString() + "," + _y.ToSearchString() + ")";
+            return null;
         }
 
         public override string ToString()

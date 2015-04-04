@@ -46,7 +46,7 @@
 
         public abstract string ToMathAsciiString();
 
-        public abstract string ToSearchString();
+        public abstract string ToJavaScriptString(bool useRad);
 
         public abstract string ToTexString();
     }

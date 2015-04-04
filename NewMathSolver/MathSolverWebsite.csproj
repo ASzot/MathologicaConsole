@@ -89,6 +89,7 @@
     <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Integral.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\IntegrationInfo.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Limit.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\PartialFracs.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\ChooseFunction.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\FactorialFunction.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\LogFunction.cs" />
@@ -115,6 +116,7 @@
     <Compile Include="MathSolverLibrary\Equation\Structural\GeneralSolution.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\LinearAlg\Vector.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\Number.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\PolynomialGen.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\Solution.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\SpecialSolutions.cs" />
     <Compile Include="MathSolverLibrary\Equation\Term\AdvAlgebraTerm.cs" />

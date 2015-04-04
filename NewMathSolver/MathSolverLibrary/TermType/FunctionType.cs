@@ -62,6 +62,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
                 return _agSolver.CalculateDomain(_assignTo, varFor, ref pEvalData);
             }
+            else if (command == "Graph")
+            {
+                if (pEvalData.AttemptSetGraphData(_assignTo))
+                    return SolveResult.Solved();
+                else
+                    return SolveResult.Failure();
+            }
 
             return SolveResult.InvalidCmd(ref pEvalData);
         }
@@ -111,6 +118,14 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             for (int i = 0; i < solveVarKeys.Count; ++i)
             {
                 tmpCmds.Add("Domain of " + solveVarKeys[i]);
+            }
+
+            if (solveVars.Count == 1)
+            {
+                AlgebraTerm term = _assignTo.ToAlgTerm();
+                string graphStr = term.ToJavaScriptString(true);
+                if (graphStr != null)
+                    tmpCmds.Add("Graph");
             }
 
             _cmds = tmpCmds.ToArray();

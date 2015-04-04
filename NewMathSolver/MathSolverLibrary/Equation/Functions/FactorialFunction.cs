@@ -41,9 +41,9 @@
             return InnerEx.ToMathAsciiString() + "!";
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return InnerEx.ToSearchString() + "!";
+            return null;
         }
 
         public override string ToString()

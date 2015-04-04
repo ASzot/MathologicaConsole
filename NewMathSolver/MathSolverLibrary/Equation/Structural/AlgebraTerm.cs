@@ -1347,13 +1347,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return finalStr;
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            string finalStr = "";
+            string finalStr = "(";
+
             foreach (ExComp comp in _subComps)
             {
-                finalStr += comp.ToSearchString();
+                finalStr += comp.ToJavaScriptString(useRad);
+                if (finalStr == null)
+                    return null;
             }
+
+            finalStr += ")";
+
             return finalStr;
         }
 

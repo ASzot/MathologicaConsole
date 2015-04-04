@@ -384,6 +384,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                     {
                         ExComp pow1 = powFunc1.Power is AlgebraTerm ? (powFunc1.Power as AlgebraTerm).RemoveRedundancies() : powFunc1.Power;
                         ExComp pow2 = powFunc2.Power is AlgebraTerm ? (powFunc2.Power as AlgebraTerm).RemoveRedundancies() : powFunc2.Power;
+
+                        ExComp origPow1 = pow1.Clone();
+                        ExComp origPow2 = pow2.Clone();
+
                         if (pow1 is AlgebraTerm)
                         {
                             AlgebraTerm[] pow1Frac = (pow1 as AlgebraTerm).GetNumDenFrac();
@@ -415,8 +419,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                         {
                             Number pow1Num = pow1 as Number;
                             Number pow2Num = pow2 as Number;
+                            ExComp usePow;
+                            if (pow1Num < pow2Num)
+                                usePow = origPow1;
+                            else
+                                usePow = origPow2;
                             ExComp powerGcf = Number.Minimum(pow1Num, pow2Num);
-                            PowerFunction powerFuncGcf = new PowerFunction(powFunc1.Base, powerGcf);
+                            PowerFunction powerFuncGcf = new PowerFunction(powFunc1.Base, usePow);
                             return powerFuncGcf;
                         }
 

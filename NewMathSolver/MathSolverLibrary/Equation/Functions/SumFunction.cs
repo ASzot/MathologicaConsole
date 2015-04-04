@@ -87,11 +87,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                 InnerEx.ToMathAsciiString();
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return string.Format("Sum({0},{1},{2},{3})", InnerTerm.ToSearchString(),
-                IterCount.ToSearchString(), IterStart.ToSearchString(),
-                IterVar.ToSearchString());
+            return null;
         }
 
         public override string ToString()

@@ -48,7 +48,7 @@
             return null;
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
             return null;
         }

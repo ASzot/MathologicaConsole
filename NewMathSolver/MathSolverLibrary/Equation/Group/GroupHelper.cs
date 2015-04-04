@@ -159,7 +159,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 if (groupComp is Functions.PowerFunction && (groupComp as Functions.PowerFunction).IsDenominator())
                 {
                     PowerFunction powFunc = groupComp as PowerFunction;
-                    var mulOp = new Operators.MulOp();
 
                     powFunc.Power = Number.NegOne;
                     if (powFunc.Power is AlgebraTerm)
@@ -727,14 +726,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     finalStr += "*";
             }
 
-            return finalStr;
-        }
-
-        public static string ToSearchableString(this ExComp[] group)
-        {
-            string finalStr = "";
-            foreach (ExComp groupComp in group)
-                finalStr += groupComp.ToSearchString();
             return finalStr;
         }
 

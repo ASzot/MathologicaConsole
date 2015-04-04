@@ -30,7 +30,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                     return qtt;
 
                 SinusodalTermType stt = new SinusodalTermType();
-                if (stt.Init(eqInfo, singularEqSet.Left, singularEqSet.Right, completeLexemeTable, solveVars, probSolveVar))
+                if (stt.Init(eqInfo, singularEqSet.Left, singularEqSet.Right, completeLexemeTable, solveVars, probSolveVar, ref pEvalData))
                     return stt;
             }
 
@@ -127,7 +127,13 @@ namespace MathSolverWebsite.MathSolverLibrary
                 if (simpTermCount <= 1)
                 {
                     EquationSystemTermType estt = new EquationSystemTermType(terms, lexemeTables, solveVars);
-                    if (estt.Init())
+                    if (estt.Init(ref pEvalData))
+                        return estt;
+                }
+                else if (simpTermCount == terms.Count)
+                {
+                    EquationSystemTermType estt = new EquationSystemTermType(terms, lexemeTables, solveVars);
+                    if (estt.InitGraphingOnly(ref pEvalData))
                         return estt;
                 }
                 return null;

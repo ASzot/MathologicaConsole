@@ -18,6 +18,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private AlgebraVar _solveFor;
         private FunctionTermType tt_func = null;
         private SolveTermType tt_solve = null;
+        private string _graphStr = null;
 
         public QuadraticTermType()
             : base()
@@ -76,6 +77,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 // Axis of symmetry.
                 ExComp aos = FindAOS(_a, _b);
                 return SolveResult.Solved(_solveFor, aos, ref pEvalData);
+            }
+            else if (command == "Graph")
+            {
+                if (pEvalData.AttemptSetGraphData(_graphStr))
+                    return SolveResult.Solved();
+                else
+                    return SolveResult.Failure();
             }
 
             if (tt_func != null && tt_func.IsValidCommand(command))
@@ -223,6 +231,10 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 else
                     tmpCmds.AddRange(tt_func.GetCommands());
             }
+
+            _graphStr = _eq.ToJavaScriptString(pEvalData.UseRad);
+            if (_graphStr != null)
+                tmpCmds.Add("Graph");
 
             _cmds = tmpCmds.ToArray();
 

@@ -178,22 +178,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return funcStr;
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            string funcStr = _iden.ToSearchString() + "(";
-            for (int i = 0; i < _args.Length; ++i)
-            {
-                if (_callArgs != null && _callArgs.Length > i)
-                    funcStr += _callArgs[i].ToSearchString();
-                else
-                    funcStr += _args[i].ToSearchString();
-                if (i != _args.Length - 1)
-                    funcStr += ",";
-            }
-
-            funcStr += ")";
-
-            return funcStr;
+            return null;
         }
 
         public override string ToString()

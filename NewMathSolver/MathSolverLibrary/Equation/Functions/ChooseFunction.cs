@@ -72,9 +72,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return String.Format("({0},{1})", Top.ToMathAsciiString(), Bottom.ToMathAsciiString());
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return String.Format("({0},{1})", Top.ToSearchString(), Bottom.ToSearchString());
+            return null;
         }
 
         public override string ToString()

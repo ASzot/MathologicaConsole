@@ -12,8 +12,48 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
     {
         private bool _failure = false;
         private AlgebraComp _dVar = null;
-        private ExComp _lower = null;
+        private bool _addConstant = true;
+        private IntegrationInfo _integralInfo = null;
         private ExComp _upper = null;
+        private ExComp _lower = null;
+
+
+        private ExComp UpperLimit
+        {
+            get { return _upper; }
+            set 
+            {
+                _upper = value;
+            }
+        }
+        private ExComp LowerLimit
+        {
+            get { return _lower; }
+            set
+            {
+                _lower = value;
+            }
+        }
+
+        public bool AddConstant
+        {
+            set { _addConstant = value; }
+        }
+
+        public IntegrationInfo Info
+        {
+            set { _integralInfo = value; }
+        }
+
+        public AlgebraComp DVar
+        {
+            get { return _dVar; }
+        }
+
+        public bool IsDefinite
+        {
+            get { return LowerLimit != null && UpperLimit != null; }
+        }
 
         public Integral(ExComp innerEx)
             : base(innerEx, FunctionType.AntiDerivative, typeof(Integral))
@@ -24,7 +64,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
         public override ExComp Clone()
         {
-            return ConstructIntegral(InnerTerm, _dVar, _lower, _upper);
+            return ConstructIntegral(InnerTerm, _dVar, LowerLimit, UpperLimit);
         }
 
         public static Integral ConstructIntegral(ExComp innerEx, AlgebraComp dVar)
@@ -36,46 +76,62 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         {
             Integral integral = new Integral(innerEx);
             integral._dVar = dVar;
-            integral._lower = lower;
-            integral._upper = upper;
+            integral.LowerLimit = lower;
+            integral.UpperLimit = upper;
 
             return integral;
         }
 
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
+            ExComp innerEx = InnerEx;
+            if (innerEx is Derivative)
+            {
+                Derivative innerDeriv = innerEx as Derivative;
+                if (innerDeriv.WithRespectTo.IsEqualTo(_dVar) && innerDeriv.DerivOf == null && innerDeriv.Order == 1)
+                {
+                    pEvalData.WorkMgr.FromSides(this, null, "The integral and the derivative cancel.");
+                    return innerDeriv.InnerTerm;
+                }
+            }
+
             AlgebraTerm indefinite = Indefinite(ref pEvalData);
             if (_failure)
                 return indefinite;      // Just 'this'
 
-            if (_lower == null || _upper == null)
+            if (LowerLimit == null || UpperLimit == null)
             {
-                // Add the constant.
-                ExComp retEx = AddOp.StaticWeakCombine(indefinite, new CalcConstant());
-                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + retEx.ToAlgTerm().FinalToDispStr() + WorkMgr.STM, 
-                    "Add in the constant of integration.");
-                return retEx;
+                if (_addConstant)
+                {
+                    // Add the constant.
+                    ExComp retEx = AddOp.StaticWeakCombine(indefinite, new CalcConstant());
+                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + retEx.ToAlgTerm().FinalToDispStr() + WorkMgr.STM,
+                        "Add the constant of integration.");
+                    return retEx;
+                }
+                else
+                    return indefinite;
             }
 
-            AlgebraTerm upperEval = indefinite.Clone().ToAlgTerm().Substitute(_dVar, _upper);
+            AlgebraTerm upperEval = indefinite.Clone().ToAlgTerm().Substitute(_dVar, UpperLimit);
             if (upperEval.Contains(_dVar))
             {
                 pEvalData.AddFailureMsg("Internal error evaluating antiderivative");
                 return this;
             }
-            ExComp upperEx = Simplifier.Simplify(upperEval, ref pEvalData);
+            ExComp upperEx = Simplifier.Simplify(new AlgebraTerm(upperEval), ref pEvalData);
 
-            AlgebraTerm lowerEval = indefinite.Clone().ToAlgTerm().Substitute(_dVar, _lower);
+            AlgebraTerm lowerEval = indefinite.Clone().ToAlgTerm().Substitute(_dVar, LowerLimit);
             if (lowerEval.Contains(_dVar))
             {
                 pEvalData.AddFailureMsg("Internal error evaluating antiderivative");
                 return this;
             }
-            ExComp lowerEx = Simplifier.Simplify(lowerEval, ref pEvalData);
+            ExComp lowerEx = Simplifier.Simplify(new AlgebraTerm(lowerEval), ref pEvalData);
 
             string integralStr = FinalToDispStr();
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + integralStr + "=F(" +
-                WorkMgr.ExFinalToAsciiStr(_upper) + ")-F(" + WorkMgr.ExFinalToAsciiStr(_lower) + ")" + WorkMgr.EDM,
+                WorkMgr.ExFinalToAsciiStr(UpperLimit) + ")-F(" + WorkMgr.ExFinalToAsciiStr(LowerLimit) + ")" + WorkMgr.EDM,
                 "Evaluate the definite integral where F is the antiderivative.");
 
             string resultStr0 = SubOp.StaticWeakCombine(upperEx, lowerEx).ToAlgTerm().FinalToDispStr();
@@ -95,6 +151,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         private AlgebraTerm Indefinite(ref TermType.EvalData pEvalData)
         {
             string thisStr = FinalToDispStr();
+
             // Split the integral up by groups.
             List<ExComp[]> gps = InnerTerm.Clone().ToAlgTerm().GetGroupsNoOps();
 
@@ -120,13 +177,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             // Independantly take the derivative of each group.
             ExComp[] adGps = new ExComp[gps.Count];
-            for (int i = 0; i < gps.Count; ++i)
+            for (int i = 0; i < gps.Count; ++i) 
             {
-                IntegrationInfo integrationInfo = new IntegrationInfo();
+                IntegrationInfo integrationInfo = _integralInfo ?? new IntegrationInfo();
+                int prevStepCount = pEvalData.WorkMgr.WorkSteps.Count;
+
                 ExComp aderiv = AntiDerivativeHelper.TakeAntiDerivativeGp(gps[i], _dVar, ref integrationInfo, ref pEvalData);
+
                 if (aderiv == null)
                 {
-                    pEvalData.AddMsg("At this time only very simple integration works");
+                    pEvalData.WorkMgr.PopSteps(pEvalData.WorkMgr.WorkSteps.Count - prevStepCount);
                     _failure = true;
                     return this;
                 }
@@ -143,40 +203,50 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             AlgebraTerm finalTerm = finalEx.ToAlgTerm();
             finalTerm = finalTerm.Order();
             if (adGps.Length > 1)
-                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + thisStr + "=" + finalTerm.FinalToDispStr() + WorkMgr.EDM, 
+            {
+                string definiteStr = IsDefinite ? "|_{" + _lower.ToAlgTerm().FinalToDispStr() + "}^{" + _upper.ToAlgTerm().FinalToDispStr() + "}" : "";
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + thisStr + "=" + finalTerm.FinalToDispStr() + definiteStr + WorkMgr.EDM,
                     "Add all together.");
+            }
 
             return finalTerm;
-        }
-
-
-
-
-
+        } 
 
         protected override AlgebraTerm CreateInstance(params ExComp[] args)
         {
-            return ConstructIntegral(args[0], this._dVar, _lower, _upper);
+            return ConstructIntegral(args[0], this._dVar, LowerLimit, UpperLimit);
         }
 
         public override string FinalToAsciiKeepFormatting()
         {
-            return "\\int(" + InnerTerm.FinalToAsciiKeepFormatting() + ")\\d" + _dVar.ToMathAsciiString();
+            string boundariesStr = "";
+            if (IsDefinite)
+                boundariesStr = "_{" + LowerLimit.ToMathAsciiString() + "}^{" + UpperLimit.ToMathAsciiString() +"}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.FinalToAsciiKeepFormatting() + ")\\d" + _dVar.ToMathAsciiString();
         }
 
         public override string FinalToAsciiString()
         {
-            return "\\int(" + InnerTerm.FinalToAsciiKeepFormatting() + ")\\d" + _dVar.ToMathAsciiString();
+            string boundariesStr = "";
+            if (IsDefinite)
+                boundariesStr = "_{" + LowerLimit.ToMathAsciiString() + "}^{" + UpperLimit.ToMathAsciiString() + "}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.FinalToAsciiKeepFormatting() + ")\\d" + _dVar.ToMathAsciiString();
         }
 
         public override string FinalToTexKeepFormatting()
         {
-            return "\\int(" + InnerTerm.FinalToTexKeepFormatting() + ")\\d" + _dVar.ToTexString();
+            string boundariesStr = "";
+            if (IsDefinite)
+                boundariesStr = "_{" + LowerLimit.ToTexString() + "}^{" + UpperLimit.ToTexString() + "}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.FinalToTexKeepFormatting() + ")\\d" + _dVar.ToTexString();
         }
 
         public override string FinalToTexString()
         {
-            return "\\int(" + InnerTerm.FinalToTexString() + ")\\d" + _dVar.ToTexString();
+            string boundariesStr = "";
+            if (IsDefinite)
+                boundariesStr = "_{" + LowerLimit.ToTexString() + "}^{" + UpperLimit.ToTexString() + "}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.FinalToTexString() + ")\\d" + _dVar.ToTexString();
         }
         
         public override bool IsEqualTo(ExComp ex)
@@ -192,22 +262,32 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
         public override string ToMathAsciiString()
         {
-            return "\\int(" + InnerTerm.ToMathAsciiString() + ")\\d" + _dVar.ToMathAsciiString();
+            string boundariesStr = "";
+            if (IsDefinite)
+                boundariesStr = "_{" + LowerLimit.ToMathAsciiString() + "}^{" + UpperLimit.ToMathAsciiString() + "}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.ToMathAsciiString() + ")\\d" + _dVar.ToMathAsciiString();
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return "\\int(" + InnerTerm.ToSearchString() + ")\\d" + _dVar.ToSearchString();
+            return null;
         }
 
         public override string ToString()
         {
-            return "\\int(" + InnerTerm.ToString() + ")\\d" + _dVar.ToString();
+            string boundariesStr = "";
+            if (IsDefinite)
+                boundariesStr = "_{" + LowerLimit.ToString() + "}^{" + UpperLimit.ToString() + "}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.ToString() + ")\\d" + _dVar.ToString();
         }
 
         public override string ToTexString()
         {
-            return "\\int(" + InnerTerm.ToTexString() + ")\\d" + _dVar.ToTexString();
+            string boundariesStr = "";
+            if (IsDefinite)
+                boundariesStr = "_{" + LowerLimit.ToTexString() + "}^{" + UpperLimit.ToTexString()+ "}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.ToTexString() + ")\\d" + _dVar.ToTexString();
         }
+
     }
 }

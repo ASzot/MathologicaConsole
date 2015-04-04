@@ -20,6 +20,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
     internal class EquationSystemSolve
     {
+        private const int MAX_EQ_COUNT = 3;
+
         private List<string> _solveFors;
         private EquationSystemSolveMethod _solveMethod = EquationSystemSolveMethod.Substitution;
         private AlgebraSolver p_agSolver;
@@ -84,6 +86,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
         public SolveResult SolveEquationArray(List<EquationSet> equations, List<LexemeTable> lexemeTables, Dictionary<string, int> allIdens, ref TermType.EvalData pEvalData)
         {
             DoAssignments(ref equations);
+
+            if (equations.Count > MAX_EQ_COUNT)
+                return SolveResult.Failure();
 
             if (_solveMethod == EquationSystemSolveMethod.Substitution)
             {
@@ -446,6 +451,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 pEvalData.WorkMgr.WorkLabel = eqIdStr;
                 ExComp result = agSolver.SolveEq(solveFor, term0, term1, ref pEvalData, false);
                 pEvalData.WorkMgr.WorkLabel = null;
+
+                // I have not really though about how this would work with three systems of equations. So for now I will just keep it at two.
+                if (result is SpecialSolution && completeEqs.Count == 2)
+                {
+                    pEvalData.AddMsg("The lines are parallel.");
+                    return SolveResult.NoSolutions();
+                }
 
                 if (result is AlgebraTermArray || result is GeneralSolution || result is NoSolutions || result is AllSolutions)
                 {

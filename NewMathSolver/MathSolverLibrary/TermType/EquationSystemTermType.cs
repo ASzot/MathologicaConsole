@@ -12,6 +12,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private List<EquationSet> _eqSets;
         private List<List<TypePair<LexemeType, string>>> _lts;
         private int _singularIndex = -1;
+        private string[] _graphStrs;
 
         public EquationSystemTermType(List<EquationSet> eqSets, List<List<TypePair<LexemeType, string>>> lts, Dictionary<string, int> allIdens)
             : base()
@@ -115,14 +116,98 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 solveMethod.SolvingMethod = Solving.EquationSystemSolveMethod.Elimination;
                 return solveMethod.SolveEquationArray(clonedEqSet.ToList(), _lts, _allIdens, ref pEvalData);
             }
+            else if (command == "Graph")
+            {
+                if (pEvalData.AttemptSetGraphData(_graphStrs))
+                    return SolveResult.Solved();
+                else
+                    return SolveResult.Failure();
+            }
 
             return SolveResult.InvalidCmd(ref pEvalData);
         }
 
-        public bool Init()
+        public bool InitGraphingOnly(ref EvalData pEvalData)
+        {
+            if (_allIdens.Count != 1)
+                return false;
+
+            string[] graphStrs = new string[_eqSets.Count];
+            for (int i = 0; i < _eqSets.Count; ++i)
+            {
+                if (!_eqSets[i].IsSingular)
+                    return false;
+
+                string graphStr = _eqSets[i].LeftTerm.ToJavaScriptString(pEvalData.UseRad);
+                if (graphStr == null)
+                    return false;
+                graphStrs[i] = graphStr;
+            }
+
+            _graphStrs = graphStrs;
+
+            _cmds = new string[1] { "Graph" };
+
+            return true;
+        }
+
+        public bool Init(ref EvalData pEvalData)
         {
             if (_eqSets.Count > 3)
                 return false;
+
+            List<string> tmpCmds = new List<string>();
+
+            bool isGraph = true;
+            _graphStrs = new string[_eqSets.Count];
+            string singularVar = null;
+            for (int i = 0; i < _eqSets.Count; ++i)
+            {
+                EquationSet eqSet = _eqSets[i];
+                if (!eqSet.IsSingular)
+                {
+                    ExComp[] funcDef = eqSet.GetFuncDefComps();
+                    if (funcDef != null)
+                    {
+                        AlgebraTerm term = funcDef[1].ToAlgTerm();
+                        var vars = term.GetAllAlgebraCompsStr();
+                        if (vars.Count == 1 && (singularVar == null || vars[0] == singularVar))
+                        {
+                            singularVar = vars[0];
+                            string graphStr = term.ToJavaScriptString(true);
+                            if (graphStr != null)
+                            {
+                                _graphStrs[i] = graphStr;
+                                continue;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    AlgebraTerm term = eqSet.LeftTerm;
+                    var vars = term.GetAllAlgebraCompsStr();
+                    if (vars.Count == 1 && (singularVar == null || vars[0] == singularVar))
+                    {
+                        singularVar = vars[0];
+                        string graphStr = term.ToJavaScriptString(true);
+                        if (graphStr != null)
+                        {
+                            _graphStrs[i] = graphStr;
+                            continue;
+                        }
+                    }
+                }
+
+                isGraph = false;
+                break;
+            }
+
+            if (!isGraph)
+                _graphStrs = null;
+            else
+                tmpCmds.Add("Graph");
+
 
             List<Dictionary<string, int>> idenOccurs = new List<Dictionary<string, int>>();
             for (int i = 0, j = 0; i < _eqSets.Count; i++, j++)
@@ -200,7 +285,6 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (options == null || options.Count == 0)
                 return false;
 
-            List<string> tmpCmds = new List<string>();
 
             foreach (string option in options)
             {

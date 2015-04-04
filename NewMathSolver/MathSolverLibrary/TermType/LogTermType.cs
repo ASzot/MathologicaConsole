@@ -7,6 +7,11 @@ using System.Linq;
 
 namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
+      ///////////////////////////////
+     // This class is never used.
+    /// //////////////////////////
+
+
     internal class LogTermType : TermType
     {
         private ExComp _coeff;

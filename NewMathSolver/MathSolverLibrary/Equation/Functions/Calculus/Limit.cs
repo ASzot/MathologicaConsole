@@ -144,9 +144,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return "\\lim_(" + _varFor.ToMathAsciiString() + "\\to" + _valTo.ToMathAsciiString() + ")(" + InnerTerm.ToMathAsciiString() + ")";
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return "\\lim_(" + _varFor.ToSearchString() + "\\to" + _valTo.ToSearchString() + ")(" + InnerTerm.ToSearchString() + ")";
+            return null;
         }
 
         public override string ToString()

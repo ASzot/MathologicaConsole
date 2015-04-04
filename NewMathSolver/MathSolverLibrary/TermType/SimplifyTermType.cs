@@ -104,6 +104,9 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 }
             }
 
+            AlgebraTerm at = term.ToAlgTerm();
+            if (at.GetAllAlgebraCompsStr().Count == 1 && at.ToJavaScriptString(true) != null)
+                tmpCmds.Add("Graph");
 
             _cmds = tmpCmds.ToArray();
 
@@ -217,6 +220,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 AlgebraVar varFor = new AlgebraVar(varForKey);
 
                 return _agSolver.CalculateDomain(_term, varFor, ref pEvalData);
+            }
+            else if (command == "Graph")
+            {
+                if (pEvalData.AttemptSetGraphData(_term))
+                    return SolveResult.Solved();
+                else
+                    return SolveResult.Failure();
             }
 
             return SolveResult.InvalidCmd(ref pEvalData);

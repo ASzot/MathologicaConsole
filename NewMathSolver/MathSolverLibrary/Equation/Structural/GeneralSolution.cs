@@ -57,9 +57,9 @@
             return false;
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return _result.ToSearchString() + "+" + _interval.ToSearchString();
+            return null;
         }
 
         public override string ToString()

@@ -382,6 +382,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     leftEx = Simplifier.HarshSimplify(leftEx.ToAlgTerm(), ref pEvalData, false);
                     rightEx = Simplifier.HarshSimplify(rightEx.ToAlgTerm(), ref pEvalData, false);
 
+                    if (leftEx is Number)
+                        (leftEx as Number).Round(Number.FINAL_ROUND_COUNT);
+                    if (rightEx is Number)
+                        (rightEx as Number).Round(Number.FINAL_ROUND_COUNT);
+
                     if (!TermType.EqualityCheckTermType.EvalComparison(leftEx, rightEx, comparison))
                     {
                         string varSolStr = Solutions[i].SolveFor.ToMathAsciiString() + "=" + WorkMgr.ExFinalToAsciiStr(Solutions[i].Result);

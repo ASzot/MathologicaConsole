@@ -47,7 +47,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     return constant;
             }
 
-            throw new ArgumentException();
+            return null;
         }
 
         public override ExComp Clone()
@@ -59,6 +59,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             // We want the compare value to behave like a number not a variable.
             return 0.0;
+        }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string baseStr = base.ToString();
+            if (baseStr == null)
+                return null;
+            else if (baseStr == "e")
+                return "Math.E";
+            else if (baseStr == "pi")
+                return "Math.PI";
+            return d_value.ToString();
         }
 
         public override string ToString()

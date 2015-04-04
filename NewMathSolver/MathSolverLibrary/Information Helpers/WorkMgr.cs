@@ -213,7 +213,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             if (!AllowWork)
                 return;
 
-            _workSteps.Add(WorkStep.Formatted(STM + "{0}" + _useComparison + "{1}" + EDM, null, left, right));
+            _workSteps.Add(WorkStep.Formatted(STM + "{0}" + ((left == null || right == null) ? "" : _useComparison) + "{1}" + EDM, null, (left == null ? (object)"" : left), (right == null ? (object)"" : right)));
         }
 
         public void FromSides(ExComp left, ExComp right, string desc)
@@ -221,7 +221,9 @@ namespace MathSolverWebsite.MathSolverLibrary
             if (!AllowWork)
                 return;
 
-            _workSteps.Add(WorkStep.Formatted(STM + "{0}" + _useComparison + "{1}" + EDM, desc + WorkLabel, left == null ? (object)"" : left, right == null ? (object)"" : right));
+            _workSteps.Add(WorkStep.Formatted(STM + "{0}" + ((left == null || right == null) ? "" : _useComparison) + "{1}" + EDM, desc + WorkLabel, 
+                (left == null ? (object)"" : left), 
+                (right == null ? (object)"" : right)));
         }
 
         public void FromSidesAndComps(IEnumerable<ExComp> enumSides, IEnumerable<LexemeType> enumComparisons, string desc)

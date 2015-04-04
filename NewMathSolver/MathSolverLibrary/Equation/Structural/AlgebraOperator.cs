@@ -45,9 +45,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return ToString();
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return ToString();
+            string str = ToString();
+            if (!(str == "*" || str == "/" || str == "+" || str == "-"))
+                return null;
+            return str;
         }
 
         public override string ToTexString()

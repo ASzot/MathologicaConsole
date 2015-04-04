@@ -111,6 +111,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                 upper, ref pEvalData));
             return rests;
         }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string innerTermStr = InnerTerm.ToJavaScriptString(useRad);
+            if (innerTermStr == null)
+                return null;
+            return "Math.acos(" + (useRad ? "" : "(180.0 / Math.PI)*") + innerTermStr + ")"; 
+        }
     }
 
     internal class ACotFunction : InverseTrigFunction
@@ -149,6 +157,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         public override string GetDerivativeOfStr()
         {
             return "-(1)/(1+x^2)";
+        }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string innerTermStr = InnerTerm.ToJavaScriptString(useRad);
+            if (innerTermStr == null)
+                return null;
+            return "(1.0/Math.atan(" + (useRad ? "" : "(180.0 / Math.PI)*") + innerTermStr + "))";
         }
     }
 
@@ -190,6 +206,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         {
             return "-(1)/(|x|sqrt(x^2-1))";
         }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string innerTermStr = InnerTerm.ToJavaScriptString(useRad);
+            if (innerTermStr == null)
+                return null;
+            return "(1.0/Math.asin(" + (useRad ? "" : "(180.0 / Math.PI)*") + innerTermStr + "))";
+        }
     }
 
     internal class ASecFunction : InverseTrigFunction
@@ -227,6 +251,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         public override string GetDerivativeOfStr()
         {
             return "1/(|x|sqrt(x^2-1))";
+        }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string innerTermSTr = InnerTerm.ToJavaScriptString(useRad);
+            if (innerTermSTr == null)
+                return null;
+            return "(1.0/Math.acos(" + (useRad ? "" : "(180.0 / Math.PI)*") + innerTermSTr + ")";
         }
     }
 
@@ -336,6 +368,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                 upper, ref pEvalData));
             return rests;
         }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string innerTermStr = InnerTerm.ToJavaScriptString(useRad);
+            if (innerTermStr == null)
+                return null;
+            return "Math.asin(" + (useRad ? "" : "(180.0 / Math.PI)*") + innerTermStr + ")";
+        }
     }
 
     internal class ATanFunction : InverseTrigFunction
@@ -403,6 +443,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         public override string GetDerivativeOfStr()
         {
             return "1/(1+x^2)";
+        }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string innerTermStr = InnerTerm.ToJavaScriptString(useRad);
+            if (innerTermStr == null)
+                return null;
+            return "Math.atan(" + (useRad ? "" : "(180.0 / Math.PI)*") + innerTermStr + ")"; 
         }
     }
 
@@ -619,6 +667,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
             return rests;
         }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string innerStr = InnerTerm.ToJavaScriptString(useRad);
+            if (innerStr == null)
+                return null;
+            return "(1.0/Math.tan(" + (useRad ? "" : "(180.0 / Math.PI)*") + innerStr + "))";
+        }
     }
 
     internal class CscFunction : TrigFunction
@@ -738,6 +794,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         public override TrigFunction GetReciprocalOf()
         {
             return new SinFunction(InnerEx);
+        }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string innerStr = InnerTerm.ToJavaScriptString(useRad);
+            if (innerStr == null)
+                return null;
+            return "(1.0/Math.sin(" + (useRad ? "" : "(180.0 / Math.PI)*") + innerStr + "))";
         }
     }
 
@@ -900,6 +964,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             rests.Add(new NotRestriction(varFor.ToAlgebraComp(), new GeneralSolution(neEx, intervalEx, iterVar)));
 
             return rests;
+        }
+
+        public override string ToJavaScriptString(bool useRad)
+        {
+            string innerStr = InnerTerm.ToJavaScriptString(useRad);
+            if (innerStr == null)
+                return null;
+
+            return "(1.0/Math.cos(" + (useRad ? "" : "(180.0 / Math.PI)*") + innerStr + "))";
         }
     }
 

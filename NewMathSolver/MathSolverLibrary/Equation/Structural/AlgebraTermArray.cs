@@ -209,20 +209,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return texStr;
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            string searchStr = "";
-            for (int i = 0; i < _terms.Count; ++i)
-            {
-                AlgebraTerm term = _terms[i];
-
-                searchStr += term.ToSearchString();
-
-                if (i != _terms.Count - 1)
-                    searchStr += "; ";
-            }
-
-            return searchStr;
+            return null;
         }
 
         public override string ToTexString()

@@ -69,9 +69,12 @@
             return "|" + InnerTerm.FinalToAsciiString() + "|";
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return "|" + base.ToSearchString() + "|";
+            string baseStr = base.ToJavaScriptString(useRad);
+            if (baseStr == null)
+                return null;
+            return "Math.abs(" + baseStr + ")";
         }
 
         public override string ToString()

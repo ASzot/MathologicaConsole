@@ -75,6 +75,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return (_useEscape ? "\\" : "") + Var.Replace("$", "");
         }
 
+        public string ToJavaScriptString()
+        {
+            return Var.Replace("$", "");
+        }
+
         public string ToTexString()
         {
             return (_useEscape ? "\\" : "") + Var.Replace("$", "");
@@ -166,9 +171,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return new Functions.PowerFunction(this, new Number(realNum));
         }
 
-        public override string ToSearchString()
+        public override string ToJavaScriptString(bool useRad)
         {
-            return Var.ToString();
+            return Var.ToJavaScriptString();
         }
 
         public override string ToString()
