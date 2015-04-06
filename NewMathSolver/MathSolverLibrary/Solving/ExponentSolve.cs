@@ -30,6 +30,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             ExComp leftEx;
             ExComp rightEx;
 
+            pEvalData.AttemptSetInputType(TermType.InputType.ExponentSolve);
+
             var leftGroups = left.GetGroups();
             var rightGroups = right.GetGroups();
             if (leftGroups.Count == 1 && rightGroups.Count == 1 && left.Contains(solveForComp) && right.Contains(solveForComp))

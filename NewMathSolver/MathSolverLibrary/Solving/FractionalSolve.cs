@@ -35,6 +35,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             ConstantsToRight(ref left, ref right, solveForComp, ref pEvalData);
 
+            pEvalData.AttemptSetInputType(TermType.InputType.RationalSolve);
+
             List<ExComp[]> gps = left.GetGroups();
 
             AlgebraTerm[] leftNumDen;

@@ -35,6 +35,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             CombineFractions(ref left, ref right, ref pEvalData);
             DivideByVariableCoeffs(ref left, ref right, solveForComp, ref pEvalData);
 
+            pEvalData.AttemptSetInputType(TermType.InputType.AbsoluteValue);
+
             if (left.GroupCount == 1)
             {
                 AbsValFunction absValFunc = left.RemoveRedundancies() as AbsValFunction;

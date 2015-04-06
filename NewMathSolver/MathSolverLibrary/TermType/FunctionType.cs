@@ -22,6 +22,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
             if (command == "Find inverse")
             {
+                pEvalData.AttemptSetInputType(InputType.FunctionInverse);
+
                 if (pEvalData.WorkMgr.AllowWork && _func.InputArgCount > 0)
                 {
                     string funcStr = WorkMgr.ExFinalToAsciiStr(_func);

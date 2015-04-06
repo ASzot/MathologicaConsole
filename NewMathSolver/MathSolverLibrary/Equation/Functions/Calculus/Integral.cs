@@ -141,6 +141,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             ExComp result = SubOp.StaticCombine(upperEx, lowerEx);
 
+            pEvalData.AddInputType(TermType.InputAddType.IntDef);
+
             string resultStr1 = WorkMgr.ExFinalToAsciiStr(result);
             if (resultStr0 != resultStr1)
                 pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + integralStr + "=" + resultStr1 + WorkMgr.EDM);

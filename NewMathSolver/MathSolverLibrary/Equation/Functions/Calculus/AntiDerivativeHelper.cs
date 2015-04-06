@@ -82,7 +82,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
                 atmpt = GetIsSingleFunc(gp[0], dVar, ref pEvalData);
                 if (atmpt != null)
+                {
+                    pEvalData.AttemptSetInputType(InputType.IntBasicFunc);
                     return atmpt;
+                }
 
                 if (pIntInfo.ByPartsCount < IntegrationInfo.MAX_BY_PARTS_COUNT && (gp[0] is LogFunction || gp[0] is InverseTrigFunction))
                 {
@@ -91,6 +94,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     atmpt = SingularIntByParts(gp[0], dVar, thisStr, ref pIntInfo, ref pEvalData);
                     if (atmpt != null)
                     {
+                        pEvalData.AttemptSetInputType(InputType.IntParts);
                         return atmpt;
                     }
                 }
@@ -122,6 +126,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                         gp[1].ToAlgTerm().FinalToDispStr() + ")\\d" + dVar.ToDispString() + "=" +
                         ad.ToAlgTerm().FinalToDispStr() + WorkMgr.EDM,
                         "Use the common antiderivative.");
+                    pEvalData.AttemptSetInputType(InputType.IntBasicFunc);
+                    return ad;
                 }
             }
 
@@ -132,6 +138,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
                 if (atmpt != null)
                 {
+                    pEvalData.AttemptSetInputType(InputType.IntUSub);
                     return atmpt;
                 }
             }
@@ -158,6 +165,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     atmpt = IntByParts(gp[0], gp[1], dVar, thisStr, ref pIntInfo, ref pEvalData);
                     if (atmpt != null)
                     {
+                        pEvalData.AttemptSetInputType(InputType.IntParts);
                         return atmpt;
                     }
                     else

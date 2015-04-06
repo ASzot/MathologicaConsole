@@ -221,6 +221,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             QuadraticSolveMethod originalSolveMethod = pEvalData.QuadSolveMethod;
             if (pEvalData.QuadSolveMethod == QuadraticSolveMethod.Factor)
             {
+                pEvalData.AttemptSetInputType(TermType.InputType.SolveQuadsFactor);
+
                 pEvalData.WorkMgr.FromSides(left, Number.Zero, "Solve this quadratic equation by factoring.");
                 ExComp factorSolutions = Factor(exA, exB, exC, solveFor, ref pEvalData);
                 // Null is returned on factoring not working.
@@ -232,6 +234,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             }
             if (pEvalData.QuadSolveMethod == QuadraticSolveMethod.Formula)
             {
+                pEvalData.AttemptSetInputType(TermType.InputType.SolveQuadsQE);
+
                 pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}=0" + WorkMgr.EDM, "Use the quadratic equation " + WorkMgr.STM + "{4}=(-b&sqrt(b^2-4ac))/(2a)" + WorkMgr.EDM +
                     " where " + WorkMgr.STM + "a={1}" + WorkMgr.EDM + ", " + WorkMgr.STM + "b={2}" + WorkMgr.EDM + ", and " + WorkMgr.STM + "c={3}" + WorkMgr.EDM, left, exA, exB, exC, solveForComp);
 
@@ -242,6 +246,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             }
             else if (pEvalData.QuadSolveMethod == QuadraticSolveMethod.CompleteSquare)
             {
+                pEvalData.AttemptSetInputType(TermType.InputType.SolveQuadsCTS);
+
                 pEvalData.WorkMgr.FromSides(left, Number.Zero, "Solve this quadratic equation by completing the square.");
 
                 ExComp ctsSolutions = CompleteTheSquare(exA, exB, exC, solveFor, left, ref pEvalData);

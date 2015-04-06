@@ -92,10 +92,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             if (_solveMethod == EquationSystemSolveMethod.Substitution)
             {
+                if (equations.Count == 2)
+                    pEvalData.AttemptSetInputType(TermType.InputType.SOE_Sub_2Var);
+                else if (equations.Count == 3)
+                    pEvalData.AttemptSetInputType(TermType.InputType.SOE_Sub_3Var);
+                
                 return SolveEquationArraySubstitution(equations, lexemeTables, ref pEvalData);
             }
             else if (_solveMethod == EquationSystemSolveMethod.Elimination)
             {
+                if (equations.Count == 2)
+                    pEvalData.AttemptSetInputType(TermType.InputType.SOE_Elim_2Var);
+                else if (equations.Count == 3)
+                    pEvalData.AttemptSetInputType(TermType.InputType.SOE_Elim_3Var);
+
                 return SolveEquationArrayElimination(equations, allIdens, ref pEvalData);
             }
             else

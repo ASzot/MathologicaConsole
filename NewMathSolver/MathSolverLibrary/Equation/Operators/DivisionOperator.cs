@@ -12,6 +12,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 
         public static ExComp AttemptPolyDiv(PolynomialExt dividend, PolynomialExt divisor, ref TermType.EvalData pEvalData)
         {
+            pEvalData.AttemptSetInputType(TermType.InputType.PolyDiv);
+
             if (dividend.Info.TermCount > MAX_POLY_DIV_COUNT || divisor.Info.TermCount > MAX_POLY_DIV_COUNT)
                 return null;
 

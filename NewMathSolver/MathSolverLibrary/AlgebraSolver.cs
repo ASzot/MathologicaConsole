@@ -488,6 +488,8 @@ namespace MathSolverWebsite.MathSolverLibrary
             if (pEvalData == null)
                 throw new InvalidOperationException("Evaluate data not set.");
 
+            pEvalData.AttemptSetInputType(TermType.InputType.FunctionDomain);
+
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}" + WorkMgr.EDM, "Find the domain of " + WorkMgr.STM + varFor.ToMathAsciiString() + WorkMgr.EDM + " in the term.", useSet.FinalToDispStr());
 
             List<Restriction> domainRestrictions = useSet.GetDomain(varFor, this, ref pEvalData);
@@ -810,13 +812,6 @@ namespace MathSolverWebsite.MathSolverLibrary
                 return SolveResult.Failure();
             else
                 return SolveResult.Solved(solveFor, result, ref pEvalData);
-        }
-
-        public SolveResult SolveEquationInequality(List<ExComp> sides, List<LexemeType> comparisonTypes, List<TypePair<LexemeType, string>> lexemeTable, ref TermType.EvalData evalData)
-        {
-            AlgebraVar solveFor = GetSolveVar(lexemeTable);
-
-            return SolveEquationInequality(sides, comparisonTypes, solveFor, ref evalData);
         }
 
         public SolveResult SolveEquationInequality(List<ExComp> sides, List<LexemeType> comparisonTypes, AlgebraVar solveFor, ref TermType.EvalData pEvalData)
@@ -1269,6 +1264,8 @@ namespace MathSolverWebsite.MathSolverLibrary
 
             SolveResult solve0 = SolveRegInequality(left0, right.Clone().ToAlgTerm(), comparison0, solveFor, ref pEvalData);
             SolveResult solve1 = SolveRegInequality(right, left1, comparison1, solveFor, ref pEvalData);
+
+            pEvalData.AttemptSetInputType(TermType.InputType.CompoundInequalities);
 
             if (!solve0.Success || !solve1.Success)
                 return SolveResult.Failure();

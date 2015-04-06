@@ -28,6 +28,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             if (polySolveResult != null)
                 return polySolveResult;
 
+            pEvalData.AttemptSetInputType(TermType.InputType.Cubic);
+
             pEvalData.AddFailureMsg("Couldn't solve the cubic equation!");
             return null;
         }

@@ -277,6 +277,8 @@ namespace MathSolverWebsite.MathSolverLibrary
                 return SolveResult.Failure();
             }
 
+            pEvalData.AttemptSetInputType(TermType.InputType.DerivImp);
+
             AlgebraComp withRespectTo = new AlgebraComp(withRespectToStr);
             AlgebraComp derivOf = new AlgebraComp(derivativeOfStr);
 

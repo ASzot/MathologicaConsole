@@ -45,6 +45,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 // We may have a fraction which hasn't been entirely solved.
                 // The linear solve repeat count is to ensure an overflow exception doesn't occur
                 // with potential recursive linear solves.
+                pEvalData.AttemptSetInputType(TermType.InputType.Linear);
                 return p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
             }
 

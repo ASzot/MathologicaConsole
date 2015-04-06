@@ -402,6 +402,12 @@ namespace MathSolverWebsite
                 WriteLineColor(ConsoleColor.DarkGreen, "Graph: " + totalStr);
             }
 
+            string inputTypeStr = evalData.InputTypeStr;
+            if (inputTypeStr != null)
+            {
+                WriteLineColor(ConsoleColor.DarkGray, " Input was " + inputTypeStr);
+            }
+
             if (!result.Success)
             {
                 WriteLineColor(ConsoleColor.DarkRed, "Failure");

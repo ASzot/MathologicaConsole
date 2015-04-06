@@ -39,6 +39,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                     return new NoSolutions();
             }
 
+            pEvalData.AttemptSetInputType(TermType.InputType.PolySolve);
+
             if (!isRightZero)
             {
                 pEvalData.WorkMgr.FromSides(left, right);

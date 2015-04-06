@@ -37,6 +37,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                     return new NoSolutions();
             }
 
+            pEvalData.AttemptSetInputType(TermType.InputType.LogSolve);
+
             bool leftLogsCombined = false;
             left = left.CompoundLogs(out leftLogsCombined, solveForComp);
             bool rightLogsCombined = false;

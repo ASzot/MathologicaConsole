@@ -400,12 +400,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
         {
             AlgebraComp solveForComp = solveFor.ToAlgebraComp();
 
+            pEvalData.AttemptSetInputType(TermType.InputType.FactorQuads);
+
             if (Number.Zero.IsEqualTo(c))
+            {
                 return new AlgebraTerm[] 
                 { 
                     solveForComp.ToAlgTerm(), 
                     AddOp.StaticCombine(MulOp.StaticCombine(a, solveForComp), b).ToAlgTerm() 
                 };
+            }
 
             ExComp ac = MulOp.StaticCombine(a, c);
             var divisors = ac.GetDivisorsSignInvariant();
@@ -486,6 +490,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
         public static AlgebraTerm FactorizeTerm(this AlgebraTerm term, ref TermType.EvalData pEvalData)
         {
             AlgebraTerm[] factors = term.GetFactors(ref pEvalData);
+            if (factors.Length > 2)
+                pEvalData.AttemptSetInputType(TermType.InputType.PolyFactor);
 
             if (factors != null)
             {

@@ -76,6 +76,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                     return new NoSolutions();
             }
 
+            pEvalData.AttemptSetInputType(TermType.InputType.TrigSolve);
+
             var groups = left.GetGroups();
             if (groups.Count != 1)
             {

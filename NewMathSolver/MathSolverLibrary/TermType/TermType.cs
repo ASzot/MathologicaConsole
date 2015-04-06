@@ -17,6 +17,17 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private Solving.QuadraticSolveMethod _quadSolveMethod;
         private Information_Helpers.FuncDefHelper _funcDefs;
         private string[] _graphEqStrs = null;
+        private InputType _inputType = InputType.Invalid;
+        private InputAddType _inputAddType = InputAddType.Invalid;
+
+
+        public string InputTypeStr
+        {
+            get
+            {
+                return InputTypeHelper.ToDescStr(_inputType, _inputAddType);
+            }
+        }
 
         public Solving.QuadraticSolveMethod QuadSolveMethod
         {
@@ -95,6 +106,23 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _useRad = useRad;
             _workMgr = workMgr;
             _funcDefs = pFuncDefHelper;
+        }
+
+        public void AttemptSetInputType(InputType inputType)
+        {
+            if (_inputType == (MathSolverLibrary.TermType.InputType.Invalid))
+                _inputType = inputType;
+        }
+
+        public void AddInputType(InputAddType inputType)
+        {
+            if (_inputAddType == (MathSolverLibrary.TermType.InputAddType.Invalid))
+                _inputAddType = inputType;
+        }
+
+        public void SwitchInputTypeForInequality()
+        {
+            _inputType = InputTypeHelper.ToInequalityType(_inputType);
         }
 
         public bool AttemptSetGraphData(ExComp graphEx)

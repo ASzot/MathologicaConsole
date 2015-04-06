@@ -153,6 +153,7 @@
     <Compile Include="MathSolverLibrary\TermType\EqualityCheckTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\EquationSystemTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\FunctionType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\InputType.cs" />
     <Compile Include="MathSolverLibrary\TermType\LogTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\QuadraticTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\SimplifyTermType.cs" />
