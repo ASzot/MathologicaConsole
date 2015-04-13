@@ -282,7 +282,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return log;
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             if (_baseEx is Constant && (_baseEx as Constant).Var.Var == "e")
             {

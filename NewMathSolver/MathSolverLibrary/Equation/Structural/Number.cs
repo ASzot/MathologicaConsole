@@ -904,7 +904,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return new AlgebraTerm(this);
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             if (IsUndefined())
                 return "\\text{Undefined}";

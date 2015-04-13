@@ -1,73 +1,50 @@
-﻿namespace MathSolverWebsite.MathSolverLibrary.Equation.LinearAlg
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
+
+namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
-    internal class ExVector : ExComp
+    class ExVector : ExMatrix
     {
-        private ExComp _x;
-        private ExComp _y;
-
-        public ExComp X
+        public int Length
         {
-            get { return _x; }
+            get { return base.Cols; }
         }
 
-        public ExComp Y
+        public ExComp[] Components
         {
-            get { return _y; }
-        }
-
-        public ExVector(ExComp x, ExComp y)
-        {
-            _x = x;
-            _y = y;
-        }
-
-        public override ExComp Clone()
-        {
-            return new ExVector(_x, _y);
-        }
-
-        public override double GetCompareVal()
-        {
-            return 1.0;
-        }
-
-        public override bool IsEqualTo(ExComp ex)
-        {
-            if (ex is ExVector)
+            get
             {
-                ExVector vec = ex as ExVector;
-                if (vec.X.IsEqualTo(_x) && vec.Y.IsEqualTo(_y))
-                    return true;
+                return base._exData[0];
             }
-
-            return false;
         }
 
-        public override AlgebraTerm ToAlgTerm()
+        public ExVector(params ExComp[] exs)
+            : base(exs)
         {
-            return new AlgebraTerm(this);
+
         }
 
-        public override string ToMathAsciiString()
+        public ExComp Get(int index)
         {
-            return "(" + _x.ToMathAsciiString() + "," + _y.ToMathAsciiString() + ")";
+            return Get(0, index);
         }
 
-        public override string ToJavaScriptString(bool useRad)
+        public static ExComp Dot(ExVector vec0, ExVector vec1)
         {
-            return null;
-        }
+            if (vec0.Length != vec1.Length)
+                return Number.Undefined;
 
-        public override string ToString()
-        {
-            if (MathSolver.USE_TEX_DEBUG)
-                return ToTexString();
-            return "(" + _x.ToString() + "," + _y.ToString() + ")";
-        }
-
-        public override string ToTexString()
-        {
-            return "(" + _x.ToTexString() + "," + _y.ToTexString() + ")";
+            ExComp totalSum = Number.Zero;
+            for (int i = 0; i < vec0.Length; ++i)
+            {
+                ExComp prod = MulOp.StaticCombine(vec0.Get(i), vec1.Get(i));
+                totalSum = AddOp.StaticCombine(prod, totalSum);
+            }
+            return totalSum;
         }
     }
 }

@@ -3,6 +3,7 @@ using MathSolverWebsite.MathSolverLibrary.Equation.Term;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 {
@@ -99,7 +100,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + (divided as AlgebraTerm).FinalToDispStr() + WorkMgr.EDM,
                     "Above is the divided result without the remainder. Since the division produced " +
                     "a remainder of " + WorkMgr.STM +
-                    (remainder is AlgebraTerm ? (remainder as AlgebraTerm).FinalToDispStr() : remainder.ToMathAsciiString()) +
+                    (remainder is AlgebraTerm ? (remainder as AlgebraTerm).FinalToDispStr() : remainder.ToAsciiString()) +
                     WorkMgr.EDM + " the remainder of the result = " + WorkMgr.STM + "\\frac{\\text{Division Remainder}}{\\text{Divisor}}" + WorkMgr.EDM +
                     ". This comes from the statement that " + WorkMgr.STM + "\\frac{f(x)}{g(x)}=q(x)+\\frac{r(x)}{d(x)}" + WorkMgr.EDM);
                 remainder = DivOp.StaticWeakCombine(remainder, divisor.ToAlgTerm());
@@ -114,7 +115,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             }
 
             pEvalData.WorkMgr.FromFormatted(
-                    WorkMgr.STM + (divided is AlgebraTerm ? (divided as AlgebraTerm).FinalToDispStr() : divided.ToMathAsciiString()) + WorkMgr.EDM,
+                    WorkMgr.STM + (divided is AlgebraTerm ? (divided as AlgebraTerm).FinalToDispStr() : divided.ToAsciiString()) + WorkMgr.EDM,
                     finalStepDesc);
 
             return divided;
@@ -618,6 +619,26 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 
             if (ex1.IsEqualTo(ex2))
                 return Number.One;
+
+            if (ex1 is ExMatrix || ex2 is ExMatrix)
+            {
+                ExMatrix mat;
+                ExComp other;
+                if (ex1 is ExMatrix)
+                {
+                    mat = ex1 as ExMatrix;
+                    other = ex2;
+                }
+                else
+                {
+                    mat = ex2 as ExMatrix;
+                    other = ex1;
+                }
+
+                ExComp atmpt = MatrixHelper.DivOpCombine(mat, other);
+                if (atmpt != null)
+                    return atmpt;
+            }
 
             if (ex1 is AlgebraTerm && (ex1 as AlgebraTerm).IsSimpleFraction() && !(ex2 is AlgebraTerm && (ex2 as AlgebraTerm).IsSimpleFraction()))
             {

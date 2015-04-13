@@ -657,8 +657,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 {
                     ExComp[] num = group.GetNumerator();
                     ExComp[] den = group.GetDenominator();
-                    string numTexStr = num.ToMathAsciiString();
-                    string denTexStr = den.ToMathAsciiString();
+                    string numTexStr = num.ToAsciiString();
+                    string denTexStr = den.ToAsciiString();
 
                     numTexStr = numTexStr.RemoveSurroundingParas();
                     denTexStr = denTexStr.RemoveSurroundingParas();
@@ -666,7 +666,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     finalStr += @"\frac{" + numTexStr + "}{" + denTexStr + "}";
                 }
                 else
-                    finalStr += group.ToMathAsciiString();
+                    finalStr += group.ToAsciiString();
                 if (i != groups.Count - 1)
                     finalStr += "+";
             }
@@ -697,10 +697,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                         finalStr += "(" + numTexStr + ")/(" + denTexStr + ")";
                     }
                     else
-                        finalStr += group.ToMathAsciiString();
+                        finalStr += group.ToAsciiString();
                 }
                 else
-                    finalStr += group.ToMathAsciiString();
+                    finalStr += group.ToAsciiString();
                 if (i != groups.Count - 1)
                     finalStr += "+";
             }
@@ -1316,7 +1316,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return this;
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             if (TermCount == 0)
                 return "0";
@@ -1330,13 +1330,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 {
                     ExComp[] num = group.GetNumerator();
                     ExComp[] den = group.GetDenominator();
-                    string numTexStr = num.ToMathAsciiString();
-                    string denTexStr = den.ToMathAsciiString();
+                    string numTexStr = num.ToAsciiString();
+                    string denTexStr = den.ToAsciiString();
 
                     finalStr += "(" + numTexStr + ")/(" + denTexStr + ")";
                 }
                 else
-                    finalStr += group.ToMathAsciiString();
+                    finalStr += group.ToAsciiString();
                 if (i != groups.Count - 1)
                     finalStr += "+";
             }
@@ -1408,7 +1408,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return finalStr;
         }
 
-        public ExComp WeakMakeWorkable(ref List<string> pParseErrors)
+        public virtual ExComp WeakMakeWorkable(ref List<string> pParseErrors)
         {
             for (int i = 0; i < _subComps.Count; ++i)
             {

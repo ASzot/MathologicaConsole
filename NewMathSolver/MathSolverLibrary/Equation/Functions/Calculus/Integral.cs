@@ -223,16 +223,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         {
             string boundariesStr = "";
             if (IsDefinite)
-                boundariesStr = "_{" + LowerLimit.ToMathAsciiString() + "}^{" + UpperLimit.ToMathAsciiString() +"}";
-            return "\\int" + boundariesStr + "(" + InnerTerm.FinalToAsciiKeepFormatting() + ")\\d" + _dVar.ToMathAsciiString();
+                boundariesStr = "_{" + LowerLimit.ToAsciiString() + "}^{" + UpperLimit.ToAsciiString() +"}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.FinalToAsciiKeepFormatting() + ")\\d" + _dVar.ToAsciiString();
         }
 
         public override string FinalToAsciiString()
         {
             string boundariesStr = "";
             if (IsDefinite)
-                boundariesStr = "_{" + LowerLimit.ToMathAsciiString() + "}^{" + UpperLimit.ToMathAsciiString() + "}";
-            return "\\int" + boundariesStr + "(" + InnerTerm.FinalToAsciiKeepFormatting() + ")\\d" + _dVar.ToMathAsciiString();
+                boundariesStr = "_{" + LowerLimit.ToAsciiString() + "}^{" + UpperLimit.ToAsciiString() + "}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.FinalToAsciiKeepFormatting() + ")\\d" + _dVar.ToAsciiString();
         }
 
         public override string FinalToTexKeepFormatting()
@@ -262,12 +262,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return false;
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             string boundariesStr = "";
             if (IsDefinite)
-                boundariesStr = "_{" + LowerLimit.ToMathAsciiString() + "}^{" + UpperLimit.ToMathAsciiString() + "}";
-            return "\\int" + boundariesStr + "(" + InnerTerm.ToMathAsciiString() + ")\\d" + _dVar.ToMathAsciiString();
+                boundariesStr = "_{" + LowerLimit.ToAsciiString() + "}^{" + UpperLimit.ToAsciiString() + "}";
+            return "\\int" + boundariesStr + "(" + InnerTerm.ToAsciiString() + ")\\d" + _dVar.ToAsciiString();
         }
 
         public override string ToJavaScriptString(bool useRad)

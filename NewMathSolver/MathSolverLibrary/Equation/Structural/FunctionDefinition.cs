@@ -160,15 +160,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return new AlgebraTerm(this);
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
-            string funcStr = _iden.ToMathAsciiString() + "(";
+            string funcStr = _iden.ToAsciiString() + "(";
             for (int i = 0; i < _args.Length; ++i)
             {
                 if (_callArgs != null && _callArgs.Length > i)
-                    funcStr += _callArgs[i].ToMathAsciiString();
+                    funcStr += _callArgs[i].ToAsciiString();
                 else
-                    funcStr += _args[i].ToMathAsciiString();
+                    funcStr += _args[i].ToAsciiString();
                 if (i != _args.Length - 1)
                     funcStr += ",";
             }

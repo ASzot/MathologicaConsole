@@ -86,7 +86,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     return (group[0] as AlgebraTerm).FinalToDispStr();
             }
 
-            return group.ToMathAsciiString();
+            return group.ToAsciiString();
         }
 
         public static ExComp[] GCF(ExComp[] group1, ExComp[] group2)
@@ -714,13 +714,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return term;
         }
 
-        public static string ToMathAsciiString(this ExComp[] group)
+        public static string ToAsciiString(this ExComp[] group)
         {
             string finalStr = "";
             for (int i = 0; i < group.Length; ++i)
             {
                 ExComp groupComp = group[i];
-                finalStr += groupComp.ToMathAsciiString();
+                finalStr += groupComp.ToAsciiString();
                 if ((groupComp is Number && (groupComp as Number) == -1 && group.Length > 1) ||
                     (groupComp is Number && i < group.Length - 1 && group[i + 1] is Number))
                     finalStr += "*";

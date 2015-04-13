@@ -64,7 +64,7 @@
             return "|" + InnerTerm.FinalToAsciiString() + "|";
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             return "|" + InnerTerm.FinalToAsciiString() + "|";
         }

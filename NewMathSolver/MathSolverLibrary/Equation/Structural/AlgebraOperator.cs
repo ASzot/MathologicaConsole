@@ -40,7 +40,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return null;
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             return ToString();
         }

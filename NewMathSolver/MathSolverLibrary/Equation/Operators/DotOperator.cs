@@ -1,4 +1,4 @@
-﻿using MathSolverWebsite.MathSolverLibrary.Equation.LinearAlg;
+﻿using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 using System;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
@@ -28,10 +28,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
         {
             if (ex1 is FunctionDefinition && ex2 is FunctionDefinition)
                 return StaticCombine(ex1, ex2);
-            if (ex1 is ExVector && ex2 is ExVector)
-            {
-                return new AlgebraTerm(ex1, new DotOperator(), ex2);
-            }
+            // The open dot is not used for dot products. The closed dot is.
+            //if (ex1 is ExVector && ex2 is ExVector)
+            //{
+            //    return new AlgebraTerm(ex1, new DotOperator(), ex2);
+            //}
 
             return null;
         }

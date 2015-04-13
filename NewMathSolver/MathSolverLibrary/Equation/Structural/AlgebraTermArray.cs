@@ -193,14 +193,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             throw new InvalidOperationException("AlgebraTermArray cannot be a AlgebraTerm!");
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             string texStr = "";
             for (int i = 0; i < _terms.Count; ++i)
             {
                 AlgebraTerm term = _terms[i];
 
-                texStr += term.ToMathAsciiString();
+                texStr += term.ToAsciiString();
 
                 if (i != _terms.Count - 1)
                     texStr += "; ";

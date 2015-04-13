@@ -49,9 +49,9 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 if (_assignTo is AlgebraTerm)
                     funcDefStr = (_assignTo as AlgebraTerm).FinalToDispStr();
                 else
-                    funcDefStr = _assignTo.ToMathAsciiString();
+                    funcDefStr = _assignTo.ToAsciiString();
                 funcDefStr = MathSolver.FinalizeOutput(funcDefStr);
-                pEvalData.AddMsg(WorkMgr.STM + _func.ToMathAsciiString() + WorkMgr.EDM + " defined as " + WorkMgr.STM + funcDefStr + WorkMgr.EDM);
+                pEvalData.AddMsg(WorkMgr.STM + _func.ToAsciiString() + WorkMgr.EDM + " defined as " + WorkMgr.STM + funcDefStr + WorkMgr.EDM);
 
                 // Assign the function.
                 pEvalData.FuncDefs.Define(_func, _assignTo);

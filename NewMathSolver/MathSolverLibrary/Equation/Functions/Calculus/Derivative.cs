@@ -160,11 +160,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             if (!_isDefined)
             {
-                return "(d" + orderStr + _derivOf.ToMathAsciiString() + ")/(d" + _withRespectTo.ToMathAsciiString() + orderStr + ")";
+                return "(d" + orderStr + _derivOf.ToAsciiString() + ")/(d" + _withRespectTo.ToAsciiString() + orderStr + ")";
             }
 
-            return "(d" + orderStr + ")/(d" + _withRespectTo.ToMathAsciiString() + orderStr + ")[" +
-                (InnerEx is AlgebraTerm ? (InnerEx as AlgebraTerm).FinalToAsciiKeepFormatting() : InnerEx.ToMathAsciiString()) + "]";
+            return "(d" + orderStr + ")/(d" + _withRespectTo.ToAsciiString() + orderStr + ")[" +
+                (InnerEx is AlgebraTerm ? (InnerEx as AlgebraTerm).FinalToAsciiKeepFormatting() : InnerEx.ToAsciiString()) + "]";
         }
 
         public override string FinalToAsciiString()
@@ -172,10 +172,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             string orderStr = _order == 1 ? "" : "^" + _order.ToString();
             if (!_isDefined)
             {
-                return "(d" + orderStr + _derivOf.ToMathAsciiString() + ")/(d" + _withRespectTo.ToMathAsciiString() + orderStr + ")";
+                return "(d" + orderStr + _derivOf.ToAsciiString() + ")/(d" + _withRespectTo.ToAsciiString() + orderStr + ")";
             }
-            return "(d" + orderStr + ")/(d" + _withRespectTo.ToMathAsciiString() + orderStr + ")[" +
-                (InnerEx is AlgebraTerm ? (InnerEx as AlgebraTerm).FinalToAsciiString() : InnerEx.ToMathAsciiString()) + "]";
+            return "(d" + orderStr + ")/(d" + _withRespectTo.ToAsciiString() + orderStr + ")[" +
+                (InnerEx is AlgebraTerm ? (InnerEx as AlgebraTerm).FinalToAsciiString() : InnerEx.ToAsciiString()) + "]";
         }
 
         public override string FinalToDispStr()
@@ -228,18 +228,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         {
             if (USE_TEX)
                 return ToTexString();
-            return ToMathAsciiString();
+            return ToAsciiString();
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             string orderStr = _order == 1 ? "" : "^" + _order.ToString();
             if (!_isDefined)
             {
-                return "((d" + orderStr + _derivOf.ToMathAsciiString() + ")/(d" + _withRespectTo.ToMathAsciiString() + orderStr + "))";
+                return "((d" + orderStr + _derivOf.ToAsciiString() + ")/(d" + _withRespectTo.ToAsciiString() + orderStr + "))";
             }
-            return "((d" + orderStr + ")/(d" + _withRespectTo.ToMathAsciiString() + orderStr + ")[" +
-                InnerEx.ToMathAsciiString() + "])";
+            return "((d" + orderStr + ")/(d" + _withRespectTo.ToAsciiString() + orderStr + ")[" +
+                InnerEx.ToAsciiString() + "])";
         }
 
         public override string ToJavaScriptString(bool useRad)
@@ -724,7 +724,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return Number.Zero;
             }
 
-            string varToStr = varTo.ToAlgTerm().ToMathAsciiString();
+            string varToStr = varTo.ToAlgTerm().ToAsciiString();
 
             ExComp derivTerm = null;
 
@@ -778,7 +778,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     ExComp u = num[0];
                     ExComp v = num.ToList().GetRange(1, num.Length - 1).ToArray().ToAlgTerm();
 
-                    pEvalData.WorkMgr.FromFormatted("`" + ca_derivSymb + "[" + num.ToMathAsciiString() + "]`",
+                    pEvalData.WorkMgr.FromFormatted("`" + ca_derivSymb + "[" + num.ToAsciiString() + "]`",
                         "Apply the product rule which states `d/(dx)[u*v]=u'v+uv'` in this case `u={0}`, `v={1}`", u, v);
 
                     pEvalData.WorkMgr.FromFormatted("`" + ca_derivSymb + "[{0}]`", "Calculate `u'` for the product rule.", u);
@@ -797,7 +797,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return derivTerm;
             ExComp constToEx = constTo.ToAlgTerm();
 
-            pEvalData.WorkMgr.FromFormatted("`{0}*" + ca_derivSymb + "[" + varTo.ToMathAsciiString() + "]={0}*{1}`", "Multiply back in the constants.", constToEx, derivTerm);
+            pEvalData.WorkMgr.FromFormatted("`{0}*" + ca_derivSymb + "[" + varTo.ToAsciiString() + "]={0}*{1}`", "Multiply back in the constants.", constToEx, derivTerm);
 
             return MulOp.StaticCombine(constToEx, derivTerm);
         }

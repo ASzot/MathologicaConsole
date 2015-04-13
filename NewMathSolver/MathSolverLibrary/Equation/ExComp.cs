@@ -41,10 +41,10 @@
         {
             if (USE_TEX)
                 return ToTexString();
-            return ToMathAsciiString();
+            return ToAsciiString();
         }
 
-        public abstract string ToMathAsciiString();
+        public abstract string ToAsciiString();
 
         public abstract string ToJavaScriptString(bool useRad);
 

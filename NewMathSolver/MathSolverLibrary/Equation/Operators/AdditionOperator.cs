@@ -1,4 +1,5 @@
 ﻿using System;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 {
@@ -11,7 +12,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             if (ex2 is AlgebraTerm)
                 ex2 = (ex2 as AlgebraTerm).RemoveRedundancies();
 
-
             if (Number.IsUndef(ex1) || Number.IsUndef(ex2))
                 return Number.Undefined;
 
@@ -20,6 +20,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             if (Number.Zero.IsEqualTo(ex2))
                 return ex1;
 
+            if (ex1 is ExMatrix || ex2 is ExMatrix)
+            {
+                ExMatrix mat;
+                ExComp other;
+                if (ex1 is ExMatrix)
+                {
+                    mat = ex1 as ExMatrix;
+                    other = ex2;
+                }
+                else
+                {
+                    mat = ex2 as ExMatrix;
+                    other = ex1;
+                }
+                ExComp combineAtmpt = MatrixHelper.AdOpCombine(mat, other);
+                if (combineAtmpt != null)
+                    return combineAtmpt;
+            }
             if (ex1 is AlgebraFunction && ex2 is AlgebraFunction)
             {
                 AlgebraFunction func1 = ex1 as AlgebraFunction;

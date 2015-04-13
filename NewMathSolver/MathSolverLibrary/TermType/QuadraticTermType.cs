@@ -1,5 +1,5 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
-using MathSolverWebsite.MathSolverLibrary.Equation.LinearAlg;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
 using MathSolverWebsite.MathSolverLibrary.Equation.Term;
 using MathSolverWebsite.MathSolverLibrary.Parsing;

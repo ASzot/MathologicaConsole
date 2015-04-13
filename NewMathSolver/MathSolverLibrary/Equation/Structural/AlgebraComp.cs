@@ -161,7 +161,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return new AlgebraTerm(this);
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             return Var.ToMathAsciiString();
         }

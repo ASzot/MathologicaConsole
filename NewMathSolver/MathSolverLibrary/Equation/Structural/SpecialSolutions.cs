@@ -2,7 +2,7 @@
 {
     internal class AllSolutions : SpecialSolution
     {
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             return @"\text{All solutions}";
         }
@@ -15,7 +15,7 @@
 
     internal class NoSolutions : SpecialSolution
     {
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             return @"\text{No solution}";
         }

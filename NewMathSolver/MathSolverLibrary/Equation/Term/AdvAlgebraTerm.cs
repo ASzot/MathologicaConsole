@@ -490,11 +490,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
         public static AlgebraTerm FactorizeTerm(this AlgebraTerm term, ref TermType.EvalData pEvalData)
         {
             AlgebraTerm[] factors = term.GetFactors(ref pEvalData);
-            if (factors.Length > 2)
-                pEvalData.AttemptSetInputType(TermType.InputType.PolyFactor);
 
             if (factors != null)
             {
+                if (factors.Length > 2)
+                    pEvalData.AttemptSetInputType(TermType.InputType.PolyFactor);
                 AlgebraTerm finalTerm = new AlgebraTerm();
                 for (int i = 0; i < factors.Length; ++i)
                 {

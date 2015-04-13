@@ -50,7 +50,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 else
                 {
                     pEvalData.WorkMgr.FromSides(innerEx, evaluated, "The " + trigFunc.FuncName + " function is undefined at the angle " +
-                        WorkMgr.STM + (right is AlgebraTerm ? (right as AlgebraTerm).FinalToDispStr() : right.ToMathAsciiString()) + WorkMgr.EDM);
+                        WorkMgr.STM + (right is AlgebraTerm ? (right as AlgebraTerm).FinalToDispStr() : right.ToAsciiString()) + WorkMgr.EDM);
 
                     return Number.Undefined;
                 }

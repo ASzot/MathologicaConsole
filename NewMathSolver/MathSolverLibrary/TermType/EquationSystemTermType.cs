@@ -77,9 +77,9 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                     if (assignTo is AlgebraTerm)
                         funcDefStr = (assignTo as AlgebraTerm).FinalToDispStr();
                     else
-                        funcDefStr = assignTo.ToMathAsciiString();
+                        funcDefStr = assignTo.ToAsciiString();
                     funcDefStr = MathSolver.FinalizeOutput(funcDefStr);
-                    pEvalData.AddMsg(WorkMgr.STM + funcDef.ToMathAsciiString() + WorkMgr.EDM + " defined as " + WorkMgr.STM + funcDefStr + WorkMgr.EDM);
+                    pEvalData.AddMsg(WorkMgr.STM + funcDef.ToAsciiString() + WorkMgr.EDM + " defined as " + WorkMgr.STM + funcDefStr + WorkMgr.EDM);
 
                     pEvalData.FuncDefs.Define((FunctionDefinition)funcDef.Clone(), assignTo.Clone());
                 }

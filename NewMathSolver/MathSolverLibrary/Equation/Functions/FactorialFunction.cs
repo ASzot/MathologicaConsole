@@ -36,9 +36,9 @@
             return this;
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
-            return InnerEx.ToMathAsciiString() + "!";
+            return InnerEx.ToAsciiString() + "!";
         }
 
         public override string ToJavaScriptString(bool useRad)

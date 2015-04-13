@@ -168,9 +168,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             for (int i = 0; i < orderedInfo.Count; ++i)
             {
                 var termInfo = orderedInfo[i];
-                string addStr = (MulOp.StaticCombine(termInfo.Data1, PowOp.StaticCombine(_var, new Number(termInfo.Data2)))).ToMathAsciiString();
+                string addStr = (MulOp.StaticCombine(termInfo.Data1, PowOp.StaticCombine(_var, new Number(termInfo.Data2)))).ToAsciiString();
                 if (addStr == "0")
-                    addStr = "0" + _var.ToMathAsciiString();
+                    addStr = "0" + _var.ToAsciiString();
                 finalStr += addStr;
                 if (i != orderedInfo.Count - 1)
                     finalStr += "+";

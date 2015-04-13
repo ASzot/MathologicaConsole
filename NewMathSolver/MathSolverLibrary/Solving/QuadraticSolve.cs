@@ -39,7 +39,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             pEvalData.WorkMgr.FromSides(AddOp.StaticWeakCombine(AddOp.StaticCombine(PowOp.StaticWeakCombine(solveForComp, new Number(2.0)), MulOp.StaticWeakCombine(b, solveForComp)), completeTheSquareTerm),
                 AddOp.StaticCombine(c, completeTheSquareTerm),
                 "Add " + WorkMgr.STM + "(b^2)/4" + WorkMgr.EDM + " or in this case " + WorkMgr.STM +
-                (completeTheSquareTerm is AlgebraTerm ? (completeTheSquareTerm as AlgebraTerm).FinalToDispStr() : completeTheSquareTerm.ToMathAsciiString()) +
+                (completeTheSquareTerm is AlgebraTerm ? (completeTheSquareTerm as AlgebraTerm).FinalToDispStr() : completeTheSquareTerm.ToAsciiString()) +
                 WorkMgr.EDM + " to both sides to complete the square by making a perfect square quadratic which can be easily factored.");
 
             ExComp right = AddOp.StaticCombine(c, completeTheSquareTerm);

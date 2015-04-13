@@ -155,7 +155,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 ExComp tmpEq1Left = Number.One.IsEqualTo(mul1) ? eq1Left : MulOp.StaticWeakCombine(mul1, eq1Left);
                 ExComp tmpEq1Right = Number.One.IsEqualTo(mul1) ? eq1Right : MulOp.StaticWeakCombine(mul1, eq1Right);
 
-                pEvalData.WorkMgr.FromArraySides("Eliminate the variable " + elimAgComp.ToMathAsciiString() + ". To do so make the variable in the equations have equal coefficients.",
+                pEvalData.WorkMgr.FromArraySides("Eliminate the variable " + elimAgComp.ToAsciiString() + ". To do so make the variable in the equations have equal coefficients.",
                     tmpEq0Left, tmpEq0Right,
                     tmpEq1Left, tmpEq1Right);
             }
@@ -183,7 +183,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 combineOp = new SubOp();
 
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM + "</br>" + WorkMgr.STM + "{4}({2}={3})" + WorkMgr.EDM,
-                ((combineOp is AddOp) ? "Add" : "Subtract") + " the equations eliminating " + WorkMgr.STM + elimAgComp.ToMathAsciiString() + WorkMgr.EDM + " from the resulting equation.",
+                ((combineOp is AddOp) ? "Add" : "Subtract") + " the equations eliminating " + WorkMgr.STM + elimAgComp.ToAsciiString() + WorkMgr.EDM + " from the resulting equation.",
                 eq0Left, eq0Right, eq1Left, eq1Right, combineOp);
 
             AlgebraTerm finalLeft = combineOp.Combine(eq0Left, eq1Left).ToAlgTerm();
@@ -204,8 +204,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             pEvalData.WorkMgr.FromSides(data1, data2,
                 "Substitute " + WorkMgr.STM +
-                solveForComp.ToMathAsciiString() + "=" +
-                (result is AlgebraTerm ? (result as AlgebraTerm).FinalToDispStr() : result.ToMathAsciiString()) +
+                solveForComp.ToAsciiString() + "=" +
+                (result is AlgebraTerm ? (result as AlgebraTerm).FinalToDispStr() : result.ToAsciiString()) +
                 WorkMgr.EDM + " into the above equation. <i>(EQ" + (index + 1).ToString() + ")</i>");
 
             data1 = data1.Substitute(solveForComp, result.Clone());
@@ -352,7 +352,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 foreach (EquationSet subInEqSet in iterGenerations)
                 {
                     pEvalData.WorkMgr.FromSides(subInEqSet.Left, subInEqSet.Right,
-                        "Substitute in " + WorkMgr.STM + solveForComp.ToMathAsciiString() + "=" + result.ToMathAsciiString() + WorkMgr.EDM + " into this equation.");
+                        "Substitute in " + WorkMgr.STM + solveForComp.ToAsciiString() + "=" + result.ToAsciiString() + WorkMgr.EDM + " into this equation.");
 
                     AlgebraTerm leftSub = subInEqSet.LeftTerm.Substitute(solveForComp, result);
                     AlgebraTerm rightSub = subInEqSet.RightTerm.Substitute(solveForComp, result);
@@ -456,7 +456,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 agSolver.CreateUSubTable(eqLexemeTables[i]);
                 AlgebraComp solveForComp = solveFor.ToAlgebraComp();
 
-                pEvalData.WorkMgr.FromSides(term0, term1, "Solve this equation" + eqIdStr + " for " + WorkMgr.STM + solveForComp.ToMathAsciiString() + WorkMgr.EDM);
+                pEvalData.WorkMgr.FromSides(term0, term1, "Solve this equation" + eqIdStr + " for " + WorkMgr.STM + solveForComp.ToAsciiString() + WorkMgr.EDM);
 
                 pEvalData.WorkMgr.WorkLabel = eqIdStr;
                 ExComp result = agSolver.SolveEq(solveFor, term0, term1, ref pEvalData, false);
@@ -529,7 +529,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 {
                     AlgebraTerm subTerm1 = completeEqs[j].RightTerm;
 
-                    pEvalData.WorkMgr.FromSides(completeEqs[j].Left, subTerm1, "Substitute " + WorkMgr.STM + varFor.ToMathAsciiString() + "=" + term1.FinalToDispStr() + WorkMgr.EDM + " into the above equation.");
+                    pEvalData.WorkMgr.FromSides(completeEqs[j].Left, subTerm1, "Substitute " + WorkMgr.STM + varFor.ToAsciiString() + "=" + term1.FinalToDispStr() + WorkMgr.EDM + " into the above equation.");
                     AlgebraTerm tmpRight = subTerm1.Substitute(varFor, term1);
                     SolveMethod.EvaluateEntirely(ref tmpRight);
                     completeEqs[j].SetRight(tmpRight);

@@ -197,7 +197,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (term != null)
                 finalStr = term.FinalToDispStr();
             else
-                finalStr = partialSol.ToMathAsciiString();
+                finalStr = partialSol.ToAsciiString();
 
             return MathSolver.FinalizeOutput(finalStr);
         }

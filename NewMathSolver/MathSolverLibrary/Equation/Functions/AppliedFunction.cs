@@ -323,9 +323,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return s_name + _useStart + InnerTerm.FinalToDispStr() + _useEnd;
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
-            return s_name + _useStart + InnerTerm.ToMathAsciiString() + _useEnd;
+            return s_name + _useStart + InnerTerm.ToAsciiString() + _useEnd;
         }
 
         public override string ToJavaScriptString(bool useRad)

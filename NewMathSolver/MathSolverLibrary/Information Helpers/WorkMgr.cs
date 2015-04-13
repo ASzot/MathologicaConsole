@@ -58,7 +58,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                 return (ex as AlgebraTerm).FinalToDispStr();
             if (ex is Number)
                 return (ex as Number).FinalToDispString();
-            return ex.ToMathAsciiString();
+            return ex.ToAsciiString();
         }
 
         public static string WorkFromSynthDivTable(ExComp root, IEnumerable<ExComp> poly, IEnumerable<ExComp> muls, IEnumerable<ExComp> results)
@@ -261,7 +261,7 @@ namespace MathSolverWebsite.MathSolverLibrary
 
             bool isNeg = false;
 
-            string subStr = sub is AlgebraTerm ? (sub as AlgebraTerm).FinalDispKeepFormatting() : sub.ToMathAsciiString();
+            string subStr = sub is AlgebraTerm ? (sub as AlgebraTerm).FinalDispKeepFormatting() : sub.ToAsciiString();
 
             if (sub is Number && (sub as Number) < 0.0)
                 isNeg = true;
@@ -346,7 +346,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                         argStrs[i] = (args[i] as AlgebraTerm).FinalToDispStr();
                     }
                     else
-                        argStrs[i] = (args[i] as ExComp).ToMathAsciiString();
+                        argStrs[i] = (args[i] as ExComp).ToAsciiString();
                 }
                 else
                     argStrs[i] = args[i].ToString();
@@ -390,7 +390,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                         argStrs[i] = (args[i] as AlgebraTerm).FinalToDispStr();
                     }
                     else
-                        argStrs[i] = (args[i] as ExComp).ToMathAsciiString();
+                        argStrs[i] = (args[i] as ExComp).ToAsciiString();
                 }
                 else
                     argStrs[i] = args[i].ToString();

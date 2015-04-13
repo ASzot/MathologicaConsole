@@ -114,7 +114,9 @@
     <Compile Include="MathSolverLibrary\Equation\Structural\Constant.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\FunctionDefinition.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\GeneralSolution.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\LinearAlg\MatrixHelper.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\LinearAlg\Vector.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Structural\LinearAlg\Matrix.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\Number.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\PolynomialGen.cs" />
     <Compile Include="MathSolverLibrary\Equation\Structural\Solution.cs" />

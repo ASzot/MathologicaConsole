@@ -345,7 +345,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override string FinalToAsciiString()
         {
-            string powerAsciiStr = _power.ToMathAsciiString();
+            string powerAsciiStr = _power.ToAsciiString();
             if (powerAsciiStr == ("-1"))
                 powerAsciiStr = powerAsciiStr.Remove(0, 2);
 
@@ -354,10 +354,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             {
                 BasicAppliedFunc funcBase = baseNoRedun as BasicAppliedFunc;
 
-                return funcBase.FuncName + "^{" + powerAsciiStr + "}(" + funcBase.InnerTerm.ToMathAsciiString() + ")";
+                return funcBase.FuncName + "^{" + powerAsciiStr + "}(" + funcBase.InnerTerm.ToAsciiString() + ")";
             }
 
-            string baseAsciiStr = Base is AlgebraTerm ? (Base as AlgebraTerm).FinalToDispStr() : Base.ToMathAsciiString();
+            string baseAsciiStr = Base is AlgebraTerm ? (Base as AlgebraTerm).FinalToDispStr() : Base.ToAsciiString();
 
             if (powerAsciiStr == "")
                 return baseAsciiStr;
@@ -379,7 +379,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                         if ((new Number(2.0)).IsEqualTo(den))
                             return "sqrt(" + baseAsciiStr + ")";
                         else
-                            return "root(" + den.ToMathAsciiString() + ")(" + baseAsciiStr + ")";
+                            return "root(" + den.ToAsciiString() + ")(" + baseAsciiStr + ")";
                     }
                 }
             }
@@ -1073,9 +1073,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return Base.IsEqualTo(comp);
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
-            string powerAsciiStr = _power.ToMathAsciiString();
+            string powerAsciiStr = _power.ToAsciiString();
             if (powerAsciiStr.StartsWith("-1") && !powerAsciiStr.StartsWith("-1*"))
                 powerAsciiStr = powerAsciiStr.Remove(0, 2);
 
@@ -1084,10 +1084,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             {
                 BasicAppliedFunc funcBase = baseNoRedun as BasicAppliedFunc;
 
-                return funcBase.FuncName + "^{" + powerAsciiStr + "}(" + funcBase.InnerTerm.ToMathAsciiString() + ")";
+                return funcBase.FuncName + "^{" + powerAsciiStr + "}(" + funcBase.InnerTerm.ToAsciiString() + ")";
             }
 
-            string baseAsciiStr = Base.ToMathAsciiString();
+            string baseAsciiStr = Base.ToAsciiString();
 
             if (powerAsciiStr == "")
                 return baseAsciiStr;
@@ -1115,7 +1115,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                         if ((new Number(2.0)).IsEqualTo(den))
                             return "sqrt(" + finalBaseAsciiStr + ")";
                         else
-                            return "root(" + den.ToMathAsciiString() + ")(" + finalBaseAsciiStr + ")";
+                            return "root(" + den.ToAsciiString() + ")(" + finalBaseAsciiStr + ")";
                     }
                 }
             }

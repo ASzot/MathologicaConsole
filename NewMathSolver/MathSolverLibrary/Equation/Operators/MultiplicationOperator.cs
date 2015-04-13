@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 {
@@ -52,6 +53,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             {
                 (ex2 as PowerFunction).Power = DivOp.StaticCombine((ex2 as PowerFunction).Power, Number.NegOne);
                 ex2 = new PowerFunction(ex2, Number.NegOne);
+            }
+
+
+            if (ex1 is ExMatrix || ex2 is ExMatrix)
+            {
+                ExMatrix mat;
+                ExComp other;
+                if (ex1 is ExMatrix)
+                {
+                    mat = ex1 as ExMatrix;
+                    other = ex2;
+                }
+                else
+                {
+                    mat = ex2 as ExMatrix;
+                    other = ex1;
+                }
+
+                ExComp atmpt = MatrixHelper.MulOpCombine(mat, other);
+                if (atmpt != null)
+                    return atmpt;
             }
 
             if (ex1 is AlgebraFunction && ex2 is AlgebraFunction)

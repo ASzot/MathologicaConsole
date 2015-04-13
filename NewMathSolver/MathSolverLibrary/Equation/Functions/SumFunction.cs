@@ -81,10 +81,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return this;
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
             return "\\Sigma_{" + IterVar + "=" + IterStart + "}^{" + IterCount + "}" +
-                InnerEx.ToMathAsciiString();
+                InnerEx.ToAsciiString();
         }
 
         public override string ToJavaScriptString(bool useRad)

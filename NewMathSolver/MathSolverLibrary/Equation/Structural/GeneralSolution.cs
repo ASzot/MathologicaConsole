@@ -87,14 +87,14 @@
             string finalStr = "";
 
             if (Number.IsUndef(_result))
-                return Number.Undefined.ToMathAsciiString();
+                return Number.Undefined.ToAsciiString();
 
             if (!Number.Zero.IsEqualTo(_result) && !(_result is AlgebraTerm && (_result as AlgebraTerm).IsZero()))
             {
                 if (_result is AlgebraTerm)
                     finalStr += (_result as AlgebraTerm).FinalToDispStr();
                 else
-                    finalStr += _result.ToMathAsciiString();
+                    finalStr += _result.ToAsciiString();
 
                 finalStr += "+";
             }
@@ -102,7 +102,7 @@
             if (_interval is AlgebraTerm)
                 finalStr += (_interval as AlgebraTerm).FinalToDispStr();
             else
-                finalStr += _interval.ToMathAsciiString();
+                finalStr += _interval.ToAsciiString();
 
             return finalStr;
         }
@@ -112,14 +112,14 @@
             string finalStr = "";
 
             if (Number.IsUndef(_result))
-                return Number.Undefined.ToMathAsciiString();
+                return Number.Undefined.ToAsciiString();
 
             if (!Number.Zero.IsEqualTo(_result) && !(_result is AlgebraTerm && (_result as AlgebraTerm).IsZero()))
             {
                 if (_result is AlgebraTerm)
                     finalStr += (_result as AlgebraTerm).FinalToAsciiKeepFormatting();
                 else
-                    finalStr += _result.ToMathAsciiString();
+                    finalStr += _result.ToAsciiString();
 
                 finalStr += "+";
             }
@@ -127,7 +127,7 @@
             if (_interval is AlgebraTerm)
                 finalStr += (_interval as AlgebraTerm).FinalToAsciiKeepFormatting();
             else
-                finalStr += _interval.ToMathAsciiString();
+                finalStr += _interval.ToAsciiString();
 
             return finalStr;
         }

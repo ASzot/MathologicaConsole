@@ -43,7 +43,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return this;
 
             _thisDispStr = pEvalData.WorkMgr.AllowWork ? this.FinalToDispStr() : "";
-            _limStr = "\\lim_(" + _varFor.ToMathAsciiString() + "\\to" + _valTo.ToMathAsciiString() + ")";
+            _limStr = "\\lim_(" + _varFor.ToAsciiString() + "\\to" + _valTo.ToAsciiString() + ")";
 
             int stepCount = pEvalData.WorkMgr.WorkSteps.Count;
 
@@ -102,12 +102,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
         public override string FinalToAsciiKeepFormatting()
         {
-            return "\\lim_(" + _varFor.ToMathAsciiString() + "\\to" + _valTo.ToMathAsciiString() + ")(" + InnerTerm.FinalToAsciiKeepFormatting() + ")";
+            return "\\lim_(" + _varFor.ToAsciiString() + "\\to" + _valTo.ToAsciiString() + ")(" + InnerTerm.FinalToAsciiKeepFormatting() + ")";
         }
 
         public override string FinalToAsciiString()
         {
-            return "\\lim_(" + _varFor.ToMathAsciiString() + "\\to" + _valTo.ToMathAsciiString() + ")(" + InnerTerm.FinalToAsciiString() + ")";
+            return "\\lim_(" + _varFor.ToAsciiString() + "\\to" + _valTo.ToAsciiString() + ")(" + InnerTerm.FinalToAsciiString() + ")";
         }
 
         public override string FinalToDispStr()
@@ -142,12 +142,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         {
             if (USE_TEX)
                 return ToTexString();
-            return ToMathAsciiString();
+            return ToAsciiString();
         }
 
-        public override string ToMathAsciiString()
+        public override string ToAsciiString()
         {
-            return "\\lim_(" + _varFor.ToMathAsciiString() + "\\to" + _valTo.ToMathAsciiString() + ")(" + InnerTerm.ToMathAsciiString() + ")";
+            return "\\lim_(" + _varFor.ToAsciiString() + "\\to" + _valTo.ToAsciiString() + ")(" + InnerTerm.ToAsciiString() + ")";
         }
 
         public override string ToJavaScriptString(bool useRad)

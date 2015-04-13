@@ -389,7 +389,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
                     if (!TermType.EqualityCheckTermType.EvalComparison(leftEx, rightEx, comparison))
                     {
-                        string varSolStr = Solutions[i].SolveFor.ToMathAsciiString() + "=" + WorkMgr.ExFinalToAsciiStr(Solutions[i].Result);
+                        string varSolStr = Solutions[i].SolveFor.ToAsciiString() + "=" + WorkMgr.ExFinalToAsciiStr(Solutions[i].Result);
 
                         pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}\\ne{1}" + WorkMgr.EDM, "Plugging " + WorkMgr.STM + varSolStr + WorkMgr.EDM +
                             " back into the original equation gives the above. The equation doesn't hold true under this solution therefore " + WorkMgr.STM +
@@ -602,7 +602,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToMathAsciiStr()
         {
-            return VarComp.ToMathAsciiString() + "\\ne" + WorkMgr.ExFinalToAsciiStr(NotVal);
+            return VarComp.ToAsciiString() + "\\ne" + WorkMgr.ExFinalToAsciiStr(NotVal);
         }
 
         public override string ToString()
@@ -730,7 +730,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         public override string ToMathAsciiStr()
         {
             if (Number.NegInfinity.IsEqualTo(Compare) && Comparison == LexemeType.LessEqual)
-                return VarComp.ToMathAsciiString() + "\\in\\text{No Real Numbers}";
+                return VarComp.ToAsciiString() + "\\in\\text{No Real Numbers}";
             string compareStr;
             if (Compare is AlgebraTerm)
                 compareStr = (Compare as AlgebraTerm).FinalToTexString();
@@ -1182,7 +1182,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             AlgebraTerm toTerm = AlternateResult.ToAlgTerm();
             if (toTerm == null)
-                return Result.ToMathAsciiString();
+                return Result.ToAsciiString();
             if (ForceFormatting)
                 return toTerm.FinalDispKeepFormatting();
             return toTerm.FinalToDispStr();
@@ -1200,7 +1200,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             AlgebraTerm toTerm = ApproximateResult.ToAlgTerm();
             if (toTerm == null)
-                return Result.ToMathAsciiString();
+                return Result.ToAsciiString();
             if (ForceFormatting)
                 return toTerm.FinalDispKeepFormatting();
             return toTerm.FinalToDispStr();
@@ -1291,7 +1291,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             AlgebraTerm toTerm = Result.ToAlgTerm();
             if (toTerm == null)
-                return Result.ToMathAsciiString();
+                return Result.ToAsciiString();
             if (ForceFormatting)
                 return toTerm.FinalDispKeepFormatting();
             return toTerm.FinalToDispStr();
@@ -1307,7 +1307,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public string SolveForToMathAsciiStr()
         {
-            return SolveFor.ToMathAsciiString();
+            return SolveFor.ToAsciiString();
         }
 
         public string SolveForToTexStr()
