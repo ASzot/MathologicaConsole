@@ -18,6 +18,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         Derivative,
         AntiDerivative,
         Limit,
+        Deteriment, 
+        Transpose,
     };
 
     internal abstract class AlgebraFunction : AlgebraTerm

@@ -12,8 +12,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private List<TypePair<LexemeType, string>> _lt;
         private string[] s_promptStrs;
 
-        public SolveTermType(EquationSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar, 
-            string[] promptStrs, string noIncludeVar)
+        public SolveTermType(EquationSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, 
+            string probSolveVar, string[] promptStrs, string noIncludeVar)
         {
             s_promptStrs = promptStrs;
 
@@ -119,7 +119,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _cmds = cmds.ToArray();
         }
 
-        public SolveTermType(EquationSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar)
+        public SolveTermType(EquationSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, 
+            string probSolveVar)
             : this(eqSet, lt, solveVars, probSolveVar, "Solve for ")
         {
         }

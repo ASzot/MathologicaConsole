@@ -59,6 +59,11 @@ namespace MathSolverWebsite.MathSolverLibrary
                 if (!singularEqSet.FixEqFuncDefs(ref pEvalData))
                     return null;
 
+                if (singularEqSet.IsLinearAlgebraTerm())
+                {
+                    return new LinearAlgebraSolve(singularEqSet);
+                }
+
                 return new SolveTermType(singularEqSet, completeLexemeTable, solveVars, probSolveVar);
             }
         }

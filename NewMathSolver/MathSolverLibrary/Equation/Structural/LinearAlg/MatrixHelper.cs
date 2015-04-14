@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
+using MathSolverWebsite.MathSolverLibrary.Equation;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural;
+using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
@@ -48,6 +51,25 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             return new ExVector(exs.ToArray());
         }
 
+        public static ExComp PowOpCombine(ExMatrix mat, ExComp ex)
+        {
+            if (ex is ExMatrix)
+                return null;
+
+            if (ex is AlgebraComp && (ex as AlgebraComp).Var.Var == "T")
+            {
+                // This is the transpose operation.
+                return mat.Transpose();
+            }
+
+            mat.ModifyEach((ExComp comp) =>
+                {
+                    return PowOp.StaticCombine(comp, ex);
+                });
+
+            return mat;
+        }
+
         public static ExComp AdOpCombine(ExMatrix mat0, ExComp ex)
         {
             if (!(ex is ExMatrix))
@@ -68,7 +90,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                     finalMat.Set(i, j, AddOp.StaticCombine(mat0.Get(i, j), mat1.Get(i, j)));
                 }
             }
-
+            if (m == 1)
+                return finalMat.GetRowVec(0);
             return finalMat;
         }
 
@@ -76,6 +99,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         {
             if (!(ex is ExMatrix))
             {
+                if (!(ex is Number))
+                    return null;
                 mat0.ModifyEach((ExComp ele) =>
                 {
                     return MulOp.StaticCombine(ele, ex);
@@ -123,6 +148,38 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 return mat;
             }
             return null;
+        }
+
+        public static bool TermContainsMatrices(ExComp ex)
+        {
+            if (ex is ExMatrix)
+                return true;
+            if (ex is PowerFunction)
+            {
+                PowerFunction pf = ex as PowerFunction;
+                return TermContainsMatrices(pf.Base) || TermContainsMatrices(pf.Power);
+            }
+            else if (ex is LogFunction)
+            {
+                LogFunction log = ex as LogFunction;
+                return TermContainsMatrices(log.Base) || TermContainsMatrices(log.InnerTerm);
+            }
+            else if (ex is ChooseFunction)
+            {
+                ChooseFunction choose = ex as ChooseFunction;
+                return TermContainsMatrices(choose.Bottom) || TermContainsMatrices(choose.Top);
+            }
+            else if (ex is AlgebraTerm)
+            {
+                AlgebraTerm term = ex as AlgebraTerm;
+                foreach (var subComp in term.SubComps)
+                {
+                    if (TermContainsMatrices(subComp))
+                        return true;
+                }
+            }
+
+            return false;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
@@ -19,7 +20,6 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private string[] _graphEqStrs = null;
         private InputType _inputType = InputType.Invalid;
         private InputAddType _inputAddType = InputAddType.Invalid;
-
 
         public string InputTypeStr
         {
@@ -94,6 +94,15 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         public virtual bool UseRad
         {
             get { return _useRad; }
+        }
+
+        /// <summary>
+        /// Only use when the angle mode will be restored shortly after.
+        /// </summary>
+        /// <param name="useRad"></param>
+        public void TmpSetUseRad(bool useRad)
+        {
+            _useRad = useRad;
         }
 
         public virtual WorkMgr WorkMgr

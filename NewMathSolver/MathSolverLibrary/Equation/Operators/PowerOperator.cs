@@ -1,5 +1,6 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 using System;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 {
@@ -7,6 +8,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
     {
         private const int MAX_BINOM_COMPLEXITY = 20;
         private const int MAX_COMPLEXITY = 1000;
+
+        /// <summary>
+        /// Raises 'e' to the given power.
+        /// </summary>
+        /// <param name="power"></param>
+        /// <returns></returns>
+        public static ExComp Exp(ExComp power)
+        {
+            return new PowerFunction(Constant.E, power);
+        }
 
         public static ExComp RaiseNumToNum(ExComp ex1, ExComp ex2)
         {
@@ -180,6 +191,29 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             if (Number.Zero.IsEqualTo(ex2))
                 return Number.One;
 
+            if (ex1 is ExMatrix || ex2 is ExMatrix)
+            {
+                ExMatrix mat;
+                ExComp other;
+                if (ex1 is ExMatrix)
+                {
+                    mat = ex1 as ExMatrix;
+                    other = ex2;
+                }
+                else
+                {
+                    mat = ex2 as ExMatrix;
+                    other = ex1;
+                }
+
+                // With pow op combines it can either be done or it can't. There is no
+                // weak combine in between. 
+                ExComp atmpt = MatrixHelper.PowOpCombine(mat, other);
+                if (atmpt == null)
+                    return Number.Undefined;
+                return atmpt;
+            }
+
             if (ex1 is Number && ex2 is Number)
             {
                 ExComp result = RaiseNumToNum(ex1, ex2);
@@ -266,6 +300,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                     return Number.One;
                 else if ((ex2 as Number) == 1.0)
                     return ex1;
+            }
+            if (ex1 is ExMatrix && ex2 is AlgebraComp && (ex2 as AlgebraComp).Var.Var == "T")
+            {
+                // This is the transpose operation.
+                return new Transpose(ex1 as ExMatrix);
             }
             return new PowerFunction(ex1, ex2);
         }

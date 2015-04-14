@@ -278,7 +278,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             s_name = name;
         }
 
-        public static ExComp Parse(string parseStr, ExComp innerEx)
+        public static ExComp Parse(string parseStr, ExComp innerEx, ref List<string> pParseErrors)
         {
             if (parseStr == "sin")
                 return new SinFunction(innerEx);
@@ -314,6 +314,21 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                 return new ACotFunction(innerEx);
             else if (parseStr == "sqrt")
                 return new AlgebraTerm(innerEx, new Operators.PowOp(), new AlgebraTerm(Number.One, new Operators.DivOp(), new Number(2.0)));
+            else if (parseStr == "det")
+            {
+                var exMat = innerEx as Structural.LinearAlg.ExMatrix;
+                if (exMat == null)
+                {
+                    pParseErrors.Add("Can only take the determinant of matrices.");
+                    return null;
+                }
+
+                return new Structural.LinearAlg.Determinant(exMat);
+            }
+            else if (parseStr == "!")
+            {
+                return new FactorialFunction(innerEx);
+            }
             else
                 return null;
         }

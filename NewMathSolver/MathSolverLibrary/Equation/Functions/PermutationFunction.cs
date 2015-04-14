@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 {
-    internal class ChooseFunction : AppliedFunction_NArgs
+    class PermutationFunction : AppliedFunction_NArgs
     {
         private const string IDEN = "C";
         public ExComp Bottom
@@ -27,7 +31,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             get { return Bottom.ToAlgTerm(); }
         }
 
-        public ChooseFunction(ExComp top, ExComp bottom)
+        public PermutationFunction(ExComp top, ExComp bottom)
             : base(FunctionType.ChooseFunction, typeof(ChooseFunction),
             top is AlgebraTerm ? (top as AlgebraTerm).RemoveRedundancies() : top,
             bottom is AlgebraTerm ? (bottom as AlgebraTerm).RemoveRedundancies() : bottom)
@@ -58,24 +62,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             {
                 FactorialFunction nFactorial = new FactorialFunction(n);
 
-                FactorialFunction kFactorial = new FactorialFunction(k);
-
                 FactorialFunction nMinusKFactorial = new FactorialFunction(Operators.SubOp.StaticCombine(n, k));
 
                 ExComp nFactEval = nFactorial.Evaluate(harshEval, ref pEvalData);
                 if (Number.IsUndef(nFactEval))
                     return Number.Undefined;
 
-                ExComp kFactEval = kFactorial.Evaluate(harshEval, ref pEvalData);
-                if (Number.IsUndef(kFactEval))
-                    return Number.Undefined;
-
                 ExComp nMinusKFactEval = nMinusKFactorial.Evaluate(harshEval, ref pEvalData);
                 if (Number.IsUndef(nMinusKFactEval))
                     return Number.Undefined;
 
-                ExComp divBy = Operators.MulOp.StaticCombine(kFactEval, nMinusKFactEval);
-                return Operators.DivOp.StaticCombine(nFactEval, divBy);
+                return Operators.DivOp.StaticCombine(nFactEval, nMinusKFactEval);
             }
 
             return this;

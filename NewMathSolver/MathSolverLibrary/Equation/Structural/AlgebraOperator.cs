@@ -19,6 +19,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 return new PowOp();
             else if (parseStr == "circ")
                 return new DotOperator();
+            else if (parseStr == Equation.Operators.CrossProductOp.IDEN)
+                return new CrossProductOp();
+            else if (parseStr == Equation.Operators.CompWiseMul.IDEN)
+                return new CompWiseMul();
+            else if (parseStr == "text(P)")
+                return new PermutationOp();
+            else if (parseStr == "text(C)")
+                return new CombinationOp();
             else
                 return null;
         }

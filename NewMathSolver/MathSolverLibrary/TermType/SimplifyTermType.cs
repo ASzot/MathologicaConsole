@@ -1,6 +1,7 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
 using MathSolverWebsite.MathSolverLibrary.Equation.Term;
 using MathSolverWebsite.MathSolverLibrary.Parsing;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -73,10 +74,35 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 tmpCmds.Add("Divide");
             }
 
+            if (_term is ExMatrix)
+            {
+                if (_term is ExVector)
+                {
+                    tmpCmds.Add("Normalize");
+                }
+                else
+                {
+                    tmpCmds.Add("Find determinant");
+                    tmpCmds.Add("Transpose");
+                }
+            }
+
+
             tmpCmds.Add(KEY_SIMPLIFY);
 
-            if (_numPolyInfo == null && _denPolyInfo == null && !(term is AlgebraFunction) && solveVarKeys.Count != 0)
+            if (!(_term is ExMatrix) && _numPolyInfo == null && _denPolyInfo == null && !(term is AlgebraFunction) && 
+                solveVarKeys.Count != 0)
                 tmpCmds.Add("Factor");
+
+            if (term is Number)
+            {
+                Number num = term as Number;
+                if (num.HasImaginaryComp())
+                {
+                    tmpCmds.Add("To polar form");
+                    tmpCmds.Add("To exponential form");
+                }
+            }
 
             if (!(_term is Equation.Functions.Calculus.Derivative ||
                 term is Equation.Functions.Calculus.Limit ||
@@ -183,6 +209,48 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (command == KEY_SIMPLIFY)
             {
                 return SimplfyTerm(_term.Clone(), ref pEvalData);
+            }
+            else if (command == "To polar form")
+            {
+                Number num = _term as Number;
+                if (num == null)
+                    return SolveResult.Failure();
+
+                return SolveResult.Simplified(num.ToPolarForm(ref pEvalData));
+            }
+            else if (command == "To exponential form")
+            {
+                Number num = _term as Number;
+                if (num == null)
+                    return SolveResult.Failure();
+
+                return SolveResult.Simplified(num.ToExponentialForm(ref pEvalData));
+            }
+            else if (command == "Normalize")
+            {
+                ExVector vec = _term as ExVector;
+                if (vec == null)
+                    return SolveResult.Failure();
+
+                return SolveResult.Simplified(vec.Normalize());
+            }
+            else if (command == "Find determinant")
+            {
+                ExMatrix mat = _term as ExMatrix;
+                if (mat == null)
+                    return SolveResult.Failure();
+
+                Determinant det = new Determinant(mat);
+
+                return SolveResult.Simplified(det.Evaluate(false, ref pEvalData));
+            }
+            else if (command == "Transpose")
+            {
+                ExMatrix mat = _term as ExMatrix;
+                if (mat == null)
+                    return SolveResult.Failure();
+
+                return SolveResult.Simplified(mat.Transpose());
             }
             else if (command == "Factor")
             {

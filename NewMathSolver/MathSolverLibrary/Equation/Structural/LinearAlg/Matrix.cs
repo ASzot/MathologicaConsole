@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System;
+using System; 
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
@@ -70,6 +70,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             get { return _exData.Length > 0 ? _exData[0].Length : 0; }
         }
 
+        public bool IsSquare
+        {
+            get { return Cols == Rows; }
+        }
+
         public ExMatrix(int rows, int cols)
         {
             _exData = new ExComp[rows][];
@@ -113,6 +118,42 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             }
 
             return new ExVector(data);
+        }
+
+        public ExMatrix GetMatrixMinor(int cancelRow, int cancelCol)
+        {
+            ExComp[][] comps = new ExComp[Rows - 1][];
+            for (int i = 0; i < Rows - 1; ++i)
+                comps[i] = new ExComp[Cols - 1];
+
+            for (int i = 0; i < Rows; ++i)
+            {
+                if (i == cancelRow)
+                    continue;
+                for (int j = 0; j < Cols; ++j)
+                {
+                    if (j == cancelCol)
+                        continue;
+                    comps[i][j] = _exData[i][j];
+                }
+            }
+
+            return new ExMatrix(comps);
+        }
+
+        public ExMatrix Transpose()
+        {
+            ExComp[][] transposedData = new ExComp[Cols][];
+            for (int i = 0; i < Cols; ++i)
+            {
+                transposedData[i] = new ExComp[Rows];
+                for (int j = 0; j < Rows; ++j)
+                {
+                    transposedData[i][j] = _exData[j][i];
+                }
+            }
+
+            return new ExMatrix(transposedData);
         }
 
         public void ModifyEach(Func<ExComp, ExComp> func)

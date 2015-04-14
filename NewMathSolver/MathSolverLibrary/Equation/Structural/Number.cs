@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
+using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation
 {
@@ -992,6 +994,31 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             }
 
             return d_realComp.ToString();
+        }
+
+        public ExComp ToPolarForm(ref TermType.EvalData pEvalData)
+        {
+            ExComp mag, angle;
+            GetPolarData(out mag, out angle, ref pEvalData);
+
+            bool origRadVal = pEvalData.UseRad;
+            pEvalData.TmpSetUseRad(true);
+
+            ExComp result = MulOp.StaticCombine(mag,
+                SubOp.StaticCombine(new CosFunction(angle), 
+                MulOp.StaticCombine(Number.ImagOne, new SinFunction(angle))));
+
+            pEvalData.TmpSetUseRad(origRadVal);
+
+            return result;
+        }
+
+        public ExComp ToExponentialForm(ref TermType.EvalData pEvalData)
+        {
+            ExComp mag, angle;
+            GetPolarData(out mag, out angle, ref pEvalData);
+
+            return MulOp.StaticCombine(mag, PowOp.Exp(MulOp.StaticCombine(angle, Number.ImagOne)));
         }
     }
 }

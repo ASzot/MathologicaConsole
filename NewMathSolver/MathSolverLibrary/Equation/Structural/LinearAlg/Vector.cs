@@ -22,6 +22,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             }
         }
 
+        public ExVector(int length)
+            : base(1, length)
+        {
+
+        }
+
         public ExVector(params ExComp[] exs)
             : base(exs)
         {
@@ -31,6 +37,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         public ExComp Get(int index)
         {
             return Get(0, index);
+        }
+
+        public void Set(int index, ExComp val)
+        {
+            Set(0, index, val);
         }
 
         public static ExComp Dot(ExVector vec0, ExVector vec1)
@@ -45,6 +56,31 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 totalSum = AddOp.StaticCombine(prod, totalSum);
             }
             return totalSum;
+        }
+
+        public ExComp GetVecLength()
+        {
+            ExComp sum = Number.Zero;
+            for (int i = 0; i < this.Length; ++i)
+            {
+                sum = AddOp.StaticCombine(Get(i), sum);
+            }
+
+            return PowOp.StaticCombine(sum, AlgebraTerm.FromFraction(Number.One, new Number(2.0)));
+        }
+
+        public ExVector Normalize()
+        {
+            ExVector vec = new ExVector(this.Length);
+            ExComp vecLength = GetVecLength();
+
+            for (int i = 0; i < this.Length; ++i)
+            {
+                ExComp setVal = DivOp.StaticCombine(this.Get(i), vecLength);
+                vec.Set(i, setVal);
+            }
+
+            return vec;
         }
     }
 }

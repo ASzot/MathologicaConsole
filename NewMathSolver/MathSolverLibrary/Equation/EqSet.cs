@@ -1,6 +1,7 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
 using MathSolverWebsite.MathSolverLibrary.Equation.Term;
 using MathSolverWebsite.MathSolverLibrary.Parsing;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 using System.Collections.Generic;
 using LexemeTable = System.Collections.Generic.List<
 MathSolverWebsite.MathSolverLibrary.TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>>;
@@ -343,6 +344,16 @@ namespace MathSolverWebsite.MathSolverLibrary
                 subbed = subbed.ApplyOrderOfOperations();
                 _sides[i] = subbed.MakeWorkable();
             }
+        }
+
+        public bool IsLinearAlgebraTerm()
+        {
+            ExComp leftEx = Left;
+            ExComp rightEx = Right;
+
+            return leftEx is ExMatrix || rightEx is ExMatrix ||
+                MatrixHelper.TermContainsMatrices(leftEx) ||
+                MatrixHelper.TermContainsMatrices(leftEx);
         }
     }
 }
