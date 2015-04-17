@@ -389,6 +389,24 @@ namespace MathSolverWebsite
                 }
             }
 
+            if (evalData.InputTypeStr != null)
+            {
+                WriteLineColor(ConsoleColor.DarkGreen, "Topic is " + evalData.InputTypeStr);
+            }
+
+            if (evalData.GraphEqStrs != null)
+            {
+                string finalGraphStr = "";
+                for (int i = 0; i < evalData.GraphEqStrs.Length; ++i)
+                {
+                    finalGraphStr += evalData.GraphEqStrs[i];
+                    if (i != evalData.GraphEqStrs.Length - 1)
+                        finalGraphStr += "; ";
+                }
+
+                WriteLineColor(ConsoleColor.White, "Graph " + finalGraphStr);
+            }
+
             if (!result.Success)
             {
                 WriteLineColor(ConsoleColor.DarkRed, "Failure");

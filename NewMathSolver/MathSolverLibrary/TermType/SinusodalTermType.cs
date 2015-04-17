@@ -78,7 +78,11 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 return false;
 
             if (solveVars.Count > 1)
+            {
+                if (!(left is AlgebraComp && !right.ToAlgTerm().Contains(left as AlgebraComp)) &&
+                    !(right is AlgebraComp && !left.ToAlgTerm().Contains(right as AlgebraComp)))
                 return false;
+            }
 
             if (!eqInfo.HasOnlyOrFunctions(FunctionType.Sinusodal))
                 return false;

@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
+using MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector;
+
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 {
     internal abstract class AppliedFunction : AlgebraFunction
@@ -325,12 +328,30 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
                 return new Structural.LinearAlg.Determinant(exMat);
             }
+            else if (parseStr == "curl")
+            {
+                if (innerEx is AlgebraTerm)
+                    innerEx = (innerEx as AlgebraTerm).RemoveRedundancies();
+                if (!CurlFunc.IsSuitableField(innerEx))
+                    return null;
+                
+                return new CurlFunc(innerEx);
+            }
+            else if (parseStr == "div")
+            {
+                if (innerEx is AlgebraTerm)
+                    innerEx = (innerEx as AlgebraTerm).RemoveRedundancies();
+                if (!DivergenceFunc.IsSuitableField(innerEx))
+                    return null;
+
+                return new DivergenceFunc(innerEx);
+            }
             else if (parseStr == "!")
             {
                 return new FactorialFunction(innerEx);
             }
-            else
-                return null;
+
+            return null;
         }
 
         public override string FinalToDispStr()

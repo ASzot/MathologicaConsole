@@ -705,7 +705,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             {
                 for (int j = 0; j < Cols; ++j)
                 {
-                    if (_exData[i][j] is AlgebraTerm)
+                    if (_exData[i][j] is AlgebraFunction)
                     {
                         var addRest = (_exData[i][j] as AlgebraFunction).GetDomain(varFor, agSolver, ref pEvalData);
                         allDomain.AddRange(addRest);

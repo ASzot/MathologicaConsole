@@ -14,6 +14,26 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             get { return base.Cols; }
         }
 
+        public ExComp X
+        {
+            get { return Get(0); }
+        }
+
+        public ExComp Y
+        {
+            get { return Get(1); }
+        }
+
+        public ExComp Z
+        {
+            get 
+            {
+                // Not all vectors will have Z component whereas 
+                // they are garunteed to have a least an x and y component.
+                return 2 < Length ? Get(2) : Number.Zero; 
+            }
+        }
+
         public ExComp[] Components
         {
             get

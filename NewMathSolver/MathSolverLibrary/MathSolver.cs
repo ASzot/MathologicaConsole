@@ -36,10 +36,14 @@ namespace MathSolverWebsite.MathSolverLibrary
 
             if (singularEqSet.IsSingular)
             {
+                bool isFuncDef = false;
+                if (singularEqSet.Left is FunctionDefinition)
+                    isFuncDef = true;
+
                 if (!singularEqSet.FixEqFuncDefs(ref pEvalData))
                     return null;
                 // The single term is always in the left component.
-                return new SimplifyTermType(singularEqSet.Left, completeLexemeTable, solveVars, probSolveVar);
+                return new SimplifyTermType(singularEqSet.Left, completeLexemeTable, solveVars, probSolveVar, isFuncDef);
             }
             else
             {

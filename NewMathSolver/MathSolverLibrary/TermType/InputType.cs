@@ -53,7 +53,9 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         IntParts = 39,
         IntUSub = 40,
 
-        Invalid = 41,
+        PartialDerivative,
+
+        Invalid,
     };
 
     enum InputAddType
@@ -83,6 +85,12 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             return InputType.Invalid;
         }
 
+        /// <summary>
+        /// Can return null if it is an invalid input type.
+        /// </summary>
+        /// <param name="inputType"></param>
+        /// <param name="inputAddType"></param>
+        /// <returns></returns>
         public static string ToDescStr(InputType inputType, InputAddType inputAddType)
         {
             string retStr;
@@ -163,11 +171,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 retStr = "integration of polynomials";
             else if (inputType == (InputType.IntUSub))
                 retStr = "integration with u-substitution";
+            else if (inputType == InputType.PartialDerivative)
+                retStr = "partial derivatives";
             else
                 return null;
 
             if (inputAddType == InputAddType.DerivCR)
-                return "use the chain rule of derivatives with " + retStr;
+                return "use the chain rule with " + retStr;
             else if (inputAddType == InputAddType.IntDef)
                 return "indefinite integration with " + retStr;
 

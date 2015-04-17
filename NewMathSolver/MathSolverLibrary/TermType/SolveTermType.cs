@@ -92,8 +92,22 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             }
 
             solveVarKeys.Insert(0, probSolveVar);
-
             List<string> cmds = new List<string>();
+            
+            if (_eqSet.Left is AlgebraComp)
+            {
+                string graphStr = _eqSet.Right.ToJavaScriptString(false);
+                if (graphStr != null)
+                    cmds.Add("Graph");
+            }
+
+            if (cmds.Count == 0 && _eqSet.Right is AlgebraComp)
+            {
+                string graphStr = _eqSet.Left.ToJavaScriptString(false);
+                if (graphStr != null)
+                    cmds.Add("Graph");
+            }
+
             for (int i = 0; i < solveVarKeys.Count; ++i)
             {
                 cmds.Add(s_promptStrs[0] + solveVarKeys[i]);
@@ -173,6 +187,25 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 result.RemoveUndefinedSolutions();
 
                 return result;
+            }
+            else if (command == "Graph")
+            {
+                string graphStr = null;
+                if (_eqSet.Left is AlgebraComp)
+                {
+                    graphStr = _eqSet.Right.ToJavaScriptString(pEvalData.UseRad);
+                }
+
+                if (graphStr == null && _eqSet.Right is AlgebraComp)
+                {
+                    graphStr = _eqSet.Left.ToJavaScriptString(pEvalData.UseRad);
+                }
+
+                if (graphStr == null)
+                    return SolveResult.Failure();
+
+                pEvalData.AttemptSetGraphData(graphStr);
+                return SolveResult.Solved();
             }
 
             return SolveResult.InvalidCmd(ref pEvalData);

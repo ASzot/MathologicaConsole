@@ -41,6 +41,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
             return new KeyValuePair<FunctionDefinition, ExComp>(null, null);
         }
 
+        public int GetFuncArgCount(string iden)
+        {
+            foreach (var def in _defs)
+            {
+                if (iden == def.Key.Iden.Var.Var)
+                    return def.Key.InputArgCount;           
+            }
+
+            return -1;
+        }
+
         public FunctionDefinition GetFuncDef(string idenStr)
         {
             foreach (var def in _defs)

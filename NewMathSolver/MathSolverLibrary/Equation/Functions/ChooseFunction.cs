@@ -103,26 +103,26 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override string FinalToAsciiKeepFormatting()
         {
-            return "(_{" + TopTerm.FinalToAsciiKeepFormatting() + "} " + IDEN + 
-                " _{" + BottomTerm.FinalToAsciiKeepFormatting() + "})";
+            return "_{" + TopTerm.FinalToAsciiKeepFormatting() + "} " + IDEN + 
+                " _{" + BottomTerm.FinalToAsciiKeepFormatting() + "}";
         }
 
         public override string FinalToAsciiString()
         {
-            return "(_{" + TopTerm.FinalToAsciiString() + "} " + IDEN +
-                " _{" + BottomTerm.FinalToAsciiString() + "})";
+            return "_{" + TopTerm.FinalToAsciiString() + "} " + IDEN +
+                " _{" + BottomTerm.FinalToAsciiString() + "}";
         }
 
         public override string FinalToTexKeepFormatting()
         {
-            return "(_{" + TopTerm.FinalToTexKeepFormatting() + "} " + IDEN +
-                " _{" + BottomTerm.FinalToTexKeepFormatting() + "})";
+            return "_{" + TopTerm.FinalToTexKeepFormatting() + "} " + IDEN +
+                " _{" + BottomTerm.FinalToTexKeepFormatting() + "}";
         }
 
         public override string FinalToTexString()
         {
-            return "(_{" + TopTerm.FinalToTexString() + "} " + IDEN +
-                " _{" + BottomTerm.FinalToTexString() + "})";
+            return "_{" + TopTerm.FinalToTexString() + "} " + IDEN +
+                " _{" + BottomTerm.FinalToTexString() + "}";
         }
     }
 }

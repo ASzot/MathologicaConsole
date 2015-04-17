@@ -9,6 +9,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         private ExComp[] _callArgs;
         private AlgebraComp _iden;
 
+        /// <summary>
+        /// The supplied arguments to the function.
+        /// They are not defined they are given.
+        /// Example is f(2) but not f(x)
+        /// </summary>
         public ExComp[] CallArgs
         {
             set { _callArgs = value; }
@@ -30,6 +35,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             get { return _args.Length; }
         }
 
+        public bool IsMultiValued
+        {
+            get { return _args.Length != 1; }
+        }
+
+        /// <summary>
+        /// The defined arguments to the function.
+        /// These are not supplied.
+        /// Example is f(x) but not f(2)
+        /// </summary>
         public AlgebraComp[] InputArgs
         {
             get { return _args; }
@@ -102,6 +117,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return new FunctionDefinition(_iden, _args, _callArgs);
         }
 
+        public bool IsArg(string argIden)
+        {
+            foreach (AlgebraComp arg in _args)
+            {
+                if (arg.Var.Var == argIden)
+                    return true;
+            }
+
+            return false;
+        }
+
         public override double GetCompareVal()
         {
             return 1.0;
@@ -162,6 +188,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToAsciiString()
         {
+            if (_args == null || _args.Length == 0)
+                return _iden.ToAsciiString();
             string funcStr = _iden.ToAsciiString() + "(";
             for (int i = 0; i < _args.Length; ++i)
             {
@@ -185,6 +213,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToString()
         {
+            if (_args == null || _args.Length == 0)
+                return _iden.ToString();
             string funcStr = _iden.ToString() + "(";
             for (int i = 0; i < _args.Length; ++i)
             {
@@ -203,6 +233,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToTexString()
         {
+            if (_args == null || _args.Length == 0)
+                return _iden.ToTexString();
             string funcStr = _iden.ToTexString() + "(";
             for (int i = 0; i < _args.Length; ++i)
             {

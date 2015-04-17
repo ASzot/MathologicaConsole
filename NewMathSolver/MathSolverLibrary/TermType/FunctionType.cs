@@ -114,7 +114,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             solveVarKeys.Insert(0, probSolveVar);
 
             List<string> tmpCmds = new List<string>();
-            if (_func.InputArgCount == 1 && _assignTo.ToAlgTerm().Contains(_func.InputArgs[0]))
+            if (!_func.IsMultiValued && _assignTo.ToAlgTerm().Contains(_func.InputArgs[0]))
                 tmpCmds.Add("Find inverse");
             tmpCmds.Add("Assign function");
             for (int i = 0; i < solveVarKeys.Count; ++i)
@@ -122,7 +122,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 tmpCmds.Add("Domain of " + solveVarKeys[i]);
             }
 
-            if (solveVars.Count == 1)
+            if (solveVars.Count == 1 && !_func.IsMultiValued)
             {
                 AlgebraTerm term = _assignTo.ToAlgTerm();
                 string graphStr = term.ToJavaScriptString(true);

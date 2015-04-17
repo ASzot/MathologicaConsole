@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 {
@@ -88,14 +89,36 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             if (innerEx is Derivative)
             {
                 Derivative innerDeriv = innerEx as Derivative;
-                if (innerDeriv.WithRespectTo.IsEqualTo(_dVar) && innerDeriv.DerivOf == null && innerDeriv.Order == 1)
+                if (innerDeriv.WithRespectTo.IsEqualTo(_dVar) && innerDeriv.DerivOf == null && innerDeriv.OrderInt == 1)
                 {
                     pEvalData.WorkMgr.FromSides(this, null, "The integral and the derivative cancel.");
                     return innerDeriv.InnerTerm;
                 }
             }
+            else if (innerEx is ExVector && !IsDefinite)
+            {
+                ExVector vec = innerEx as ExVector;
+                // Take the anti derivative of each component seperately.
 
-            AlgebraTerm indefinite = Indefinite(ref pEvalData);
+                ExVector antiDerivVec = new ExVector(vec.Length);
+
+                // Work steps should go here.
+
+                for (int i = 0; i < vec.Length; ++i)
+                {
+                    ExComp antiDeriv = Indefinite(vec.Get(i), ref pEvalData);
+                    antiDerivVec.Set(i, antiDeriv);
+                }
+
+                return antiDerivVec;
+            }
+            else if (innerEx is ExMatrix)
+            {
+                // Don't know if this works.
+                return Number.Undefined;
+            }
+
+            AlgebraTerm indefinite = Indefinite(InnerTerm, ref pEvalData);
             if (_failure)
                 return indefinite;      // Just 'this'
 
@@ -150,12 +173,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return result;
         }
 
-        private AlgebraTerm Indefinite(ref TermType.EvalData pEvalData)
+        private AlgebraTerm Indefinite(ExComp takeEx, ref TermType.EvalData pEvalData)
         {
-            string thisStr = FinalToDispStr();
+            string thisStr = takeEx.ToAlgTerm().FinalToDispStr();
 
             // Split the integral up by groups.
-            List<ExComp[]> gps = InnerTerm.Clone().ToAlgTerm().GetGroupsNoOps();
+            List<ExComp[]> gps = takeEx.Clone().ToAlgTerm().GetGroupsNoOps();
 
             if (gps.Count == 0)
             {

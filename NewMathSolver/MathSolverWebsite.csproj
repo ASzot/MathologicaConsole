@@ -91,6 +91,10 @@
     <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\IntegrationInfo.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Limit.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\PartialFracs.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Vector\CurlFunc.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Vector\DivergenceFunc.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Vector\GradientFunc.cs" />
+    <Compile Include="MathSolverLibrary\Equation\Functions\Calculus\Vector\VectorFieldOperation.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\ChooseFunction.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\FactorialFunction.cs" />
     <Compile Include="MathSolverLibrary\Equation\Functions\LogFunction.cs" />
@@ -163,6 +167,7 @@
     <Compile Include="MathSolverLibrary\Solving\TrigSolve.cs" />
     <Compile Include="MathSolverLibrary\TermType\EqualityCheckTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\EquationSystemTermType.cs" />
+    <Compile Include="MathSolverLibrary\TermType\EvalData.cs" />
     <Compile Include="MathSolverLibrary\TermType\FunctionType.cs" />
     <Compile Include="MathSolverLibrary\TermType\InputType.cs" />
     <Compile Include="MathSolverLibrary\TermType\LinearAlgebraSolve.cs" />

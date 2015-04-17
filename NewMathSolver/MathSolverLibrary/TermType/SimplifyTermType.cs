@@ -21,7 +21,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _agSolver = new AlgebraSolver();
         }
 
-        public SimplifyTermType(ExComp term, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar)
+        public SimplifyTermType(ExComp term, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar, bool isFuncDef = false)
             : base()
         {
             _term = term;
@@ -68,6 +68,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 logOptionsCount = 2;
 
             List<string> tmpCmds = new List<string>();
+            if (isFuncDef)
+                tmpCmds.Add(KEY_SIMPLIFY);
 
             if (_numPolyInfo != null && _denPolyInfo != null && _numPolyInfo.MaxPow > _denPolyInfo.MaxPow)
             {
@@ -87,8 +89,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 }
             }
 
-
-            tmpCmds.Add(KEY_SIMPLIFY);
+            if (!tmpCmds.Contains(KEY_SIMPLIFY))
+                tmpCmds.Add(KEY_SIMPLIFY);
 
             if (!(_term is ExMatrix) && _numPolyInfo == null && _denPolyInfo == null && !(term is AlgebraFunction) && 
                 solveVarKeys.Count != 0)
@@ -109,6 +111,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 term is Equation.Functions.SumFunction ||
                 term is Equation.Functions.ChooseFunction ||
                 term is Equation.Functions.FactorialFunction ||
+                term is Equation.Functions.Calculus.Vector.FieldTransformation ||
                 term is Equation.Functions.Calculus.Integral))
             {
                 for (int i = 1; i < solveVarKeys.Count + 1; ++i)

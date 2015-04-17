@@ -24,7 +24,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
         Constant,
         EquationSeperator,
         FunctionDef,
+
         Comma,
+
         Derivative,
         FuncDeriv,
         Integral,

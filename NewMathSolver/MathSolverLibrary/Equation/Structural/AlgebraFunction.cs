@@ -20,6 +20,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         Limit,
         Deteriment, 
         Transpose,
+        Gradient,
+        Curl,
+        Divergence,
     };
 
     internal abstract class AlgebraFunction : AlgebraTerm
