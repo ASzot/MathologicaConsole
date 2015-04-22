@@ -71,7 +71,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (_funcIden is FunctionDefinition)
             {
                 tt_func = new FunctionTermType();
-                if (!tt_func.Init(new EquationSet(_funcIden, left == null ? right : left, LexemeType.EqualsOp), lexemeTable, solveVars, probSolveVar))
+                if (!tt_func.Init(new EqSet(_funcIden, left == null ? right : left, LexemeType.EqualsOp), lexemeTable, solveVars, probSolveVar))
                     tt_func = null;
             }
 
@@ -87,7 +87,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (promptStr == null)
                 return false;
 
-            tt_solve = new SolveTermType(new EquationSet(overall, Number.Zero, LexemeType.EqualsOp), lexemeTable, solveVars,
+            tt_solve = new SolveTermType(new EqSet(overall, Number.Zero, LexemeType.EqualsOp), lexemeTable, solveVars,
                 probSolveVar, promptStr);
 
             int groupCount = overall.GroupCount;

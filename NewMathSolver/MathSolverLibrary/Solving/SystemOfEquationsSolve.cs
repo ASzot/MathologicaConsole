@@ -42,7 +42,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             p_agSolver = pAgSolver;
         }
 
-        public static bool DoAssignments(ref List<EquationSet> equations)
+        public static bool DoAssignments(ref List<EqSet> equations)
         {
             if (equations.Count == 1)
                 return false;
@@ -54,7 +54,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             for (int i = 0; i < equations.Count; ++i)
             {
-                EquationSet eqSet = equations[i];
+                EqSet eqSet = equations[i];
                 if (eqSet.Sides.Count != 2)
                     continue;
 
@@ -83,7 +83,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             return anySubbed;
         }
 
-        public SolveResult SolveEquationArray(List<EquationSet> equations, List<LexemeTable> lexemeTables, Dictionary<string, int> allIdens, ref TermType.EvalData pEvalData)
+        public SolveResult SolveEquationArray(List<EqSet> equations, List<LexemeTable> lexemeTables, Dictionary<string, int> allIdens, ref TermType.EvalData pEvalData)
         {
             DoAssignments(ref equations);
 
@@ -112,7 +112,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 throw new ArgumentException("Solve method is an impossible type.");
         }
 
-        private EquationSet? CombineEquations(AlgebraVar eliminate, EquationSet eq0, EquationSet eq1, ref TermType.EvalData pEvalData)
+        private EqSet? CombineEquations(AlgebraVar eliminate, EqSet eq0, EqSet eq1, ref TermType.EvalData pEvalData)
         {
             AlgebraComp elimAgComp = eliminate.ToAlgebraComp();
 
@@ -194,10 +194,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             pEvalData.WorkMgr.FromSides(finalLeft, finalRight, "The resulting combined equation.");
 
-            return new EquationSet(finalLeft, finalRight, Parsing.LexemeType.EqualsOp);
+            return new EqSet(finalLeft, finalRight, Parsing.LexemeType.EqualsOp);
         }
 
-        private void DoSub(int index, ref List<EquationSet> completeEqs, ref TermType.EvalData pEvalData, AlgebraComp solveForComp, ExComp result)
+        private void DoSub(int index, ref List<EqSet> completeEqs, ref TermType.EvalData pEvalData, AlgebraComp solveForComp, ExComp result)
         {
             AlgebraTerm data1 = completeEqs[index].LeftTerm;
             AlgebraTerm data2 = completeEqs[index].RightTerm;
@@ -263,20 +263,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             return lowestComplexityVar.Var;
         }
 
-        private bool SolveEliminationRecur(List<EquationSet> equations, AlgebraSolver agSolver, AlgebraVar eliminate, ref List<EquationSet> iterGenerations, ref TermType.EvalData pEvalData)
+        private bool SolveEliminationRecur(List<EqSet> equations, AlgebraSolver agSolver, AlgebraVar eliminate, ref List<EqSet> iterGenerations, ref TermType.EvalData pEvalData)
         {
             iterGenerations.Add(equations[0]);
 
             if (equations.Count == 1)
                 return true;
 
-            List<EquationSet> finalEquationSets = new List<EquationSet>();
+            List<EqSet> finalEquationSets = new List<EqSet>();
             for (int i = 1; i < equations.Count; ++i)
             {
-                EquationSet eq0 = equations[i - 1];
-                EquationSet eq1 = equations[i];
+                EqSet eq0 = equations[i - 1];
+                EqSet eq1 = equations[i];
 
-                EquationSet? combined = CombineEquations(eliminate, eq0, eq1, ref pEvalData);
+                EqSet? combined = CombineEquations(eliminate, eq0, eq1, ref pEvalData);
                 if (!combined.HasValue)
                 {
                     pEvalData.AddFailureMsg("Error on combining system of equations.");
@@ -292,7 +292,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             return SolveEliminationRecur(finalEquationSets, agSolver, eliminate, ref iterGenerations, ref pEvalData);
         }
 
-        private SolveResult SolveEquationArrayElimination(List<EquationSet> equations, Dictionary<string, int> allIdens, ref TermType.EvalData pEvalData)
+        private SolveResult SolveEquationArrayElimination(List<EqSet> equations, Dictionary<string, int> allIdens, ref TermType.EvalData pEvalData)
         {
             p_agSolver.CreateUSubTable(allIdens);
 
@@ -300,7 +300,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             if (pEvalData.WorkMgr.AllowWork)
             {
-                var sides = EquationSet.GetSides(equations).ToList();
+                var sides = EqSet.GetSides(equations).ToList();
                 string finalStr = "";
                 for (int i = 0; i < sides.Count; i += 2)
                 {
@@ -310,7 +310,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 pEvalData.WorkMgr.FromFormatted(finalStr, "Solve this system of equations by elimination.", sides.ToArray());
             }
 
-            List<EquationSet> iterGenerations = new List<EquationSet>();
+            List<EqSet> iterGenerations = new List<EqSet>();
 
             if (!SolveEliminationRecur(equations, p_agSolver, eliminate, ref iterGenerations, ref pEvalData))
                 return SolveResult.Failure();
@@ -349,7 +349,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
                 iterGenerations.RemoveAt(i);
 
-                foreach (EquationSet subInEqSet in iterGenerations)
+                foreach (EqSet subInEqSet in iterGenerations)
                 {
                     pEvalData.WorkMgr.FromSides(subInEqSet.Left, subInEqSet.Right,
                         "Substitute in " + WorkMgr.STM + solveForComp.ToAsciiString() + "=" + result.ToAsciiString() + WorkMgr.EDM + " into this equation.");
@@ -370,7 +370,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             return solveResult;
         }
 
-        private SolveResult SolveEquationArraySubstitution(List<EquationSet> equations, List<LexemeTable> lexemeTables, ref TermType.EvalData pEvalData)
+        private SolveResult SolveEquationArraySubstitution(List<EqSet> equations, List<LexemeTable> lexemeTables, ref TermType.EvalData pEvalData)
         {
             List<LexemeTable> eqLexemeTables = new List<LexemeTable>();
             for (int i = 0; i < lexemeTables.Count; i += 2)
@@ -398,10 +398,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             return SolveEquationSystemRecur(equations, eqLexemeTables, ref pEvalData);
         }
 
-        private SolveResult SolveEquationSystemRecur(List<EquationSet> completeEqs,
+        private SolveResult SolveEquationSystemRecur(List<EqSet> completeEqs,
             List<LexemeTable> eqLexemeTables, ref TermType.EvalData pEvalData, bool ascending = true)
         {
-            List<EquationSet> clonedEqs = (from completeEq in completeEqs
+            List<EqSet> clonedEqs = (from completeEq in completeEqs
                                            select completeEq.Clone()).ToList();
 
             // Really this whole ascending thing really doesn't do much.
@@ -499,7 +499,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             return SubstituteInResults(completeEqs, ref pEvalData);
         }
 
-        private SolveResult SubstituteInResults(List<EquationSet> completeEqs, ref TermType.EvalData pEvalData)
+        private SolveResult SubstituteInResults(List<EqSet> completeEqs, ref TermType.EvalData pEvalData)
         {
             SolveResult solveResult;
             solveResult.Solutions = new List<Solution>();

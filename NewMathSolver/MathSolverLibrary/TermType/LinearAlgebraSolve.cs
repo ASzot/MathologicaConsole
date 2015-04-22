@@ -17,7 +17,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private AlgebraComp _solveFor;
         private ExMatrix _A;
 
-        public LinearAlgebraSolve(EquationSet eqSet)
+        public LinearAlgebraSolve(EqSet eqSet)
         {
             // In the form Ax=b
 

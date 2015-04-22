@@ -151,6 +151,7 @@
     <Compile Include="MathSolverLibrary\Parsing\LexicalParser.cs" />
     <Compile Include="MathSolverLibrary\Solving\AbsoluteValueSolve.cs" />
     <Compile Include="MathSolverLibrary\Solving\CubicSolve.cs" />
+    <Compile Include="MathSolverLibrary\Solving\Diff Eqs\DiffAgSolver.cs" />
     <Compile Include="MathSolverLibrary\Solving\ExponentSolve.cs" />
     <Compile Include="MathSolverLibrary\Solving\FactorSolve.cs" />
     <Compile Include="MathSolverLibrary\Solving\FractionalSolve.cs" />
@@ -165,6 +166,7 @@
     <Compile Include="MathSolverLibrary\Solving\SubstitutionSolve.cs" />
     <Compile Include="MathSolverLibrary\Solving\SystemOfEquationsSolve.cs" />
     <Compile Include="MathSolverLibrary\Solving\TrigSolve.cs" />
+    <Compile Include="MathSolverLibrary\TermType\DiffEqTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\EqualityCheckTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\EquationSystemTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\EvalData.cs" />

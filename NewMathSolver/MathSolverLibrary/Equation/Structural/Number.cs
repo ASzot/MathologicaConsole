@@ -617,7 +617,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public bool HasImaginaryComp()
         {
-            return (d_imagComp != 0.0);
+            return (d_imagComp != 0.0 && !IsUndefined());
         }
 
         public bool HasImagRealComp()

@@ -8,7 +8,7 @@ MathSolverWebsite.MathSolverLibrary.TypePair<MathSolverWebsite.MathSolverLibrary
 
 namespace MathSolverWebsite.MathSolverLibrary
 {
-    internal struct EquationSet
+    internal struct EqSet
     {
         private List<LexemeType> _comparisonOps;
         private List<ExComp> _sides;
@@ -100,7 +100,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             get { return _sides; }
         }
 
-        public EquationSet(ExComp singleEx, string strContent)
+        public EqSet(ExComp singleEx, string strContent)
         {
             _sides = new List<ExComp>();
             _comparisonOps = new List<LexemeType>();
@@ -110,14 +110,14 @@ namespace MathSolverWebsite.MathSolverLibrary
             Right = null;
         }
 
-        public EquationSet(List<ExComp> sides, List<LexemeType> comparionOps)
+        public EqSet(List<ExComp> sides, List<LexemeType> comparionOps)
         {
             _sides = sides;
             _comparisonOps = comparionOps;
             _strContent = null;
         }
 
-        public EquationSet(ExComp left, ExComp right, LexemeType comparisonOp)
+        public EqSet(ExComp left, ExComp right, LexemeType comparisonOp)
         {
             _sides = new List<ExComp>();
             _comparisonOps = new List<LexemeType>();
@@ -127,7 +127,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             Right = right;
         }
 
-        public EquationSet(ExComp singleEx)
+        public EqSet(ExComp singleEx)
         {
             _sides = new List<ExComp>();
             _comparisonOps = new List<LexemeType>();
@@ -137,16 +137,16 @@ namespace MathSolverWebsite.MathSolverLibrary
             Right = null;
         }
 
-        public static IEnumerable<AlgebraTerm> GetSides(List<EquationSet> eqSets)
+        public static IEnumerable<AlgebraTerm> GetSides(List<EqSet> eqSets)
         {
-            foreach (EquationSet eqSet in eqSets)
+            foreach (EqSet eqSet in eqSets)
             {
                 yield return eqSet.LeftTerm;
                 yield return eqSet.RightTerm;
             }
         }
 
-        public EquationSet Clone()
+        public EqSet Clone()
         {
             List<ExComp> clonedSides = new List<ExComp>();
             foreach (ExComp side in _sides)
@@ -154,7 +154,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                 clonedSides.Add(side.Clone());
             }
 
-            return new EquationSet(clonedSides, _comparisonOps);
+            return new EqSet(clonedSides, _comparisonOps);
         }
 
         public ExComp[] GetFuncDefComps()
@@ -201,6 +201,13 @@ namespace MathSolverWebsite.MathSolverLibrary
             return finalStr;
         }
 
+        /// <summary>
+        /// Calls all functions.
+        /// False will be returned if the function is in the 
+        /// form f(2) where f is not defined.
+        /// </summary>
+        /// <param name="pEvalData"></param>
+        /// <returns></returns>
         public bool FixEqFuncDefs(ref TermType.EvalData pEvalData)
         {
             for (int i = 0; i < _sides.Count; ++i)
@@ -297,9 +304,9 @@ namespace MathSolverWebsite.MathSolverLibrary
             return agSolver.SolveEquationEquality(solveFor.Var, left.ToAlgTerm(), right.ToAlgTerm(), ref pEvalData);
         }
 
-        public bool ReparseInfo(out EquationSet eqSet, ref TermType.EvalData pEvalData)
+        public bool ReparseInfo(out EqSet eqSet, ref TermType.EvalData pEvalData)
         {
-            eqSet = new EquationSet();
+            eqSet = new EqSet();
 
             List<LexemeTable> lts;
             var garbageParseErrors = new List<string>();

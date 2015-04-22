@@ -303,13 +303,28 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return new PowerFunction(baseEx, powEx);
         }
 
+        protected override ExComp CancelWith(ExComp innerEx, ref TermType.EvalData evalData)
+        {
+            LogFunction log = innerEx as LogFunction;
+            if (log == null)
+                return null;
+            if (log.Base.IsEqualTo(Base))
+                return log.InnerEx;
+
+            return null;
+        }
+
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
+            ExComp cancelResult = CancelWith(_power, ref pEvalData);
+            if (cancelResult != null)
+                return cancelResult;
+
             ExComp baseEx = Base;
             if (Number.IsUndef(baseEx) || Number.IsUndef(_power))
                 return Number.Undefined;
 
-            if (Number.Zero.IsEqualTo(baseEx))
+            if (Number.Zero.IsEqualTo(baseEx) && !Number.NegOne.IsEqualTo(_power))
                 return Number.Zero;
 
             if (baseEx is AlgebraTerm)

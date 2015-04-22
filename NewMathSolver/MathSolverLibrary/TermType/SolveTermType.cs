@@ -8,11 +8,11 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
     internal class SolveTermType : TermType
     {
         private AlgebraSolver _agSolver;
-        private EquationSet _eqSet;
+        private EqSet _eqSet;
         private List<TypePair<LexemeType, string>> _lt;
         private string[] s_promptStrs;
 
-        public SolveTermType(EquationSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, 
+        public SolveTermType(EqSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, 
             string probSolveVar, string[] promptStrs, string noIncludeVar)
         {
             s_promptStrs = promptStrs;
@@ -66,7 +66,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _cmds = tmpCmds.ToArray();
         }
 
-        public SolveTermType(EquationSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar, string promptStr)
+        public SolveTermType(EqSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar, string promptStr)
             : base()
         {
             s_promptStrs = new string[1];
@@ -133,7 +133,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _cmds = cmds.ToArray();
         }
 
-        public SolveTermType(EquationSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, 
+        public SolveTermType(EqSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, 
             string probSolveVar)
             : this(eqSet, lt, solveVars, probSolveVar, "Solve for ")
         {
@@ -150,7 +150,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                     string solveForKey = command.Substring(promptStr.Length, command.Length - promptStr.Length);
                     AlgebraVar solveFor = new AlgebraVar(solveForKey);
 
-                    EquationSet useSet = _eqSet.Clone();
+                    EqSet useSet = _eqSet.Clone();
 
                     pEvalData.IsWorkable = false;
                     SolveResult result;

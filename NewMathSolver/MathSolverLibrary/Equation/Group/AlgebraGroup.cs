@@ -18,6 +18,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             get { return _group.Count(); }
         }
 
+        public ExComp this[int i]
+        {
+            get { return _group[i]; }
+            set { _group[i] = value; }
+        }
+
         public AlgebraGroup(ExComp[] group)
         {
             _group = group;

@@ -177,6 +177,224 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return null;
         }
 
+        private static ExComp TrigFuncIntegration(ExComp ex0, ExComp ex1, AlgebraComp dVar, ref IntegrationInfo pIntInfo, ref EvalData pEvalData)
+        {
+            int tf0Pow = -1;
+            int tf1Pow = -1;
+            TrigFunction tf0 = null;
+            TrigFunction tf1 = null;
+
+            if (ex0 is TrigFunction)
+            {
+                tf0Pow = 1;
+                tf0 = ex0 as TrigFunction;
+            }
+            else if (ex0 is PowerFunction)
+            {
+                PowerFunction pf0 = ex0 as PowerFunction;
+                if (pf0.Base is TrigFunction && pf0.Base is Number && (pf0.Power as Number).IsRealInteger())
+                {
+                    tf0 = pf0.Base as TrigFunction;
+                    tf0Pow = (int)(pf0.Power as Number).RealComp;
+                }
+            }
+            else
+                return null;
+
+            if (ex1 is TrigFunction)
+            {
+                tf1Pow = 1;
+                tf1 = ex1 as TrigFunction;
+            }
+            else if (ex1 is PowerFunction)
+            {
+                PowerFunction pf1 = ex1 as PowerFunction;
+                if (pf1.Base is TrigFunction && pf1.Base is Number && (pf1.Power as Number).IsRealInteger())
+                {
+                    tf1 = pf1.Base as TrigFunction;
+                    tf1Pow = (int)(pf1.Power as Number).RealComp;
+                }
+            }
+            else
+                return null;
+
+            if (tf1Pow < 0 || tf0Pow < 0)
+                return null;
+
+            ExComp simplified = null;
+
+            if (tf1Pow == 0 && tf0Pow == 0)
+                simplified = SingularPowTrig(tf0, tf1);
+            else if ((tf0 is SinFunction && tf1 is CosFunction) ||
+                (tf0 is CosFunction && tf1 is SinFunction))
+            {
+                int sp, cp;
+                SinFunction sf;
+                CosFunction cf;
+                if (tf0 is SinFunction)
+                {
+                    sf = tf0 as SinFunction;
+                    cf = tf1 as CosFunction;
+                    sp = tf0Pow;
+                    cp = tf1Pow;
+                }
+                else
+                {
+                    sf = tf1 as SinFunction;
+                    cf = tf0 as CosFunction;
+                    sp = tf1Pow;
+                    cp = tf0Pow;
+                }
+
+                simplified = SinCosTrig(sf, cf, sp, cp);
+            }
+            else if ((tf0 is SecFunction && tf1 is TanFunction) ||
+                (tf0 is TanFunction && tf1 is SecFunction))
+            {
+                int sp, tp;
+                SecFunction sf;
+                TanFunction tf;
+                if (tf0 is SecFunction)
+                {
+                    sf = tf0 as SecFunction;
+                    tf = tf1 as TanFunction;
+                    sp = tf0Pow;
+                    tp = tf1Pow;
+                }
+                else
+                {
+                    sf = tf1 as SecFunction;
+                    tf = tf0 as TanFunction;
+                    sp = tf1Pow;
+                    tp = tf0Pow;
+                }
+
+                // This gets the actual anti-derivative not just evaluatable form.
+                return SecTanTrig(sf, tf, sp, tp, dVar, ref pIntInfo, ref pEvalData);
+            }
+
+            if (simplified != null)
+                return Integral.TakeAntiDeriv(simplified, dVar, ref pEvalData);
+
+            return null;
+        }
+
+        private static ExComp SecTanTrig(SecFunction sf, TanFunction tf, int sp, int tp, AlgebraComp dVar, 
+            ref IntegrationInfo pIntInfo, ref EvalData pEvalData)
+        {
+            if (!sf.InnerEx.IsEqualTo(tf.InnerEx))
+                return null;
+
+            bool spEven = sp % 2 == 0;
+            bool tpEven = tp % 2 == 0;
+            if (!spEven && tp == 1)
+            {
+                ExComp[] gp = new ExComp[] { PowOp.StaticCombine(sf, new Number(sp - 1)), sf, tf };
+                return AttemptUSub(gp, dVar, ref pIntInfo, ref pEvalData);
+            }
+            else if (!spEven && tpEven && sp > 2)
+            {
+                ExComp secSubed = PowOp.StaticCombine(
+                    AddOp.StaticCombine(
+                    Number.One, 
+                    PowOp.StaticCombine(new TanFunction(sf.InnerEx), new Number(2.0))),
+                    new Number((sp - 2) / 2));
+                ExComp[] gp = new ExComp[] { PowOp.StaticCombine(tf, new Number(tp)), secSubed, PowOp.StaticCombine(sf, new Number(2.0)) };
+                return AttemptUSub(gp, dVar, ref pIntInfo, ref pEvalData);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sf">sin function</param>
+        /// <param name="cf">cos function</param>
+        /// <param name="sp">sin power</param>
+        /// <param name="cp">cos power</param>
+        /// <returns></returns>
+        private static ExComp SinCosTrig(SinFunction sf, CosFunction cf, int sp, int cp)
+        {
+            if (!sf.InnerEx.IsEqualTo(cf.InnerEx))
+                return null;
+            bool spEven = sp % 2 == 0;
+            bool cpEven = cp % 2 == 0;
+
+            if (spEven && !cpEven)
+            {
+                // Use cos^2(x) = 1 - sin^2(x)
+                ExComp subbedCos = PowOp.StaticCombine(
+                    SubOp.StaticCombine(
+                    Number.One,
+                    PowOp.StaticCombine(new SinFunction(cf.InnerEx), new Number(2.0))),
+                    new Number((cp - 1) / 2));
+
+                return MulOp.StaticCombine(cf, MulOp.StaticCombine(PowOp.StaticCombine(sf, new Number(sp)), subbedCos));
+            }
+
+            else if (!spEven && cpEven)
+            {
+                // Using sin^2(x) = 1 - cos^2(x)
+                ExComp subbedCos = PowOp.StaticCombine(
+                    SubOp.StaticCombine(
+                    Number.One,
+                    PowOp.StaticCombine(new CosFunction(sf.InnerEx), new Number(2.0))),
+                    new Number((sp - 1) / 2));
+
+                return MulOp.StaticCombine(sf, MulOp.StaticCombine(PowOp.StaticCombine(cf, new Number(cp)), subbedCos));
+            }
+
+            else if (spEven && cpEven)
+            {
+                // Using sin^2(x) = (1/2)(1-cos(2x))
+                // Using cos^2(x) = (1/2)(1+cos(2x))
+                ExComp sinSub = MulOp.StaticCombine(
+                    AlgebraTerm.FromFraction(Number.One, new Number(2.0)), 
+                    SubOp.StaticCombine(Number.One, new CosFunction(MulOp.StaticCombine(new Number(2.0), sf.InnerEx))));
+                ExComp cosSub=  MulOp.StaticCombine(
+                    AlgebraTerm.FromFraction(Number.One, new Number(2.0)),
+                    AddOp.StaticCombine(Number.One, new CosFunction(MulOp.StaticCombine(new Number(2.0), sf.InnerEx))));
+                return MulOp.StaticCombine(
+                    PowOp.StaticCombine(sinSub, new Number(sp / 2)),
+                    PowOp.StaticCombine(cosSub, new Number(cp / 2)));
+            }
+
+            return null;
+        }
+
+        private static ExComp SingularPowTrig(TrigFunction tf0, TrigFunction tf1)
+        {
+            ExComp a = tf0.InnerEx;
+            ExComp b=  tf1.InnerEx;
+            AlgebraTerm half = AlgebraTerm.FromFraction(Number.One, new Number(2.0));
+            if (tf0 is SinFunction && tf1 is SinFunction)
+                return MulOp.StaticCombine(half,
+                    SubOp.StaticCombine(
+                    new CosFunction(SubOp.StaticCombine(a, b)),
+                    new CosFunction(AddOp.StaticCombine(a, b))));
+            else if (tf0 is CosFunction && tf1 is CosFunction)
+                return MulOp.StaticCombine(half,
+                    AddOp.StaticCombine(
+                    new CosFunction(SubOp.StaticCombine(a, b)),
+                    new CosFunction(AddOp.StaticCombine(a, b))));
+
+            if (tf0 is CosFunction && tf1 is SinFunction)
+            {
+                ExComp tmp = a;
+                a = b;
+                b = tmp;
+            }
+
+            if (tf0 is SinFunction && tf1 is CosFunction)
+                return MulOp.StaticCombine(half,
+                    AddOp.StaticCombine(
+                    new SinFunction(SubOp.StaticCombine(a, b)),
+                    new SinFunction(AddOp.StaticCombine(a, b))));
+
+            return null;
+        }
+
         private static ExComp AttemptPartialFractions(ExComp num, ExComp den, AlgebraComp dVar, ref IntegrationInfo pIntInfo, ref EvalData pEvalData)
         {
             if (!(num is AlgebraTerm) || !(den is AlgebraTerm))
@@ -272,6 +490,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 else
                     pEvalData.WorkMgr.PopSteps(pEvalData.WorkMgr.WorkSteps.Count - prevWorkStepCount);
             }
+
+            return null;
+        }
+
+        private static ExComp AttemptUSub(ExComp[] group, AlgebraComp dVar, ExComp forcedU, ref IntegrationInfo pIntInfo, ref EvalData pEvalData)
+        {
+            int prevWorkStepCount = pEvalData.WorkMgr.WorkSteps.Count;
+            ExComp attempt = TryU(group, forcedU, dVar, ref pIntInfo, ref pEvalData);
+            if (attempt != null)
+                return attempt;
+            else
+                pEvalData.WorkMgr.PopSteps(pEvalData.WorkMgr.WorkSteps.Count - prevWorkStepCount);
 
             return null;
         }
@@ -607,6 +837,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return false;
         }
 
+
+
         private static ExComp GetIsSingleFunc(ExComp single, AlgebraComp dVar, ref EvalData pEvalData)
         {
             if (single is PowerFunction)
@@ -717,6 +949,64 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                             WorkMgr.ExFinalToAsciiStr(ad) + WorkMgr.EDM, "Use the common antiderivative.");
 
                         return ad;
+                    }
+                }
+                else if (pf.Base is SinFunction && pf.Power is Number && (pf.Power as Number).IsRealInteger())
+                {
+                    int iPow = (int)(pf.Power as Number).RealComp;
+                    SinFunction sf = pf.Base as SinFunction;
+                    if (iPow > 0 && iPow % 2 == 0)
+                    {
+                        ExComp subbed = MulOp.StaticCombine(
+                            AlgebraTerm.FromFraction(Number.One, new Number(2.0)),
+                            SubOp.StaticCombine(Number.One, new CosFunction(MulOp.StaticCombine(new Number(2.0), sf.InnerEx))));
+
+                        return Integral.TakeAntiDeriv(PowOp.StaticCombine(subbed, new Number(iPow / 2)), dVar, ref pEvalData);
+                    }
+                }
+                else if (pf.Base is CosFunction && pf.Power is Number && (pf.Power as Number).IsRealInteger())
+                {
+                    int iPow = (int)(pf.Power as Number).RealComp;
+                    CosFunction cf = pf.Base as CosFunction;
+                    if (iPow > 0 && iPow % 2 == 0)
+                    {
+                        ExComp subbed = MulOp.StaticCombine(
+                            AlgebraTerm.FromFraction(Number.One, new Number(2.0)),
+                            SubOp.StaticCombine(Number.One, new SinFunction(MulOp.StaticCombine(new Number(2.0), cf.InnerEx))));
+
+                        return Integral.TakeAntiDeriv(PowOp.StaticCombine(subbed, new Number(iPow / 2)), dVar, ref pEvalData);
+                    }
+                }
+                else if (pf.Base is CosFunction && pf.Power is Number && (pf.Power as Number).IsRealInteger())
+                {
+                    int iPow = (int)(pf.Power as Number).RealComp;
+                    CosFunction cf = pf.Base as CosFunction;
+                    if (iPow > 1 && iPow % 2 != 0)
+                    {
+                        ExComp finalEx = MulOp.StaticCombine(cf,
+                            PowOp.StaticCombine(
+                            SubOp.StaticCombine(
+                            Number.One,
+                            PowOp.StaticCombine(new SinFunction(cf.InnerEx), new Number(2.0))),
+                            new Number((iPow - 1) / 2)));
+
+                        return Integral.TakeAntiDeriv(finalEx, dVar, ref pEvalData);
+                    }
+                }
+                else if (pf.Base is SinFunction && pf.Power is Number && (pf.Power as Number).IsRealInteger())
+                {
+                    int iPow = (int)(pf.Power as Number).RealComp;
+                    SinFunction sf = pf.Base as SinFunction;
+                    if (iPow > 1 && iPow % 2 != 0)
+                    {
+                        ExComp finalEx = MulOp.StaticCombine(sf,
+                            PowOp.StaticCombine(
+                            SubOp.StaticCombine(
+                            Number.One,
+                            PowOp.StaticCombine(new CosFunction(sf.InnerEx), new Number(2.0))),
+                            new Number((iPow - 1) / 2)));
+
+                        return Integral.TakeAntiDeriv(finalEx, dVar, ref pEvalData);
                     }
                 }
             }

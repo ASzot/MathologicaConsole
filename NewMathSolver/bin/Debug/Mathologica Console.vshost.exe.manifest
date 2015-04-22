@@ -42,14 +42,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="Mathologica Console.exe" size="443392">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="Mathologica Console.exe" size="453632">
       <assemblyIdentity name="Mathologica Console" version="1.2.5.3" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>zyUDaDtCwHGUU4MLVtvzxtssj5mlTGBA0fedBG1+vB8=</dsig:DigestValue>
+        <dsig:DigestValue>u8exd4UGmlhIbsaarHB2l33bqm3Eu5E+QS2+PIMDQIk=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

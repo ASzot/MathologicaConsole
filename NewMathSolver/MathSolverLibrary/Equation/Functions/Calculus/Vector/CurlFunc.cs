@@ -39,8 +39,22 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector
                 return false;
         }
 
+        protected override ExComp CancelWith(ExComp innerEx, ref TermType.EvalData evalData)
+        {
+            if (innerEx is GradientFunc)
+            {
+                return Number.Zero;
+            }
+
+            return null;
+        }
+
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
+            ExComp cancelWith = CancelWith(InnerEx, ref pEvalData);
+            if (cancelWith != null)
+                return cancelWith;
+
             ExComp p, q, r;
             ExComp innerEx = InnerEx;
             

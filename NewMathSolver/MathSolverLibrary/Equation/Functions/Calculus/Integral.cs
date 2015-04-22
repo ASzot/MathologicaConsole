@@ -83,6 +83,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return integral;
         }
 
+        public static ExComp TakeAntiDeriv(ExComp innerEx, AlgebraComp dVar, ref TermType.EvalData pEvalData)
+        {
+            Integral integral = ConstructIntegral(innerEx, dVar);
+            integral._addConstant = false;
+            return integral.Evaluate(false, ref pEvalData);
+        }
+
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
             ExComp innerEx = InnerEx;

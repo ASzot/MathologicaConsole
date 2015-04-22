@@ -8,6 +8,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         private AlgebraComp[] _args;
         private ExComp[] _callArgs;
         private AlgebraComp _iden;
+        private bool _funcNotation = true;
 
         /// <summary>
         /// The supplied arguments to the function.
@@ -54,11 +55,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
         }
 
-        public FunctionDefinition(AlgebraComp iden, AlgebraComp[] args, ExComp[] callArgs)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="iden">The identifier of the function.</param>
+        /// <param name="args">The definition of the arguments. Null is not acceptable.</param>
+        /// <param name="callArgs">What the user is inputting. These are not defined. Null is acceptable.</param>
+        /// <param name="funcNotation">True means the function will output like y(x). False means the function will output just y.</param>
+        public FunctionDefinition(AlgebraComp iden, AlgebraComp[] args, ExComp[] callArgs, bool funcNotation = true)
         {
             _iden = iden;
             _args = args;
             _callArgs = callArgs;
+            _funcNotation = funcNotation;
         }
 
         public ExComp CallFunc(ref TermType.EvalData pEvalData)
@@ -66,6 +75,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             var def = pEvalData.FuncDefs.GetDefinition(this);
             if (def.Value == null)
             {
+                if (CallArgs != null && InputArgs == null)
+                    return null;
                 return this;
             }
 
@@ -114,7 +125,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override ExComp Clone()
         {
-            return new FunctionDefinition(_iden, _args, _callArgs);
+            return new FunctionDefinition(_iden, _args, _callArgs, _funcNotation);
         }
 
         public bool IsArg(string argIden)
@@ -188,7 +199,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToAsciiString()
         {
-            if (_args == null || _args.Length == 0)
+            if (!_funcNotation || (_args == null || _args.Length == 0))
                 return _iden.ToAsciiString();
             string funcStr = _iden.ToAsciiString() + "(";
             for (int i = 0; i < _args.Length; ++i)
@@ -213,7 +224,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToString()
         {
-            if (_args == null || _args.Length == 0)
+            if (!_funcNotation || (_args == null || _args.Length == 0))
                 return _iden.ToString();
             string funcStr = _iden.ToString() + "(";
             for (int i = 0; i < _args.Length; ++i)
@@ -233,7 +244,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToTexString()
         {
-            if (_args == null || _args.Length == 0)
+            if (!_funcNotation || (_args == null || _args.Length == 0))
                 return _iden.ToTexString();
             string funcStr = _iden.ToTexString() + "(";
             for (int i = 0; i < _args.Length; ++i)

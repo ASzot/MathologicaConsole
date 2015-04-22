@@ -101,13 +101,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             }
 
             // Solve the system of equations for the decomposition coefficients.
-            List<EquationSet> equations = new List<EquationSet>();
+            List<EqSet> equations = new List<EqSet>();
             for (int i = 0; i < decomCoeffs.Count; ++i)
             {
                 ExComp coeffForPow = numPoly.Info.GetCoeffForPow(i);
                 ExComp right = coeffForPow ?? Number.Zero;
 
-                equations.Add(new EquationSet(decomCoeffs[i], right, Parsing.LexemeType.EqualsOp));
+                equations.Add(new EqSet(decomCoeffs[i], right, Parsing.LexemeType.EqualsOp));
             }
 
             AlgebraSolver agSolver = new AlgebraSolver();

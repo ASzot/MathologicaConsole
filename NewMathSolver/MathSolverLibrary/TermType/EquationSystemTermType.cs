@@ -9,12 +9,12 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
     internal class EquationSystemTermType : TermType
     {
         private Dictionary<string, int> _allIdens;
-        private List<EquationSet> _eqSets;
+        private List<EqSet> _eqSets;
         private List<List<TypePair<LexemeType, string>>> _lts;
         private int _singularIndex = -1;
         private string[] _graphStrs;
 
-        public EquationSystemTermType(List<EquationSet> eqSets, List<List<TypePair<LexemeType, string>>> lts, Dictionary<string, int> allIdens)
+        public EquationSystemTermType(List<EqSet> eqSets, List<List<TypePair<LexemeType, string>>> lts, Dictionary<string, int> allIdens)
             : base()
         {
             _lts = lts;
@@ -83,7 +83,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
                     pEvalData.FuncDefs.Define((FunctionDefinition)funcDef.Clone(), assignTo.Clone());
                 }
-                EquationSet tmpEqSet;
+                EqSet tmpEqSet;
                 if (!_eqSets[_singularIndex].ReparseInfo(out tmpEqSet, ref pEvalData))
                 {
                     pEvalData.AddFailureMsg("Internal error.");
@@ -163,7 +163,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             string singularVar = null;
             for (int i = 0; i < _eqSets.Count; ++i)
             {
-                EquationSet eqSet = _eqSets[i];
+                EqSet eqSet = _eqSets[i];
                 if (!eqSet.IsSingular)
                 {
                     ExComp[] funcDef = eqSet.GetFuncDefComps();

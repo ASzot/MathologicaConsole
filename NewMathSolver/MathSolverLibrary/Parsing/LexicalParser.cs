@@ -60,7 +60,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                                              @"\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\/\(((partial)|d)(" + IDEN_MATCH + @")(\^(" + NUM_MATCH + @"))?\)" :
                                              @"frac\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\(((partial)|d)(" + IDEN_MATCH + @")(\^(" + NUM_MATCH + @"))?\)",
                                              LexemeType.Derivative),
-            new TypePair<string, LexemeType>("(" + IDEN_MATCH + @")(((\')+)|(\^((" + NUM_MATCH + @")|(" + IDEN_MATCH + @"))))\((" + IDEN_MATCH + @")\)", LexemeType.FuncDeriv),
+            new TypePair<string, LexemeType>("(" + IDEN_MATCH + @")(((\')+)|((\^((" + NUM_MATCH + @")|(" + IDEN_MATCH + @")))\((" + IDEN_MATCH + @")\)))", LexemeType.FuncDeriv),
             new TypePair<string, LexemeType>(MathSolver.PLAIN_TEXT ? 
                                              @"sum_\((" + IDEN_MATCH + ")=(" + NUM_MATCH + @")\)\^\((" + NUM_MATCH + @")\)" : 
                                              @"(sum\^(\()?(" + NUM_MATCH + @")(\))?_\((" + IDEN_MATCH + ")=(" + NUM_MATCH + @")\))", 
@@ -363,7 +363,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             {
                 if (orderedTolkensList[i].Data1 == LexemeType.Identifier && orderedTolkensList[i + 1].Data1 == LexemeType.StartPara)
                 {
-                    if (p_EvalData.FuncDefs.IsFuncDefined(orderedTolkensList[i].Data2))
+                    if (true) //p_EvalData.FuncDefs.IsFuncDefined(orderedTolkensList[i].Data2))
                     {
                         // Find the ending paranthese.
                         int endIndex = -1;
@@ -401,7 +401,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                                 commaCount++;
                         }
 
-                        if (p_EvalData.FuncDefs.IsValidFuncCall(orderedTolkensList[i].Data2, commaCount + 1))
+                        if (commaCount == 0) //p_EvalData.FuncDefs.IsValidFuncCall(orderedTolkensList[i].Data2, commaCount + 1))
                         {
                             // Replace with a function call.
                             orderedTolkensList[i].Data1 = LexemeType.FuncIden;
@@ -478,14 +478,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return true;
         }
 
-        public List<EquationSet> ParseInput(string inputStr, out List<LexemeTable> lexemeTables, ref List<string> pParseErrors)
+        public List<EqSet> ParseInput(string inputStr, out List<LexemeTable> lexemeTables, ref List<string> pParseErrors)
         {
             _vectorStore = new Dictionary<string, LexemeTable>();
             _vecStoreIndex = 0;
             string[] equationSets = inputStr.Split(';');
             lexemeTables = new List<LexemeTable>();
 
-            List<EquationSet> eqSets = new List<EquationSet>();
+            List<EqSet> eqSets = new List<EqSet>();
 
             foreach (string equationSet in equationSets)
             {
@@ -522,7 +522,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                             return null;
                     }
 
-                    eqSets.Add(new EquationSet(final, equationSet));
+                    eqSets.Add(new EqSet(final, equationSet));
                     continue;
                 }
                 List<LexemeType> solveTypes = new List<LexemeType>();
@@ -564,9 +564,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         parsedTerms.Add(final);
                     }
 
-                    EquationSet singleEqSet = new EquationSet(parsedTerms, solveTypes);
+                    EqSet singleEqSet = new EqSet(parsedTerms, solveTypes);
 
-                    eqSets = new List<EquationSet>();
+                    eqSets = new List<EqSet>();
                     eqSets.Add(singleEqSet);
 
                     return eqSets;
@@ -598,7 +598,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     parsedExs[i] = final;
                 }
 
-                eqSets.Add(new EquationSet(parsedExs[0], parsedExs[1], solveType));
+                eqSets.Add(new EqSet(parsedExs[0], parsedExs[1], solveType));
             }
 
             return eqSets;
@@ -1989,7 +1989,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 }
             }
 
-            funcDef = new FunctionDefinition(new AlgebraComp(lex.Data2), areCallArgs ? null : defInputArgs, areCallArgs ? defInputArgs : null);
+            funcDef = new FunctionDefinition(new AlgebraComp(lex.Data2), areCallArgs ? null : defInputArgs, areCallArgs ? argExs : null);
             return funcDef.ToAlgTerm();
         }
 
@@ -2279,33 +2279,56 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
         private AlgebraTerm ParseFuncDerivative(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
         {
+            Lexeme lex = lt[currentIndex];
+            string str;
+            string withRespectTo = null;
+            if (lex.Data2.Contains("("))
+            {
+                string[] tmps = lex.Data2.Split('(');
+                str = tmps[0];
+                withRespectTo = tmps[1].Remove(tmps[1].Length - 1, 1);
+            }
+            else
+                str = lex.Data2;
+
             // Convert this over to the Leibniz notation.
-            string[] split = lt[currentIndex].Data2.Split('(');
-            Match funcMatch = Regex.Match(split[0], IDEN_MATCH);
+            Match funcMatch = Regex.Match(str, IDEN_MATCH);
             if (!funcMatch.Success)
                 return null;
 
-            split[0] = split[0].Remove(0, funcMatch.Length);
+            str = str.Remove(0, funcMatch.Length);
             ExComp order = null;
-            if (split[0].Contains("'"))
-                order = new Number(split[0].Length);        // Just the number of primes we have.
+            if (str.Contains("'"))
+                order = new Number(str.Length);        // Just the number of primes we have.
             else
             {
-                split[0] = split[0].Remove(0, 1);
+                str = str.Remove(0, 1);
                 // This is in the notation f^2(x)
 
                 int iTmp;
-                if (int.TryParse(split[0], out iTmp))
+                if (int.TryParse(str, out iTmp))
                     order = new Number(iTmp);
-                else if (Regex.IsMatch(split[0], IDEN_MATCH))
-                    order = new AlgebraComp(split[0]);
+                else if (Regex.IsMatch(str, IDEN_MATCH))
+                    order = new AlgebraComp(str);
                 else
                     return null;
             }
 
-            split[1] = split[1].Remove(split[1].Length - 1, 1);
+            if (withRespectTo == null && currentIndex + 3 < lt.Count)
+            {
+                if (lt[currentIndex + 1].Data1 == LexemeType.StartPara)
+                {
+                    if (lt[currentIndex + 2].Data1 != LexemeType.Identifier)
+                        return null;
+                    withRespectTo = lt[currentIndex + 2].Data2;
+                    if (lt[currentIndex + 3].Data1 != LexemeType.EndPara)
+                        return null;
 
-            var deriv = Equation.Functions.Calculus.Derivative.Parse(funcMatch.Value, split[1], order, false, 
+                    currentIndex = currentIndex + 4;
+                }
+            }
+
+            var deriv = Equation.Functions.Calculus.Derivative.Parse(funcMatch.Value, withRespectTo, order, false, 
                 ref p_EvalData, true);
 
             if (deriv == null)

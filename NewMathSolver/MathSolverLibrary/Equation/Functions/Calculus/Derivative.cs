@@ -66,6 +66,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             }
         }
 
+        public bool IsPartial
+        {
+            get { return _isPartial; }
+        }
+
         public static Derivative ConstructDeriv(ExComp innerEx, AlgebraComp withRespect, AlgebraComp derivOf)
         {
             Derivative deriv = new Derivative(innerEx);
@@ -78,14 +83,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         public static Derivative Parse(string function, string withRespectTo, ExComp order, bool isPartial,
             ref TermType.EvalData pEvalData, bool mustBeSingleVar = false)
         {
-            if (withRespectTo.Length == 0)
+            if (withRespectTo != null && withRespectTo.Length == 0)
                 return null;
 
-            AlgebraComp respectToCmp = new AlgebraComp(withRespectTo);
+            AlgebraComp respectToCmp = withRespectTo == null ? null : new AlgebraComp(withRespectTo);
 
             FunctionDefinition funcDef = new FunctionDefinition(new AlgebraComp(function), null, null);
 
-            ExComp innerEx = pEvalData.FuncDefs.GetDefinition(funcDef).Value;
+            var funcDefValue = pEvalData.FuncDefs.GetDefinition(funcDef);
+            ExComp innerEx = funcDefValue.Value;
             Derivative deriv;
             if (innerEx == null)
             {
@@ -98,6 +104,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 deriv = new Derivative(innerEx);
                 if (mustBeSingleVar && pEvalData.FuncDefs.GetFuncArgCount(funcDef.Iden.Var.Var) != 1)
                     return null;
+                if (respectToCmp == null && mustBeSingleVar)
+                {
+                    // We can be certian there is only one input argument.
+                    respectToCmp = funcDefValue.Key.InputArgs[0];
+                }
             }
 
             deriv.WithRespectTo = respectToCmp;
@@ -109,11 +120,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
         public static Derivative Parse(string withRespectTo, ExComp inner, ExComp order, bool isPartial)
         {
-            if (withRespectTo.Length == 0)
+            if (withRespectTo != null && withRespectTo.Length == 0)
                 return null;
 
             Derivative deriv = new Derivative(inner);
-            deriv.WithRespectTo = new AlgebraComp(withRespectTo);
+            deriv.WithRespectTo = withRespectTo == null ? null : new AlgebraComp(withRespectTo);
             deriv._order = order;
             deriv._isPartial = isPartial;
 
@@ -122,7 +133,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
         public static ExComp TakeDeriv(ExComp term, AlgebraComp withRespectTo, ref TermType.EvalData pEvalData, bool isPartial = false, bool isFuncDeriv = false)
         {
-            if (term is AlgebraComp && !term.IsEqualTo(withRespectTo))
+            if ((term is AlgebraComp || term is FunctionDefinition) && !term.IsEqualTo(withRespectTo) && isFuncDeriv)
                 return ConstructImplicitDerivAgCmp(term, withRespectTo, isPartial);
 
             Derivative deriv = ConstructDeriv(term, withRespectTo, null);
@@ -135,9 +146,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         public override ExComp Clone()
         {
             Derivative deriv = new Derivative(InnerEx.Clone());
-            deriv._withRespectTo = this._withRespectTo;
+            deriv._withRespectTo = this._withRespectTo == null ? null : (AlgebraComp)this._withRespectTo.Clone();
             deriv._order = this._order.Clone();
-            deriv._derivOf = this._derivOf;
+            deriv._derivOf = this._derivOf == null ? null : (AlgebraComp)this._derivOf.Clone();
             deriv._isDefined = this._isDefined;
             deriv._isPartial = this._isPartial;
             return deriv;
@@ -164,6 +175,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
             if (!_isDefined)
+                return this;
+
+            if (_withRespectTo == null)
                 return this;
 
             if (!(_order is Number && (_order as Number).IsRealInteger()))
@@ -224,16 +238,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return final;
         }
 
-        public override string FinalDispKeepFormatting()
-        {
-            if (USE_TEX)
-                return FinalToTexKeepFormatting();
-            return FinalToAsciiKeepFormatting();
-        }
-
         public override string FinalToAsciiKeepFormatting()
         {
             string orderStr = IsOrderOne ? "" : "^{" + _order.ToAsciiString() + "}";
+
+            if (_withRespectTo == null)
+            {
+                string followingStr = null;
+                if (_order is Number && (_order as Number).IsRealInteger())
+                {
+                    int order = (int)(_order as Number).RealComp;
+                    if (order < 3)
+                    {
+                        followingStr = "";
+                        // Use prime notation.
+                        for (int i = 0; i < order; ++i)
+                            followingStr += "'";
+                    }
+                }
+
+                return _derivOf.ToAsciiString() + (followingStr == null ? orderStr : followingStr);
+            }
 
             if (!_isDefined)
             {
@@ -249,6 +274,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         {
             string orderStr = IsOrderOne ? "" : "^{" + _order.ToAsciiString() + "}";
 
+            if (_withRespectTo == null)
+            {
+                string followingStr = null;
+                if (_order is Number && (_order as Number).IsRealInteger())
+                {
+                    int order = (int)(_order as Number).RealComp;
+                    if (order < 3)
+                    {
+                        followingStr = "";
+                        // Use prime notation.
+                        for (int i = 0; i < order; ++i)
+                            followingStr += "'";
+                    }
+                }
+
+                return _derivOf.ToAsciiString() + (followingStr == null ? orderStr : followingStr);
+            }
+
             if (!_isDefined)
             {
                 return "(" + NotationIden + orderStr + _derivOf.ToAsciiString() + ")/(" + NotationIden + _withRespectTo.ToAsciiString() + orderStr + ")";
@@ -257,16 +300,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 (InnerEx is AlgebraTerm ? (InnerEx as AlgebraTerm).FinalToAsciiString() : InnerEx.ToAsciiString()) + "]";
         }
 
-        public override string FinalToDispStr()
-        {
-            if (USE_TEX)
-                return FinalToTexString();
-            return FinalToAsciiString();
-        }
-
         public override string FinalToTexKeepFormatting()
         {
             string orderStr = IsOrderOne ? "" : "^{" + _order.ToTexString() + "}";
+
+            if (_withRespectTo == null)
+            {
+                string followingStr = null;
+                if (_order is Number && (_order as Number).IsRealInteger())
+                {
+                    int order = (int)(_order as Number).RealComp;
+                    if (order < 3)
+                    {
+                        followingStr = "";
+                        // Use prime notation.
+                        for (int i = 0; i < order; ++i)
+                            followingStr += "'";
+                    }
+                }
+
+                return _derivOf.ToTexString() + (followingStr == null ? orderStr : followingStr);
+            }
 
             if (!_isDefined)
             {
@@ -279,6 +333,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         public override string FinalToTexString()
         {
             string orderStr = IsOrderOne ? "" : "^{" + _order.ToTexString() + "}";
+
+            if (_withRespectTo == null)
+            {
+                string followingStr = null;
+                if (_order is Number && (_order as Number).IsRealInteger())
+                {
+                    int order = (int)(_order as Number).RealComp;
+                    if (order < 3)
+                    {
+                        followingStr = "";
+                        // Use prime notation.
+                        for (int i = 0; i < order; ++i)
+                            followingStr += "'";
+                    }
+                }
+
+                return _derivOf.ToTexString() + (followingStr == null ? orderStr : followingStr);
+            }
 
             if (!_isDefined)
             {
@@ -347,19 +419,30 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         {
             string orderStr = IsOrderOne ? "" : "^{" + _order.ToAsciiString() + "}";
 
+            if (_withRespectTo == null)
+            {
+                string followingStr = null;
+                if (_order is Number && (_order as Number).IsRealInteger())
+                {
+                    int order = (int)(_order as Number).RealComp;
+                    if (order < 3)
+                    {
+                        followingStr = "";
+                        // Use prime notation.
+                        for (int i = 0; i < order; ++i)
+                            followingStr += "'";
+                    }
+                }
+
+                return _derivOf.ToAsciiString() + (followingStr == null ? orderStr : followingStr);
+            }
+
             if (!_isDefined)
             {
                 return "((" + NotationIden + orderStr + _derivOf.ToAsciiString() + ")/(" + NotationIden + _withRespectTo.ToAsciiString() + orderStr + "))";
             }
             return "((" + NotationIden + orderStr + ")/(" + NotationIden + _withRespectTo.ToAsciiString() + orderStr + ")[" +
                 InnerEx.ToAsciiString() + "])";
-        }
-
-        public override string ToDispString()
-        {
-            if (USE_TEX)
-                return ToTexString();
-            return ToAsciiString();
         }
 
         public override string ToJavaScriptString(bool useRad)
@@ -376,6 +459,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         {
             string orderStr = IsOrderOne ? "" : "^{" + _order.ToTexString() + "}";
 
+            if (_withRespectTo == null)
+            {
+                string followingStr = null;
+                if (_order is Number && (_order as Number).IsRealInteger())
+                {
+                    int order = (int)(_order as Number).RealComp;
+                    if (order < 3)
+                    {
+                        followingStr = "";
+                        // Use prime notation.
+                        for (int i = 0; i < order; ++i)
+                            followingStr += "'";
+                    }
+                }
+
+                return _derivOf.ToTexString() + (followingStr == null ? orderStr : followingStr);
+            }
+
             if (!_isDefined)
             {
                 return "(\\frac{" + NotationIden + orderStr + _derivOf.ToTexString() + "}{" + NotationIden + _withRespectTo.ToTexString() + orderStr + "})";
@@ -387,7 +488,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         protected override AlgebraTerm CreateInstance(params ExComp[] args)
         {
             Derivative deriv = new Derivative(args[0]);
-            deriv._withRespectTo = (AlgebraComp)this._withRespectTo.Clone();
+            deriv._withRespectTo = this._withRespectTo == null ? null : (AlgebraComp)this._withRespectTo.Clone();
             deriv._order = this._order;
             deriv._isDefined = this._isDefined;
             deriv._derivOf = this._derivOf;

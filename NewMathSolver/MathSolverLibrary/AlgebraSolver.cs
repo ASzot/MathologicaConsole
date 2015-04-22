@@ -73,7 +73,7 @@ namespace MathSolverWebsite.MathSolverLibrary
         /// <returns></returns>
         public SolveResult CalculateDomain(ExComp term, AlgebraVar varFor, ref TermType.EvalData evalData)
         {
-            return CalculateDomain(new EquationSet(term), varFor, ref evalData);
+            return CalculateDomain(new EqSet(term), varFor, ref evalData);
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace MathSolverWebsite.MathSolverLibrary
         /// <param name="useSet"></param>
         /// <param name="varFor"></param>
         /// <returns></returns>
-        public SolveResult CalculateDomain(EquationSet useSet, AlgebraVar varFor, ref TermType.EvalData pEvalData)
+        public SolveResult CalculateDomain(EqSet useSet, AlgebraVar varFor, ref TermType.EvalData pEvalData)
         {
             if (pEvalData == null)
                 throw new InvalidOperationException("Evaluate data not set.");

@@ -154,6 +154,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return variableGroups.ToList();
         }
 
+        public List<AlgebraGroup> GetGroupsVariableToNoOps(AlgebraComp varFor)
+        {
+            var groups = GetGroupsNoOps();
+
+            var variableGroups = from gp in groups
+                                 where gp.GroupContains(varFor)
+                                 select new AlgebraGroup(gp);
+
+            return variableGroups.ToList();
+        }
+
         public override int GetHashCode()
         {
             unchecked

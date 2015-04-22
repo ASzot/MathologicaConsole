@@ -14,10 +14,14 @@ namespace MathSolverWebsite.MathSolverLibrary
         public const bool USE_TEX_DEBUG = true;
         public const bool PLAIN_TEXT = true;
 
-        public static TermType.TermType DetermineSingularEqSet(EquationSet singularEqSet, List<TypePair<LexemeType, string>> completeLexemeTable,
+        public static TermType.TermType DetermineSingularEqSet(EqSet singularEqSet, List<TypePair<LexemeType, string>> completeLexemeTable,
             Dictionary<string, int> solveVars, ref TermType.EvalData pEvalData)
         {
             string probSolveVar = AlgebraSolver.GetProbableVar(solveVars);
+
+            DiffEqTermType diffEqTT = new DiffEqTermType();
+            if (diffEqTT.Init(singularEqSet, solveVars, probSolveVar))
+                return diffEqTT;
 
             EquationInformation eqInfo = singularEqSet.IsSingular ? new EquationInformation(singularEqSet.LeftTerm, new AlgebraComp(probSolveVar)) :
                 new EquationInformation(singularEqSet.LeftTerm, singularEqSet.RightTerm, new AlgebraComp(probSolveVar));
@@ -93,7 +97,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                 return null;
 
             List<LexemeTable> lexemeTables;
-            List<EquationSet> terms = lexParser.ParseInput(input, out lexemeTables, ref pParseErrors);
+            List<EqSet> terms = lexParser.ParseInput(input, out lexemeTables, ref pParseErrors);
             if (terms == null)
                 return null;
 
@@ -110,12 +114,16 @@ namespace MathSolverWebsite.MathSolverLibrary
 
             if (terms.Count == 1)
             {
-                EquationSet singularEqSet = terms[0];
+                EqSet singularEqSet = terms[0];
 
                 return DetermineSingularEqSet(singularEqSet, completeLexemeTable, solveVars, ref pEvalData);
             }
             else
             {
+                DiffEqTermType diffEqTT = new DiffEqTermType();
+                if (diffEqTT.Init(terms))
+                    return diffEqTT;
+
                 for (int i = 0; i < terms.Count; ++i)
                 {
                     if (!terms[i].FixEqFuncDefs(ref pEvalData))
@@ -149,13 +157,13 @@ namespace MathSolverWebsite.MathSolverLibrary
             }
         }
 
-        private static void RecheckSolveVars(ref Dictionary<string, int> solveVars, List<EquationSet> terms)
+        private static void RecheckSolveVars(ref Dictionary<string, int> solveVars, List<EqSet> terms)
         {
             List<string> keys = solveVars.Keys.ToList();
             for (int i = 0; i < keys.Count; ++i)
             {
                 bool contains = false;
-                foreach (EquationSet eqSet in terms)
+                foreach (EqSet eqSet in terms)
                 {
                     if (eqSet.ContainsVar(new AlgebraComp(keys[i])))
                     {

@@ -54,6 +54,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         IntUSub = 40,
 
         PartialDerivative,
+        LeHopital, 
 
         Invalid,
     };
@@ -173,6 +174,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 retStr = "integration with u-substitution";
             else if (inputType == InputType.PartialDerivative)
                 retStr = "partial derivatives";
+            else if (inputType == InputType.LeHopital)
+                retStr = "L'Hospital's rule";
             else
                 return null;
 

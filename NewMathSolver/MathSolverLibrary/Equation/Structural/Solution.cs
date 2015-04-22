@@ -47,6 +47,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return failure;
         }
 
+        public static SolveResult Failure(string msg, ref TermType.EvalData pEvalData)
+        {
+            pEvalData.AddMsg(msg);
+            return Failure();
+        }
+
         public static SolveResult InequalitySolved(params Restriction[] restrictions)
         {
             SolveResult valid;
@@ -348,7 +354,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             }
         }
 
-        public void RemoveExtraneousSolutions(EquationSet eqSet, ref TermType.EvalData pEvalData)
+        public void RemoveExtraneousSolutions(EqSet eqSet, ref TermType.EvalData pEvalData)
         {
             if (!Success || !pEvalData.CheckSolutions)
                 return;

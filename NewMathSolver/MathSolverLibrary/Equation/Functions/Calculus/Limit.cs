@@ -5,11 +5,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 {
     internal class Limit : AppliedFunction
     {
+        private const int MAX_LE_HOPITAL_COUNT = 3;
+
         private bool _evalFail = false;
         private string _limStr;
         private ExComp _reducedInner = null;
         private string _thisDispStr;
         private ExComp _valTo;
+        private int _leHopitalCount = 0;
         private AlgebraComp _varFor;
 
         public Limit(ExComp inner)
@@ -37,6 +40,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return lim;
         }
 
+        public static ExComp TakeLim(ExComp innerEx, AlgebraComp varFor, ExComp valueTo, ref TermType.EvalData pEvalData, int leHopitalCount = 0)
+        {
+            Limit lim = new Limit(innerEx);
+            lim._valTo = valueTo;
+            lim._varFor = varFor;
+            lim._leHopitalCount = leHopitalCount;
+
+            return lim.Evaluate(false, ref pEvalData);
+        }
+
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
             if (_evalFail)
@@ -60,8 +73,25 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 {
                     _evalFail = true;
                     pEvalData.WorkMgr.PopSteps(pEvalData.WorkMgr.WorkSteps.Count - stepCount);
-                    return this;
                 }
+
+                if (attempt == null)
+                {
+                    attempt = EvalInfinitySpecialFunc(reduced);
+                }
+
+                if (attempt == null)
+                {
+                    attempt = AttemptLeHopitals(reduced, ref pEvalData);
+                    if (attempt == null)
+                    {
+                        _leHopitalCount = 0;
+                        pEvalData.WorkMgr.PopSteps(pEvalData.WorkMgr.WorkSteps.Count - stepCount);
+                        return this;
+                    }
+                }
+
+
 
                 pEvalData.WorkMgr.FromFormatted("`" + _thisDispStr + "={0}`", attempt);
 
@@ -79,6 +109,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return plugIn;
             }
 
+            attempt = EvalSpecialFunc(reduced);
+            if (attempt != null)
+            {
+                pEvalData.WorkMgr.FromFormatted("`" + _thisDispStr + "={0}`", attempt);
+
+                pEvalData.AttemptSetInputType(TermType.InputType.Limits);
+                return attempt;
+            }
+
             attempt = TryRadicalConjugate(reduced, ref pEvalData);
             if (attempt != null)
             {
@@ -88,16 +127,178 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return attempt;
             }
 
+            attempt = AttemptLeHopitals(reduced, ref pEvalData);
+            if (attempt != null)
+            {
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + _thisDispStr + "={0}" + WorkMgr.EDM, attempt);
+
+                pEvalData.AttemptSetInputType(TermType.InputType.LeHopital);
+                return attempt;
+            }
+
+
             _evalFail = true;
             pEvalData.WorkMgr.PopSteps(pEvalData.WorkMgr.WorkSteps.Count - stepCount);
             return this;
         }
 
-        public override string FinalDispKeepFormatting()
+        private ExComp EvalInfinitySpecialFunc(ExComp ex)
         {
-            if (USE_TEX)
-                return FinalToTexKeepFormatting();
-            return FinalToAsciiKeepFormatting();
+            bool posInfinity = Number.PosInfinity.IsEqualTo(_valTo);
+            if (ex is PowerFunction)
+            {
+                PowerFunction pf = ex as PowerFunction;
+                if (pf.Base is Number && !(pf.Base as Number).HasImaginaryComp())
+                {
+                    Number baseNum = pf.Base as Number;
+                    if (Number.One.IsEqualTo(baseNum))
+                        return Number.One;
+                    bool ltOne = baseNum < 1.0;
+                    if (posInfinity)
+                        return ltOne ? Number.Zero : Number.PosInfinity;
+                    else
+                        return ltOne ? Number.PosInfinity : Number.Zero;
+                }
+            }
+            else if (ex is TrigFunction)
+            {
+                return Number.Undefined;
+            }
+
+            return null;
+        }
+
+        private ExComp EvalSpecialFunc(ExComp ex)
+        {
+            if (ex is TrigFunction)
+            {
+                return Number.Undefined;
+            }
+            else if (ex is LogFunction)
+            {
+                LogFunction lf = ex as LogFunction;
+                if (Number.Zero.IsEqualTo(_valTo))
+                    return Number.NegInfinity;
+                if (Number.PosInfinity.IsEqualTo(_valTo))
+                    return Number.PosInfinity;
+            }
+            else if (ex is AlgebraTerm)
+            {
+                AlgebraTerm[] numDen = (ex as AlgebraTerm).GetNumDenFrac();
+                if (numDen == null)
+                    return null;
+
+                Number numNum = numDen[0].RemoveRedundancies() as Number;
+                if (numNum == null || numNum.HasImaginaryComp())
+                    return null;
+
+                ExComp den = numDen[1].RemoveRedundancies();
+
+                bool isNeg = numNum < 0.0;
+                if (den is AlgebraTerm && !(den is PowerFunction))
+                {
+                    AlgebraTerm denTerm = den as AlgebraTerm;
+                    var varGps = denTerm.GetGroupsVariableToNoOps(_varFor);
+                    if (varGps.Count != 1)
+                        return null;
+
+                    var constGps = denTerm.GetGroupsConstantTo(_varFor);
+                    ExComp constEx = Number.Zero;
+                    foreach (var constGp in constGps)
+                    {
+                        constEx = AddOp.StaticCombine(constEx, constGp.ToTerm());
+                    }
+
+                    if (constEx is AlgebraTerm)
+                        constEx = (ex as AlgebraTerm).RemoveRedundancies();
+
+                    if (!constEx.IsEqualTo(MulOp.Negate(_valTo)))
+                        return null;
+
+                    if (varGps[0].GroupCount > 1)
+                    {
+                        // There might be a coefficient.
+                        if (varGps[0].GroupCount != 2)
+                            return null;
+                        Number coeff = varGps[0][0] is Number ? varGps[0][0] as Number : varGps[0][1] as Number;
+                        den = varGps[0][0] is Number ? varGps[0][1] : varGps[0][0];
+
+                        if (coeff.HasImaginaryComp())
+                            return null;
+
+                        if (coeff < 0.0)
+                            isNeg = !isNeg;
+                    }
+                    else
+                        den = varGps[0].ToTerm().RemoveRedundancies();
+                }
+                else if (!Number.Zero.IsEqualTo(_valTo))
+                    return null;
+
+                if (den is AlgebraComp)
+                    den = new PowerFunction(den, Number.One);
+
+                if (!(den is PowerFunction))
+                    return null;
+
+                PowerFunction pf = den as PowerFunction;
+                if (!pf.Base.IsEqualTo(_varFor) || !(pf.Power is Number))
+                    return null;
+
+                Number powNum = pf.Power as Number;
+                if (!powNum.IsRealInteger())
+                    return null;
+
+                int iPow = (int)powNum.RealComp;
+
+                if (iPow % 2 != 0)
+                    return Number.Undefined;
+                else
+                    return isNeg ? Number.NegInfinity : Number.PosInfinity;
+            }
+
+            return null;
+        }
+
+        private ExComp AttemptLeHopitals(ExComp ex, ref TermType.EvalData pEvalData)
+        {
+            if (_leHopitalCount >= MAX_LE_HOPITAL_COUNT)
+                return null;
+
+            _leHopitalCount++;
+
+            if (!(ex is AlgebraTerm))
+                return null;
+
+            AlgebraTerm term = ex as AlgebraTerm;
+            AlgebraTerm[] numDen = term.GetNumDenFrac();
+            if (numDen == null)
+                return null;
+
+            ExComp num = numDen[0];
+            ExComp den = numDen[1];
+
+            // Is this an indefinite form.
+            ExComp numEval = TakeLim(num, _varFor, _valTo, ref pEvalData, _leHopitalCount);
+            if (numEval is Limit)
+                return null;
+            ExComp denEval = TakeLim(den, _varFor, _valTo, ref pEvalData, _leHopitalCount);
+            if (denEval is Limit)
+                return null;
+
+            if (!Number.Zero.IsEqualTo(numEval) && !Number.NegInfinity.IsEqualTo(numEval) && !Number.PosInfinity.IsEqualTo(numEval))
+                return null;
+
+            if (!numEval.IsEqualTo(denEval))
+                return null;
+
+            // This is in indefinite form.
+            ExComp numDeriv = Derivative.TakeDeriv(num, _varFor, ref pEvalData);
+            ExComp denDeriv = Derivative.TakeDeriv(den, _varFor, ref pEvalData);
+
+            AlgebraTerm frac = new AlgebraTerm(numDeriv, denDeriv);
+
+            return TakeLim(frac, _varFor, _valTo, ref pEvalData, _leHopitalCount);
         }
 
         public override string FinalToAsciiKeepFormatting()
@@ -136,13 +337,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             }
 
             return false;
-        }
-
-        public override string ToDispString()
-        {
-            if (USE_TEX)
-                return ToTexString();
-            return ToAsciiString();
         }
 
         public override string ToAsciiString()

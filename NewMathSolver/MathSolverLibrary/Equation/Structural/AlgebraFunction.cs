@@ -108,6 +108,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return term;
         }
 
+        protected virtual ExComp CancelWith(ExComp innerEx, ref TermType.EvalData evalData)
+        {
+            return null;
+        }
+
         public abstract ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData);
 
         public override double GetCompareVal()
