@@ -125,6 +125,43 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return Number.Undefined;
             }
 
+            string integralStr = FinalToDispStr();
+
+            ExComp useUpper;
+            ExComp useLower;
+
+            if (UpperLimit is Number && (UpperLimit as Number).IsInfinity())
+                useUpper = new AlgebraComp("$n");
+            else
+                useUpper = UpperLimit;
+
+            if (LowerLimit is Number && (LowerLimit as Number).IsInfinity())
+                useLower = new AlgebraComp("$n");
+            else
+                useLower = LowerLimit;
+
+
+            if (useUpper != UpperLimit && useLower != LowerLimit)
+            {
+                // Evaluating from infinity in both directions. 
+                // Split the integral up.
+                Integral upperInt = Integral.ConstructIntegral(InnerTerm, _dVar, Number.Zero, Number.PosInfinity);
+                Integral lowerInt = Integral.ConstructIntegral(InnerTerm, _dVar, Number.NegInfinity, Number.Zero);
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + integralStr + "=" + lowerInt.FinalToDispStr() + "=" + 
+                    upperInt.FinalToDispStr() + WorkMgr.EDM,
+                    "Split the integral.");
+
+                ExComp upperSideEval = upperInt.Evaluate(harshEval, ref pEvalData);
+                ExComp lowerSideEval = lowerInt.Evaluate(harshEval, ref pEvalData);
+
+                ExComp added = AddOp.StaticCombine(upperSideEval, lowerSideEval);
+
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + WorkMgr.ExFinalToAsciiStr(upperSideEval) + "+" + WorkMgr.ExFinalToAsciiStr(lowerSideEval) +
+                    "=" + WorkMgr.ExFinalToAsciiStr(added) + WorkMgr.EDM, "Combine the integral back together.");
+
+                return added;
+            }
+
             AlgebraTerm indefinite = Indefinite(InnerTerm, ref pEvalData);
             if (_failure)
                 return indefinite;      // Just 'this'
@@ -135,7 +172,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 {
                     // Add the constant.
                     ExComp retEx = AddOp.StaticWeakCombine(indefinite, new CalcConstant());
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + retEx.ToAlgTerm().FinalToDispStr() + WorkMgr.STM,
+                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + retEx.ToAlgTerm().FinalToDispStr() + WorkMgr.EDM,
                         "Add the constant of integration.");
                     return retEx;
                 }
@@ -143,7 +180,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     return indefinite;
             }
 
-            AlgebraTerm upperEval = indefinite.Clone().ToAlgTerm().Substitute(_dVar, UpperLimit);
+            AlgebraTerm upperEval = indefinite.Clone().ToAlgTerm().Substitute(_dVar, useUpper);
             if (upperEval.Contains(_dVar))
             {
                 pEvalData.AddFailureMsg("Internal error evaluating antiderivative");
@@ -151,7 +188,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             }
             ExComp upperEx = Simplifier.Simplify(new AlgebraTerm(upperEval), ref pEvalData);
 
-            AlgebraTerm lowerEval = indefinite.Clone().ToAlgTerm().Substitute(_dVar, LowerLimit);
+            AlgebraTerm lowerEval = indefinite.Clone().ToAlgTerm().Substitute(_dVar, useLower);
             if (lowerEval.Contains(_dVar))
             {
                 pEvalData.AddFailureMsg("Internal error evaluating antiderivative");
@@ -159,7 +196,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             }
             ExComp lowerEx = Simplifier.Simplify(new AlgebraTerm(lowerEval), ref pEvalData);
 
-            string integralStr = FinalToDispStr();
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + integralStr + "=F(" +
                 WorkMgr.ExFinalToAsciiStr(UpperLimit) + ")-F(" + WorkMgr.ExFinalToAsciiStr(LowerLimit) + ")" + WorkMgr.EDM,
                 "Evaluate the definite integral where F is the antiderivative.");
@@ -170,6 +206,30 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 resultStr0 + WorkMgr.EDM);
 
             ExComp result = SubOp.StaticCombine(upperEx, lowerEx);
+            AlgebraComp subVar = null;
+            ExComp limVal = null;
+            if (useUpper != UpperLimit)
+            {
+                subVar = useUpper as AlgebraComp;
+                limVal = Number.PosInfinity;
+            }
+            else if (useLower != LowerLimit)
+            {
+                subVar = useLower as AlgebraComp;
+                limVal = Number.NegInfinity;
+            }
+
+            if (subVar != null)
+            {
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + integralStr + "=\\lim_{" + subVar.ToDispString() +
+                    " \\to \\infty} \\int_{" + subVar.ToDispString() + "}^{" + WorkMgr.ExFinalToAsciiStr(result) + "} + " +
+                    InnerTerm.FinalToDispStr() + "d" + _dVar.ToDispString() + WorkMgr.EDM);
+
+                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\lim_{" + subVar.ToDispString() + " \\to \\infty}" +
+                    WorkMgr.ExFinalToAsciiStr(result) + WorkMgr.EDM, "Take the limit to infinity.");
+
+                result = Limit.TakeLim(result, subVar, limVal, ref pEvalData);
+            }
 
             pEvalData.AddInputType(TermType.InputAddType.IntDef);
 
