@@ -715,9 +715,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             double real = (n1.RealComp * n2.RealComp) - (n1.ImagComp * n2.ImagComp);
             double imag = (n1.RealComp * n2.ImagComp) + (n1.ImagComp * n2.RealComp);
+            if (n1.IsInfinity() || n2.IsInfinity())
+                imag = 0.0;
 
             real = EpsilonCorrect(real);
             imag = EpsilonCorrect(imag);
+
+            if (imag == 0.0 && n1.IsPosInfinity())
+                return n2 < 0.0 ? NegInfinity : PosInfinity;
+            else if (imag == 0.0 && n2.IsPosInfinity())
+                return n1 < 0.0 ? NegInfinity : PosInfinity;
 
             return new Number(real, imag);
         }

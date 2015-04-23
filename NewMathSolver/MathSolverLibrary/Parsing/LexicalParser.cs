@@ -65,7 +65,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                                              LexemeType.Summation),
 			new TypePair<string, LexemeType>(@"lim_\((" + IDEN_MATCH + @")to(\-)?((inf)|(" + NUM_MATCH + @")|(" + IDEN_MATCH + @"))\)", 
                                              LexemeType.Limit),
-            new TypePair<string, LexemeType>(@"(int_\()|(int_((" + NUM_MATCH + ")|(" + IDEN_MATCH + ")|(pi)))|(int)", LexemeType.Integral),
+            new TypePair<string, LexemeType>(@"(int_\()|(int)", LexemeType.Integral),
             new TypePair<string, LexemeType>(@"\$d(" + IDEN_MATCH + @")", LexemeType.Differential),
             new TypePair<string, LexemeType>(@"inf", LexemeType.Infinity),
             new TypePair<string, LexemeType>(@"(sum)|(lim)", LexemeType.ErrorType),
@@ -185,12 +185,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         for (int j = 0; j < tolkenRange.Count; ++j)
                         {
                             var tolken = tolkenRange[j];
-                            for (int k = j + 1; k < tolkenRange.Count; ++k)
+                            for (int k = 0; k < tolkenRange.Count; ++k)
                             {
+                                if (j == k)
+                                    continue;
                                 var compTolken = tolkenRange[k];
-                                if (compTolken.Data2.Index < (tolken.Data2.Index + tolken.Data2.Length))
+                                if (tolken.Data2.Index <= compTolken.Data2.Index && 
+                                    (tolken.Data2.Length + tolken.Data2.Index) >= (compTolken.Data2.Index + compTolken.Data2.Length))
                                 {
                                     tolkenRange.RemoveAt(k--);
+                                    if (k < j)
+                                        j--;
                                     continue;
                                 }
                             }
@@ -2657,7 +2662,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
             // Next should be the expression.
             // Parse until the differential.
-            int depth = 0;
+            int depth = 1;
             for (; currentIndex < lt.Count; ++currentIndex)
             {
                 if (lt[currentIndex].Data1 == LexemeType.Integral)
