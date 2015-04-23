@@ -879,7 +879,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         public bool IsRealInteger()
         {
             string realStr = d_realComp.ToString();
-            return !realStr.Contains(".");
+            return !realStr.Contains(".") && !IsInfinity();
         }
 
         public bool IsUndefined()

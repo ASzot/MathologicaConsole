@@ -46,6 +46,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
         FuncArgStart,
         FuncArgEnd,
 
+        Infinity,
+
         ErrorType,
     };
 

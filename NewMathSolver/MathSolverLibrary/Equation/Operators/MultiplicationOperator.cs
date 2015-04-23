@@ -300,7 +300,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             {
                 Number n1 = ex1 as Number;
                 Number n2 = ex2 as Number;
-
+                
                 Number result = n1 * n2;
                 return result;
             }

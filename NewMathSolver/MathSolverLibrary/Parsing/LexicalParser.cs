@@ -67,7 +67,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                                              LexemeType.Limit),
             new TypePair<string, LexemeType>(@"(int_\()|(int_((" + NUM_MATCH + ")|(" + IDEN_MATCH + ")|(pi)))|(int)", LexemeType.Integral),
             new TypePair<string, LexemeType>(@"\$d(" + IDEN_MATCH + @")", LexemeType.Differential),
-            new TypePair<string, LexemeType>(@"(sum)|(inf)|(lim)", LexemeType.ErrorType),
+            new TypePair<string, LexemeType>(@"inf", LexemeType.Infinity),
+            new TypePair<string, LexemeType>(@"(sum)|(lim)", LexemeType.ErrorType),
         };
 
         private class MatchTolken
@@ -982,7 +983,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
         private string CleanTexInput(string str)
         {
-
             str = str.Replace(@"\cdot", "*");
             str = str.Replace(@"\left", "");
             str = str.Replace(@"\right", "");
@@ -1553,6 +1553,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     return ParseVector(ref currentIndex, lexemeTable, ref pParseErrors);
                 case LexemeType.MultiVarFuncStore:
                     return ParseMultiVarFunc(ref currentIndex, lexemeTable, ref pParseErrors);
+                case LexemeType.Infinity:
+                    return Number.PosInfinity;
 
                 case LexemeType.Function:
                     endIndex = -1;
