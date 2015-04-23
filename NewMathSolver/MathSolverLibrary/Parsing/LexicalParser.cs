@@ -61,9 +61,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                                              @"frac\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\(((partial)|d)(" + IDEN_MATCH + @")(\^(" + NUM_MATCH + @"))?\)",
                                              LexemeType.Derivative),
             new TypePair<string, LexemeType>("(" + IDEN_MATCH + @")(((\')+)|((\^((" + NUM_MATCH + @")|(" + IDEN_MATCH + @")))\((" + IDEN_MATCH + @")\)))", LexemeType.FuncDeriv),
-            new TypePair<string, LexemeType>(MathSolver.PLAIN_TEXT ? 
-                                             @"sum_\((" + IDEN_MATCH + ")=(" + NUM_MATCH + @")\)\^\((" + NUM_MATCH + @")\)" : 
-                                             @"(sum\^(\()?(" + NUM_MATCH + @")(\))?_\((" + IDEN_MATCH + ")=(" + NUM_MATCH + @")\))", 
+            new TypePair<string, LexemeType>(@"sum_\((" + IDEN_MATCH + ")=", 
                                              LexemeType.Summation),
 			new TypePair<string, LexemeType>(@"lim_\((" + IDEN_MATCH + @")to(\-)?((inf)|(" + NUM_MATCH + @")|(" + IDEN_MATCH + @"))\)", 
                                              LexemeType.Limit),
@@ -138,7 +136,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             {
                 var tolkenMatch = tolkenMatches[i];
 
-                if (tolkenMatch.Data1 == LexemeType.Integral)
+                if (tolkenMatch.Data1 == LexemeType.Identifier && tolkenMatch.Data2.Value.Contains("=") && tolkenMatch.Data2.Value.Contains("="))
+                {
+                    string splitVal = tolkenMatch.Data2.Value.Split('_')[0];
+                    tolkenMatches[i].Data2 = new MatchTolken(splitVal.Length, 
+                        tolkenMatch.Data2.Index, splitVal);
+
+                }
+                else if (tolkenMatch.Data1 == LexemeType.Integral)
                 {
                     string tolkenStr = tolkenMatch.Data2.Value;
 
@@ -1809,9 +1814,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     return ParseFuncDerivative(ref currentIndex, lexemeTable, ref pParseErrors);
 
                 case LexemeType.Summation:
-                    if (MathSolver.PLAIN_TEXT)
-                        return ParseSummationPlainText(ref currentIndex, lexemeTable, ref pParseErrors);
-                    return ParseSummationTeX(ref currentIndex, lexemeTable, ref pParseErrors);
+                    return ParseSummation(ref currentIndex, lexemeTable, ref pParseErrors);
 
                 case LexemeType.Limit:
                     return ParseLimit(ref currentIndex, lexemeTable, ref pParseErrors);
@@ -2379,18 +2382,34 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 return null;
 
             ExComp innerEx;
-            if (lt[currentIndex].Data1 == LexemeType.StartPara)
-                innerEx = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
-            else
+            int endIndex = lt.Count;
+            int depth = 0;
+            int prevOp = -1;
+            for (int i = currentIndex; i < lt.Count; ++i)
             {
-                // Just takes the derivative of the rest of the expression.
-                var remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
-                currentIndex = lt.Count - 1;
-                innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
+                if (lt[i].Data1 == LexemeType.StartPara)
+                    depth++;
+                else if (lt[i].Data1 == LexemeType.EndPara)
+                    depth--;
+                else if (lt[i].Data1 == LexemeType.Operator)
+                    prevOp = i;
+                else if (lt[i].Data1 == LexemeType.Limit && depth == 0)
+                {
+                    // there will always be an operator before that needs to be parsed
+                    endIndex = prevOp != -1 ? prevOp : i;
+                    break;
+                }
             }
 
+
+            var remainingLt = lt.GetRange(currentIndex, endIndex - currentIndex);
+            if (remainingLt.Count == 0)
+                return null;
+            innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
             if (innerEx == null)
                 return null;
+
+            currentIndex = endIndex == lt.Count - 1 ? endIndex : endIndex - 1;
 
             return Equation.Functions.Calculus.Limit.Create(innerEx, varFor, parsedValTo);
         }
@@ -2489,101 +2508,93 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return new AlgebraTerm(innerEx, new Equation.Operators.PowOp(), Equation.Operators.DivOp.StaticCombine(Number.One, rootEx));
         }
 
-        private AlgebraTerm ParseSummationPlainText(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseSummation(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
         {
-            string sumData = lt[currentIndex].Data2.Split('_')[1];
+            string varStr = lt[currentIndex].Data2.Remove(0, "sum_(".Length);
+            // Remove the equals sign.
+            varStr = varStr.Remove(varStr.Length - 1, 1);
+
+            AlgebraComp iterVar = new AlgebraComp(varStr);
+
+            int endParaIndex = -1;
+            int depth = 1;
+            for (int i = currentIndex; i < lt.Count; ++i)
+            {
+                if (lt[i].Data1 == LexemeType.StartPara)
+                {
+                    depth++;
+                }
+                if (lt[i].Data1 == LexemeType.EndPara)
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        endParaIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (endParaIndex == -1)
+                return null;
+
+            LexemeTable startValLt = lt.GetRange(currentIndex + 1, endParaIndex - (currentIndex + 1));
+            AlgebraTerm tmp = LexemeTableToAlgebraTerm(startValLt, ref pParseErrors);
+            if (tmp == null)
+                return null;
+            ExComp startVal = tmp.RemoveRedundancies();
+
+            currentIndex = endParaIndex + 1;
+
+            if (currentIndex + 1 >= lt.Count)
+                return null;
+
+            if (lt[currentIndex].Data1 != LexemeType.Operator || lt[currentIndex].Data2 != "^")
+                return null;
 
             currentIndex++;
-            if (currentIndex > lt.Count - 1)
+
+            ExComp endVal = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
+            if (endVal == null)
                 return null;
-
-            string[] split = sumData.Split('^');
-
-            // Remove the starting '('
-            split[0] = split[0].Remove(0, 1);
-            // Remove the ending ')'
-            split[0] = split[0].Remove(split[0].Length - 1, 1);
-
-            // Remove the starting '('
-            split[1] = split[1].Remove(0, 1);
-            split[1] = split[1].Remove(split[1].Length - 1, 1);
-
-            string[] initStrs = split[0].Split('=');
-            Number nInit = Number.Parse(initStrs[1]);
-            AlgebraComp iterVar = new AlgebraComp(initStrs[0]);
-            Number nIterCount = Number.Parse(split[1]);
-
-            if (nInit == null || nIterCount == null)
-                return null;
-
-            ExComp innerEx;
-            if (lt[currentIndex].Data1 == LexemeType.StartPara)
-                innerEx = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
-            else
-            {
-                // Just takes the derivative of the rest of the expression.
-                var remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
-                currentIndex = lt.Count - 1;
-                innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
-            }
-
-            if (innerEx == null)
-            {
-                pParseErrors.Add("Expression must follow summation.");
-                return null;
-            }
-
-            Equation.Functions.SumFunction sumFunc = new SumFunction(innerEx, iterVar, nInit, nIterCount);
-
-            return sumFunc;
-        }
-
-        private AlgebraTerm ParseSummationTeX(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
-        {
-            string[] split = lt[currentIndex].Data2.Split('_');
 
             currentIndex++;
-            if (currentIndex > lt.Count - 1)
-                return null;
-
-            split[0] = split[0].Remove(0, "sum^".Length);
-
-            split[1] = split[1].Remove(0, 1);
-            split[1] = split[1].Remove(split[1].Length - 1, 1);
-
-            if (split[0].StartsWith("("))
+            if (lt[currentIndex].Data1 == LexemeType.Operator && lt[currentIndex].Data2 == "*")
             {
-                split[0] = split[0].Remove(0, 1);
-                split[0] = split[0].Remove(split[0].Length - 1, 1);
+                currentIndex++;
             }
 
-            string[] initStrs = split[1].Split('=');
+            // Parse the rest of the expression.
 
-            Number nInit = Number.Parse(initStrs[1]);
-            AlgebraComp iterVar = new AlgebraComp(initStrs[0]);
-            Number nIterCount = Number.Parse(split[0]);
-
-            if (nInit == null || nIterCount == null)
-                return null;
-
-            ExComp innerEx;
-            if (lt[currentIndex].Data1 == LexemeType.StartPara)
-                innerEx = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
-            else
+            int endIndex = lt.Count;
+            depth = 0;
+            int prevOp = -1;
+            for (int i = currentIndex; i < lt.Count; ++i)
             {
-                // Just takes the derivative of the rest of the expression.
-                var remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
-                currentIndex = lt.Count - 1;
-                innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
+                if (lt[i].Data1 == LexemeType.StartPara)
+                    depth++;
+                else if (lt[i].Data1 == LexemeType.EndPara)
+                    depth--;
+                else if (lt[i].Data1 == LexemeType.Operator)
+                    prevOp = i;
+                else if (lt[i].Data1 == LexemeType.Summation && depth == 0)
+                {
+                    // there will always be an operator before that needs to be parsed
+                    endIndex = prevOp != -1 ? prevOp : i;
+                    break;
+                }
             }
 
+            var remainingLt = lt.GetRange(currentIndex, endIndex - currentIndex);
+            if (remainingLt.Count == 0)
+                return null;
+            AlgebraTerm innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
             if (innerEx == null)
-            {
-                pParseErrors.Add("Expression must follow summation.");
                 return null;
-            }
 
-            Equation.Functions.SumFunction sumFunc = new SumFunction(innerEx, iterVar, nInit, nIterCount);
+            currentIndex = endIndex == lt.Count - 1 ? endIndex : endIndex - 1;
+
+            Equation.Functions.SumFunction sumFunc = new SumFunction(innerEx, iterVar, startVal, endVal);
 
             return sumFunc;
         }

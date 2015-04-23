@@ -1353,9 +1353,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
             foreach (ExComp comp in _subComps)
             {
-                finalStr += comp.ToJavaScriptString(useRad);
-                if (finalStr == null)
+                string addStr = comp.ToJavaScriptString(useRad);
+                if (addStr == null)
                     return null;
+
+                finalStr += addStr;
             }
 
             finalStr += ")";
