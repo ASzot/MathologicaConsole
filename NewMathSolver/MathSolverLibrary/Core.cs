@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
+using MathSolverWebsite.MathSolverLibrary.Equation;
+
 namespace MathSolverWebsite.MathSolverLibrary
 {
     public static class DoubleHelper
@@ -99,7 +101,7 @@ namespace MathSolverWebsite.MathSolverLibrary
     {
         public static bool ContainsEx(this List<Equation.ExComp> exs, Equation.ExComp ex)
         {
-            foreach (var compareEx in exs)
+            foreach (ExComp compareEx in exs)
             {
                 if (compareEx.IsEqualTo(ex))
                     return true;

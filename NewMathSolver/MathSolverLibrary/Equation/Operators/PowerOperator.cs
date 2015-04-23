@@ -1,6 +1,7 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 using System;
 using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
+using System.Collections.Generic;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 {
@@ -126,7 +127,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 
             if (term is AlgebraTerm)
             {
-                var groups = (term as AlgebraTerm).GetGroups();
+                List<ExComp[]> groups = (term as AlgebraTerm).GetGroups();
                 int groupCount = groups.Count;
 
                 if (groups.Count == 2)
@@ -137,8 +138,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                     // Use the binomial theorem.
                     AlgebraComp iterVar = new AlgebraComp("$k");
                     ChooseFunction chooseFunc = new ChooseFunction(power, iterVar);
-                    var group0 = groups[0].ToAlgTerm();
-                    var group1 = groups[1].ToAlgTerm();
+					AlgebraTerm group0 = groups[0].ToAlgTerm();
+					AlgebraTerm group1 = groups[1].ToAlgTerm();
                     ExComp overallEx = MulOp.StaticWeakCombine(chooseFunc, PowOp.StaticWeakCombine(group0, SubOp.StaticWeakCombine(power, iterVar)));
                     overallEx = MulOp.StaticWeakCombine(overallEx, PowOp.StaticWeakCombine(group1, iterVar));
                     SumFunction sumFunc = new SumFunction(overallEx, iterVar, Number.Zero, power);

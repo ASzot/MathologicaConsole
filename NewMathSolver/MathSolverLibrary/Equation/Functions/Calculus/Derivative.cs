@@ -2,6 +2,7 @@
 using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 
 using System.Linq;
+using System.Collections.Generic;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 {
@@ -90,7 +91,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             FunctionDefinition funcDef = new FunctionDefinition(new AlgebraComp(function), null, null);
 
-            var funcDefValue = pEvalData.FuncDefs.GetDefinition(funcDef);
+            KeyValuePair<FunctionDefinition, ExComp> funcDefValue = pEvalData.FuncDefs.GetDefinition(funcDef);
             ExComp innerEx = funcDefValue.Value;
             Derivative deriv;
             if (innerEx == null)
@@ -161,7 +162,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return ca_impDeriv;
         }
 
-        private static AlgebraComp ConstructImplicitDerivAgCmp(ExComp derivOf, ExComp withRespectTo, bool partial = false)
+        private static AlgebraComp ConstructImplicitDerivAgCmp(ExComp derivOf, ExComp withRespectTo, bool isPartial = false)
         {
             string iden = partial ? "\\partial" : "d";
             return new AlgebraComp("(" + iden + derivOf.ToDispString() + ")/(" + iden + withRespectTo.ToDispString() + ")");
@@ -651,10 +652,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 // Don't include the constants which are still contained under the neg one power.
                 if (powFunc.Base is AlgebraTerm)
                 {
-                    var gps = (powFunc.Base as AlgebraTerm).GetGroupsNoOps();
+                    List<ExComp[]> gps = (powFunc.Base as AlgebraTerm).GetGroupsNoOps();
                     if (gps.Count == 1)
                     {
-                        var gp = gps[0];
+                        ExComp[] gp = gps[0];
                         ExComp[] varTo, constTo;
                         gp.GetConstVarTo(out varTo, out constTo, _withRespectTo);
                         if (varTo.Length != 0 && constTo.Length != 0)
@@ -886,7 +887,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     }
                 }
 
-                var gps = term.GetGroupsNoOps();
+                List<ExComp[]> gps = term.GetGroupsNoOps();
                 AlgebraTerm final = new AlgebraTerm();
 
                 if (gps.Count != 1 && pEvalData.WorkMgr.AllowWork)

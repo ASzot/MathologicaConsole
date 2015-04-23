@@ -19,7 +19,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
             bool allMatrices = true;
             bool containsMatrix = false;
-            foreach (var ex in exs)
+            foreach (ExComp ex in exs)
             {
                 if (ex is ExMatrix)
                     containsMatrix = true;

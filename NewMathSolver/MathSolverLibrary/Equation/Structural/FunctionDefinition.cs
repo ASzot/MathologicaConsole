@@ -1,5 +1,6 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation.Term;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation
 {
@@ -72,7 +73,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public ExComp CallFunc(ref TermType.EvalData pEvalData)
         {
-            var def = pEvalData.FuncDefs.GetDefinition(this);
+            KeyValuePair<FunctionDefinition, ExComp> def = pEvalData.FuncDefs.GetDefinition(this);
             if (def.Value == null)
             {
                 if (CallArgs != null && InputArgs == null)

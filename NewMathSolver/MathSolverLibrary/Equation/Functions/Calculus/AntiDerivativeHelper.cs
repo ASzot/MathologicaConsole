@@ -433,7 +433,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     if (!(baseEx is AlgebraComp) && baseEx.ToAlgTerm().Contains(dVar))
                     {
                         potentialU.Add(baseEx);
-                        var groups = baseEx.ToAlgTerm().GetGroups();
+                        List<ExComp[]> groups = baseEx.ToAlgTerm().GetGroups();
                         if (groups.Count == 1)
                         {
                             List<ExComp> additionalBase = GetPotentialU(groups[0], dVar);
@@ -455,7 +455,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     if (!(powerEx is AlgebraComp) && powerEx.ToAlgTerm().Contains(dVar))
                     {
                         potentialU.Add(powerEx);
-                        var groups = powerEx.ToAlgTerm().GetGroups();
+                        List<ExComp[]> groups = powerEx.ToAlgTerm().GetGroups();
                         if (groups.Count == 1)
                         {
                             List<ExComp> additionalPower = GetPotentialU(powerEx.ToAlgTerm().SubComps.ToArray(), dVar);
@@ -532,7 +532,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             term = term.Substitute(uatmpt, subInVar, ref success);
             if (!success)
                 return null;
-            var updatedGroups = term.GetGroupsNoOps();
+            List<ExComp[]> updatedGroups = term.GetGroupsNoOps();
             // The group count started as one and should not have been altered by substitutions.
             if (updatedGroups.Count != 1)
                 return null;
@@ -552,7 +552,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
             group = updatedGroups[0];
 
-            var groups = evaluated.ToAlgTerm().GetGroupsNoOps();
+            List<ExComp[]> groups = evaluated.ToAlgTerm().GetGroupsNoOps();
             ExComp constEx = null;
 
             if (groups.Count == 1)
@@ -649,7 +649,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     PowerFunction groupPf = group[j] as PowerFunction;
                     PowerFunction evaluatedPf = evaluated as PowerFunction;
 
-                    var baseGps = groupPf.Base.ToAlgTerm().GetGroupsNoOps();
+                    List<ExComp[]> baseGps = groupPf.Base.ToAlgTerm().GetGroupsNoOps();
                     if (baseGps.Count == 1)
                     {
                         // Search the base for like terms. 
@@ -787,7 +787,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     return null;
             }
 
-            var stepRange = pEvalData.WorkMgr.WorkSteps.GetRange(stepCount, pEvalData.WorkMgr.WorkSteps.Count - stepCount);
+            List<WorkStep> stepRange = pEvalData.WorkMgr.WorkSteps.GetRange(stepCount, pEvalData.WorkMgr.WorkSteps.Count - stepCount);
             pEvalData.WorkMgr.WorkSteps.RemoveRange(stepCount, pEvalData.WorkMgr.WorkSteps.Count - stepCount);
 
             pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "\\int(" + thisStr + ")d" + dVar.ToDispString() + WorkMgr.EDM,

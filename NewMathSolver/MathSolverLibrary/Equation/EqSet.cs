@@ -3,6 +3,7 @@ using MathSolverWebsite.MathSolverLibrary.Equation.Term;
 using MathSolverWebsite.MathSolverLibrary.Parsing;
 using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 using System.Collections.Generic;
+using MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus;
 using LexemeTable = System.Collections.Generic.List<
 MathSolverWebsite.MathSolverLibrary.TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>>;
 
@@ -290,8 +291,8 @@ namespace MathSolverWebsite.MathSolverLibrary
             AlgebraComp withRespectTo = new AlgebraComp(withRespectToStr);
             AlgebraComp derivOf = new AlgebraComp(derivativeOfStr);
 
-            var derivLeft = Equation.Functions.Calculus.Derivative.ConstructDeriv(Left, withRespectTo, derivOf);
-            var derivRight = Equation.Functions.Calculus.Derivative.ConstructDeriv(Right, withRespectTo, derivOf);
+            Derivative derivLeft = Derivative.ConstructDeriv(Left, withRespectTo, derivOf);
+			Derivative derivRight = Derivative.ConstructDeriv(Right, withRespectTo, derivOf);
 
             pEvalData.WorkMgr.FromSides(derivLeft, derivRight, "Take the implicit derivative of each side.");
             pEvalData.WorkMgr.FromFormatted("`{0}`", "First take the derivative of the left side.", Left);
@@ -309,10 +310,10 @@ namespace MathSolverWebsite.MathSolverLibrary
             eqSet = new EqSet();
 
             List<LexemeTable> lts;
-            var garbageParseErrors = new List<string>();
+            List<string> garbageParseErrors = new List<string>();
 
             LexicalParser lexParser = new LexicalParser(pEvalData);
-            var eqs = lexParser.ParseInput(_strContent, out lts, ref garbageParseErrors);
+            List<EqSet> eqs = lexParser.ParseInput(_strContent, out lts, ref garbageParseErrors);
 
             if (eqs == null)
                 return false;

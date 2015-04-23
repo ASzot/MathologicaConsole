@@ -47,3 +47,6 @@ C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver
 C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.application
 C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.exe
 C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.pdb
+C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\Mathologica Console.exe.config
+C:\Users\728812\Desktop\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.exe
+C:\Users\728812\Desktop\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.pdb

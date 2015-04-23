@@ -64,8 +64,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 }
                 else if (comp is AlgebraTerm && !(comp is AlgebraFunction))
                 {
-                    var groups = (comp as AlgebraTerm).GetGroups();
-                    foreach (var compGroup in groups)
+                    List<ExComp[]> groups = (comp as AlgebraTerm).GetGroups();
+                    foreach (ExComp[] compGroup in groups)
                     {
                         if (compGroup.ContainsFrac())
                             return true;
@@ -155,7 +155,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             List<ExComp> denGroup = new List<ExComp>();
             for (int j = 0; j < group.Length; ++j)
             {
-                var groupComp = group[j];
+                ExComp groupComp = group[j];
                 if (groupComp is Functions.PowerFunction && (groupComp as Functions.PowerFunction).IsDenominator())
                 {
                     PowerFunction powFunc = groupComp as PowerFunction;
@@ -272,7 +272,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             List<ExComp> numGroup = new List<ExComp>();
             for (int j = 0; j < group.Length; ++j)
             {
-                var groupComp = group[j];
+                ExComp groupComp = group[j];
                 if (groupComp is Functions.PowerFunction && (groupComp as Functions.PowerFunction).IsDenominator())
                     continue;
 
@@ -334,7 +334,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static ExComp GetRelatableTermOfGroup(this List<TypePair<ExComp, bool>> group, ExComp comp)
         {
-            foreach (var groupComp in group)
+            foreach (TypePair<ExComp, bool> groupComp in group)
             {
                 if (CompsRelatable(groupComp.Data1, comp))
                 {
@@ -459,7 +459,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (Number.One.IsEqualTo(comp2))
                 return comp1;
 
-            var mulOp = new Operators.MulOp();
+            Operators.MulOp mulOp = new Operators.MulOp();
             return mulOp.Combine(comp1, comp2);
         }
 
@@ -494,8 +494,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             group2 = group2.RemoveRedundancies();
             List<ExComp> lcmComps = new List<ExComp>();
 
-            var group2Checks = (from gpCmp in group2
-                                select new TypePair<ExComp, bool>(gpCmp, false)).ToList();
+            List<TypePair<ExComp, bool>> group2Checks = (from gpCmp in group2
+														select new TypePair<ExComp, bool>(gpCmp, false)).ToList();
 
             foreach (ExComp group1Comp in group1)
             {
@@ -511,7 +511,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 }
             }
 
-            foreach (var group2Check in group2Checks)
+            foreach (TypePair<ExComp, bool> group2Check in group2Checks)
             {
                 if (!group2Check.Data2)
                     lcmComps.Add(group2Check.Data1);
@@ -529,8 +529,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         public static List<TypePair<ExComp, ExComp>> MatchCorresponding(ExComp[] group1, ExComp[] group2, out List<TypePair<int, int>> matchIndices)
         {
             matchIndices = new List<TypePair<int, int>>();
-            var checkedGroup2 = (from group2Comp in group2
-                                 select new TypePair<ExComp, bool>(group2Comp, false)).ToList();
+            List<TypePair<ExComp, bool>> checkedGroup2 = (from group2Comp in group2
+														  select new TypePair<ExComp, bool>(group2Comp, false)).ToList();
 
             List<TypePair<ExComp, ExComp>> corresponding = new List<TypePair<ExComp, ExComp>>();
 
@@ -539,7 +539,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 ExComp group1Comp = group1[i];
                 for (int j = 0; j < checkedGroup2.Count(); ++j)
                 {
-                    var checkedComp2 = checkedGroup2.ElementAt(j);
+                    TypePair<ExComp, bool> checkedComp2 = checkedGroup2.ElementAt(j);
                     if (checkedComp2.Data2)
                         continue;
                     if (CompsRelatable(group1Comp, checkedComp2.Data1))
@@ -636,8 +636,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             if (group.ContainsFrac())
             {
-                var num = group.GetNumerator();
-                var den = group.GetDenominator();
+                ExComp[] num = group.GetNumerator();
+                ExComp[] den = group.GetDenominator();
 
                 if (num.Length <= 1)
                 {
@@ -686,7 +686,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 {
                     AlgebraTerm groupCompTerm = groupComp as AlgebraTerm;
 
-                    var subGroups = groupCompTerm.GetGroupsNoOps();
+                    List<ExComp[]> subGroups = groupCompTerm.GetGroupsNoOps();
                     if (subGroups.Count == 1)
                     {
                         workedGroup.AddRange(subGroups[0]);
@@ -750,7 +750,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (accum is AlgebraTerm)
             {
                 AlgebraTerm acumTerm = accum as AlgebraTerm;
-                var groups = acumTerm.GetGroupsNoOps();
+                List<ExComp[]> groups = acumTerm.GetGroupsNoOps();
                 if (groups.Count == 1)
                     return groups[0];
                 else

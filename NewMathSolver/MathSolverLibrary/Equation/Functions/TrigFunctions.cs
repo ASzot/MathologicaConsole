@@ -504,7 +504,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             if (!simplFrac.IsSimpleUnitCircleAngle(out num, out den, false))
                 return this;
 
-            var unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
+            UnitCirclePoint unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
             if (unitCirclePoint == null)
                 return this;
 
@@ -603,7 +603,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             if (!simplFrac.IsSimpleUnitCircleAngle(out num, out den))
                 return this;
 
-            var unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
+            UnitCirclePoint unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
             if (unitCirclePoint == null)
                 return this;
 
@@ -730,7 +730,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             if (!simplFrac.IsSimpleUnitCircleAngle(out num, out den))
                 return this;
 
-            var unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
+            UnitCirclePoint unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
             if (unitCirclePoint == null)
                 return this;
 
@@ -900,7 +900,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             if (!simplFrac.IsSimpleUnitCircleAngle(out num, out den, false))
                 return this;
 
-            var unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
+			UnitCirclePoint unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
             if (unitCirclePoint == null)
                 return this;
 
@@ -1026,7 +1026,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             if (!simplFrac.IsSimpleUnitCircleAngle(out num, out den))
                 return this;
 
-            var unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
+			UnitCirclePoint unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
             if (unitCirclePoint == null)
                 return this;
 
@@ -1122,7 +1122,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             if (!simplFrac.IsSimpleUnitCircleAngle(out num, out den))
                 return this;
 
-            var unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
+			UnitCirclePoint unitCirclePoint = UnitCircle.GetPointForAngle(num, den);
             if (unitCirclePoint == null)
                 return this;
 

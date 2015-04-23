@@ -128,8 +128,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 AlgebraTerm term1 = ex1 as AlgebraTerm;
                 AlgebraTerm term2 = ex2 as AlgebraTerm;
 
-                var numDenTerm1 = term1.GetNumDenFrac();
-                var numDenTerm2 = term2.GetNumDenFrac();
+                AlgebraTerm[] numDenTerm1 = term1.GetNumDenFrac();
+				AlgebraTerm[] numDenTerm2 = term2.GetNumDenFrac();
 
                 if (numDenTerm1 != null || numDenTerm2 != null)
                 {
@@ -162,8 +162,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                     return finalFrac;
                 }
 
-                var groups1 = term1.GetGroupsNoOps();
-                var groups2 = term2.GetGroupsNoOps();
+                List<ExComp[]> groups1 = term1.GetGroupsNoOps();
+				List<ExComp[]> groups2 = term2.GetGroupsNoOps();
 
                 int groups1Count = groups1.Count;
                 int groups2Count = groups2.Count;
@@ -176,18 +176,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 List<ExComp[]> combinedGroups = new List<ExComp[]>();
                 for (int i = 0; i < groups1.Count; ++i)
                 {
-                    var group1 = groups1[i];
+                    ExComp[] group1 = groups1[i];
 
                     for (int j = 0; j < groups2.Count; ++j)
                     {
-                        var group2 = groups2[j];
+                        ExComp[] group2 = groups2[j];
 
                         ExComp[] combination = AlgebraTerm.MultiplyGroups(group1.CloneGroup(), group2.CloneGroup());
                         combinedGroups.Add(combination);
                     }
                 }
                 AlgebraTerm term = new AlgebraTerm();
-                foreach (var group in combinedGroups)
+                foreach (ExComp[] group in combinedGroups)
                     term.AddGroup(group);
 
                 term.CombineLikeTerms();
@@ -200,21 +200,21 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 AlgebraTerm term = ex1 is AlgebraTerm ? ex1 as AlgebraTerm : ex2 as AlgebraTerm;
                 AlgebraComp comp = ex1 is AlgebraComp ? ex1 as AlgebraComp : ex2 as AlgebraComp;
 
-                var numDen = term.GetNumDenFrac();
+                AlgebraTerm[] numDen = term.GetNumDenFrac();
                 if (numDen != null && Number.One.IsEqualTo(numDen[0].RemoveRedundancies()) && comp.IsEqualTo(numDen[1].RemoveRedundancies()))
                 {
                     return Number.One;
                 }
 
-                var groups = term.PopGroups();
+                List<ExComp[]> groups = term.PopGroups();
                 List<ExComp[]> combinedGroups = new List<ExComp[]>();
                 for (int i = 0; i < groups.Count; ++i)
                 {
-                    var group = groups[i];
+                    ExComp[] group = groups[i];
                     bool matchingFound = false;
                     for (int j = 0; j < group.Count(); ++j)
                     {
-                        var groupComp = group[j];
+                        ExComp groupComp = group[j];
 
                         if (GroupHelper.CompsRelatable(groupComp, comp))
                         {
@@ -258,13 +258,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 List<ExComp[]> combinedGroups = new List<ExComp[]>();
                 for (int i = 0; i < groups.Count; ++i)
                 {
-                    var group = groups[i];
+                    ExComp[] group = groups[i];
                     if (group.Length == 1 && group[0] is Functions.Calculus.CalcConstant)
                     {
                         combinedGroups.Add(groups[i]);
                         break;
                     }
-                    var groupToAdd = AlgebraTerm.RemoveCoeffs(group);
+                    ExComp[] groupToAdd = AlgebraTerm.RemoveCoeffs(group);
                     Number coeff = AlgebraTerm.GetCoeffTerm(group);
                     if (coeff == null)
                         coeff = new Number(1.0);

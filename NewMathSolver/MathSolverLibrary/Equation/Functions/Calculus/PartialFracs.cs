@@ -87,9 +87,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             List<ExComp> decomCoeffs = new List<ExComp>();
             for (int i = max; i >= 0; --i)
             {
-                var decomVarGroups = finalTerm.GetGroupContainingTerm(dVar.ToPow(i));
-                var decomVarTerms = from decomVarGroup in decomVarGroups
-                                    select decomVarGroup.GetUnrelatableTermsOfGroup(dVar).ToAlgTerm();
+                List<ExComp[]> decomVarGroups = finalTerm.GetGroupContainingTerm(dVar.ToPow(i));
+                IEnumerable<AlgebraTerm> decomVarTerms = from decomVarGroup in decomVarGroups
+														 select decomVarGroup.GetUnrelatableTermsOfGroup(dVar).ToAlgTerm();
 
                 AlgebraTerm decomCoeff = new AlgebraTerm();
                 foreach (AlgebraTerm aTerm in decomVarTerms)

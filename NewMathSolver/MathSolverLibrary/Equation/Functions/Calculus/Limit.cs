@@ -1,5 +1,8 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
 using MathSolverWebsite.MathSolverLibrary.Equation.Term;
+using MathSolverWebsite.MathSolverLibrary.Equation;
+
+using System.Collections.Generic;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 {
@@ -198,13 +201,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 if (den is AlgebraTerm && !(den is PowerFunction))
                 {
                     AlgebraTerm denTerm = den as AlgebraTerm;
-                    var varGps = denTerm.GetGroupsVariableToNoOps(_varFor);
+                    List<AlgebraGroup> varGps = denTerm.GetGroupsVariableToNoOps(_varFor);
                     if (varGps.Count != 1)
                         return null;
 
-                    var constGps = denTerm.GetGroupsConstantTo(_varFor);
+                    List<AlgebraGroup> constGps = denTerm.GetGroupsConstantTo(_varFor);
                     ExComp constEx = Number.Zero;
-                    foreach (var constGp in constGps)
+                    foreach (AlgebraGroup constGp in constGps)
                     {
                         constEx = AddOp.StaticCombine(constEx, constGp.ToTerm());
                     }
@@ -398,7 +401,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     return DivOp.StaticCombine(singular, dividend);
             }
 
-            var groups = term.GetGroupsNoOps();
+            List<ExComp[]> groups = term.GetGroupsNoOps();
 
             AlgebraTerm finalTerm = new AlgebraTerm();
             for (int i = 0; i < groups.Count; ++i)
@@ -406,7 +409,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 if (i != 0)
                     finalTerm.Add(new AddOp());
 
-                var group = groups[i];
+                ExComp[] group = groups[i];
                 ExComp[] constTo, varTo;
                 group.GetConstVarTo(out varTo, out constTo, _varFor);
                 if (varTo.Length == 0)
@@ -542,10 +545,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return new PowerFunction(RemoveOverVarTerms(pf.Base.ToAlgTerm()), pf.Power);
             }
 
-            var groups = term.GetGroups();
+            List<ExComp[]> groups = term.GetGroups();
             for (int i = 0; i < groups.Count; ++i)
             {
-                var numDen = groups[i].ToAlgTerm().GetNumDenFrac();
+                AlgebraTerm[] numDen = groups[i].ToAlgTerm().GetNumDenFrac();
 
                 if (numDen != null && !numDen[0].Contains(_varFor) && numDen[1].Contains(_varFor))
                     groups.RemoveAt(i--);
@@ -686,7 +689,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             if (numDen == null || numDen[0].Contains(_varFor) || numDen[1].Contains(_varFor))
                 return null;
 
-            var numGps = numDen[0].GetGroups();
+            List<ExComp[]> numGps = numDen[0].GetGroups();
             if (numGps.Count != 2)
                 return null;
             ExComp numGp0 = numGps[0].ToAlgTerm().RemoveRedundancies();

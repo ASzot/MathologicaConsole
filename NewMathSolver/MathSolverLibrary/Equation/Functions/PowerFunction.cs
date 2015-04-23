@@ -101,17 +101,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             {
                 bool multiplyOut = true;
 
-                var groups = term.GetGroupsNoOps();
+                List<ExComp[]> groups = term.GetGroupsNoOps();
 
                 int modGroupCount = 0;
 
                 for (int i = 0; i < groups.Count; ++i)
                 {
-                    var group = groups[i];
+                    ExComp[] group = groups[i];
                     bool equalTerm = false;
                     for (int j = 0; j < group.Length; ++j)
                     {
-                        var groupComp = group[j];
+                        ExComp groupComp = group[j];
                         if (groupComp.IsEqualTo(pf))
                         {
                             equalTerm = true;
@@ -541,7 +541,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             List<ExComp[]> groups = new List<ExComp[]>();
 
             AlgebraTerm baseTerm = new AlgebraTerm();
-            foreach (var comp in _subComps)
+            foreach (ExComp comp in _subComps)
             {
                 baseTerm.Add(comp);
             }
@@ -796,7 +796,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override List<ExComp[]> PopGroups()
         {
-            var groups = GetGroups();
+            List<ExComp[]> groups = GetGroups();
 
             _subComps.Clear();
 
@@ -1191,7 +1191,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                 return @"\sqrt{" + baseTexStr + "}";
             else if (powerTexStr.StartsWith(@"\frac"))
             {
-                var matches = Regex.Matches(powerTexStr, MathSolverLibrary.Parsing.LexicalParser.REAL_NUM_PATTERN);
+                MatchCollection matches = Regex.Matches(powerTexStr, MathSolverLibrary.Parsing.LexicalParser.REAL_NUM_PATTERN);
                 if (matches.Count != 2)
                     throw new ArgumentException();
                 string numStr = matches[0].Value;

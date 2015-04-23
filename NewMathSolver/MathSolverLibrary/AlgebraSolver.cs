@@ -34,7 +34,7 @@ namespace MathSolverWebsite.MathSolverLibrary
         public static Dictionary<string, int> GetIdenOccurances(List<TypePair<LexemeType, string>> lexemeTable)
         {
             Dictionary<string, int> occurances = new Dictionary<string, int>();
-            foreach (var lexeme in lexemeTable)
+            foreach (TypePair<LexemeType, string> lexeme in lexemeTable)
             {
                 if (lexeme.Data1 == LexemeType.Identifier)
                 {
@@ -51,7 +51,7 @@ namespace MathSolverWebsite.MathSolverLibrary
         public static string GetProbableVar(Dictionary<string, int> idens)
         {
             KeyValuePair<string, int> maxIden = new KeyValuePair<string, int>("-", -1);
-            foreach (var keyVal in idens)
+            foreach (string keyVal in idens)
             {
                 if (keyVal.Key == "x")
                     return "x";
@@ -109,7 +109,7 @@ namespace MathSolverWebsite.MathSolverLibrary
 
         public void CreateUSubTable(List<TypePair<LexemeType, string>> lexemeTable)
         {
-            var idenOccurances = GetIdenOccurances(lexemeTable);
+            Dictionary<string, int> idenOccurances = GetIdenOccurances(lexemeTable);
             CreateUSubTable(idenOccurances);
         }
 
@@ -344,7 +344,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                     AlgebraTermArray ataResult = result as AlgebraTermArray;
                     for (int i = 0; i < ataResult.Terms.Count; ++i)
                     {
-                        var indResult = ataResult.Terms[i];
+                        AlgebraTerm indResult = ataResult.Terms[i];
                         if (indResult == null || Number.IsUndef(indResult))
                             continue;
                         string indResultDispStr = indResult.FinalToDispStr();

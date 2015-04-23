@@ -195,8 +195,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override ExComp Clone()
         {
-            var cloned = from arg in _args
-                         select arg.Clone();
+            IEnumerable<ExComp> cloned = from arg in _args
+										 select arg.Clone();
             return CreateInstance(cloned.ToArray());
         }
 
@@ -214,36 +214,36 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override AlgebraTerm HarshEvaluation()
         {
-            var harshEval = from arg in _args
-                            select arg.ToAlgTerm().HarshEvaluation();
+            IEnumerable<ExComp> harshEval = from arg in _args
+											select arg.ToAlgTerm().HarshEvaluation();
             return CreateInstance(harshEval.ToArray());
         }
 
         public override AlgebraTerm Order()
         {
-            var ordered = from arg in _args
-                          select arg.ToAlgTerm().Order();
+            IEnumerable<ExComp> ordered = from arg in _args
+										  select arg.ToAlgTerm().Order();
             return CreateInstance(ordered.ToArray());
         }
 
         public override AlgebraTerm RemoveOneCoeffs()
         {
-            var noOneCoeffs = from arg in _args
-                              select (arg is AlgebraTerm ? (arg as AlgebraTerm).RemoveOneCoeffs() : arg);
+            IEnumerable<ExComp> noOneCoeffs = from arg in _args
+											  select (arg is AlgebraTerm ? (arg as AlgebraTerm).RemoveOneCoeffs() : arg);
             return CreateInstance(noOneCoeffs.ToArray());
         }
 
         public override ExComp RemoveRedundancies(bool postWorkable = false)
         {
-            var noRedun = from arg in _args
-                          select arg.ToAlgTerm().RemoveRedundancies(postWorkable);
+            IEnumerable<ExComp> noRedun = from arg in _args
+                                          select arg.ToAlgTerm().RemoveRedundancies(postWorkable);
             return CreateInstance(noRedun.ToArray());
         }
 
         public override AlgebraTerm Substitute(ExComp subOut, ExComp subIn)
         {
-            var substituted = from arg in _args
-                              select arg.ToAlgTerm().Substitute(subOut, subIn);
+            IEnumerable<ExComp> substituted = from arg in _args
+											  select arg.ToAlgTerm().Substitute(subOut, subIn);
             return CreateInstance(substituted.ToArray());
         }
 
@@ -319,7 +319,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
                 return new AlgebraTerm(innerEx, new Operators.PowOp(), new AlgebraTerm(Number.One, new Operators.DivOp(), new Number(2.0)));
             else if (parseStr == "det")
             {
-                var exMat = innerEx as Structural.LinearAlg.ExMatrix;
+                ExMatrix exMat = innerEx as ExMatrix;
                 if (exMat == null)
                 {
                     pParseErrors.Add("Can only take the determinant of matrices.");

@@ -326,7 +326,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 {
                     if (_exData[i][j] is AlgebraTerm)
                     {
-                        var tmp = (_exData[i][j] as AlgebraTerm).GetAppliedFunctionsNoPow(varFor);
+                        List<FunctionType>
+							tmp = (_exData[i][j] as AlgebraTerm).GetAppliedFunctionsNoPow(varFor);
                         totalFuncs.AddRange(tmp);
                     }
                 }
@@ -352,7 +353,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 {
                     if (_exData[i][j] is AlgebraTerm)
                     {
-                        var tmp = (_exData[i][j] as AlgebraTerm).GetPowersOfVar(varFor);
+                        List<ExComp> tmp = (_exData[i][j] as AlgebraTerm).GetPowersOfVar(varFor);
                         totalFuncs.AddRange(tmp);
                     }
                 }
@@ -707,7 +708,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 {
                     if (_exData[i][j] is AlgebraFunction)
                     {
-                        var addRest = (_exData[i][j] as AlgebraFunction).GetDomain(varFor, agSolver, ref pEvalData);
+                        List<Restriction> addRest = (_exData[i][j] as AlgebraFunction).GetDomain(varFor, agSolver, ref pEvalData);
                         allDomain.AddRange(addRest);
                     }
                 }
