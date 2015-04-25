@@ -66,7 +66,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             }
             else if (command == "Graph")
             {
-                if (pEvalData.AttemptSetGraphData(_assignTo))
+                if (pEvalData.AttemptSetGraphData(_assignTo, _func.InputArgs[0].Var.Var))
                     return SolveResult.Solved();
                 else
                     return SolveResult.Failure();

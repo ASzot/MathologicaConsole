@@ -1,6 +1,7 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 
 namespace MathSolverWebsite.MathSolverLibrary.Solving
 {
@@ -57,7 +58,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 pEvalData.WorkMgr.FromSides(left, right, "Simplify");
         }
 
-        public static void DivideByVariableCoeffs(ref AlgebraTerm left, ref AlgebraTerm right, AlgebraComp solveForComp, ref TermType.EvalData pEvalData)
+        public static void DivideByVariableCoeffs(ref AlgebraTerm left, ref AlgebraTerm right, AlgebraComp solveForComp, ref TermType.EvalData pEvalData, 
+            bool strongDivide = false)
         {
             if (right.SubComps.Count == 0)
                 right.Add(Number.Zero);
@@ -125,6 +127,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 right = Equation.Operators.DivOp.StaticCombine(right, factoredOutUnrelatedTerm.Clone()).ToAlgTerm();
 
                 pEvalData.WorkMgr.FromSides(left, right, "Cancel and simplify");
+            }
+            else if (left is PowerFunction && strongDivide)
+            {
+                PowerFunction leftPf = left as PowerFunction;
+                if (leftPf.Base.ToAlgTerm().Contains(solveForComp) || !(leftPf.Power is AlgebraTerm))
+                    return;
+                AlgebraTerm leftPow = leftPf.Power as AlgebraTerm;
+                List<AlgebraGroup> constGps = leftPow.GetGroupsConstantTo(solveForComp);
+                if (constGps.Count != 0)
+                {
+                    List<AlgebraGroup> varGps = leftPow.GetGroupsVariableTo(solveForComp);
+                    AlgebraTerm constTerm = new AlgebraTerm(constGps.ToArray());
+                    AlgebraTerm varTerm = new AlgebraTerm(varGps.ToArray());
+                    ExComp divide = new PowerFunction(leftPf.Base, constTerm);
+
+                    left = new PowerFunction(leftPf.Base, varTerm);
+                    right = Equation.Operators.DivOp.StaticCombine(right, divide).ToAlgTerm();
+                }
             }
         }
 

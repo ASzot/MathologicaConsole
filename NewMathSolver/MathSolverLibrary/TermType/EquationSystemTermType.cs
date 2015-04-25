@@ -13,6 +13,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private List<List<TypePair<LexemeType, string>>> _lts;
         private int _singularIndex = -1;
         private string[] _graphStrs;
+        private string _graphVarStr = null;
 
         public EquationSystemTermType(List<EqSet> eqSets, List<List<TypePair<LexemeType, string>>> lts, Dictionary<string, int> allIdens)
             : base()
@@ -118,7 +119,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             }
             else if (command == "Graph")
             {
-                if (pEvalData.AttemptSetGraphData(_graphStrs))
+                if (_graphVarStr != null && pEvalData.AttemptSetGraphData(_graphStrs, _graphVarStr))
                     return SolveResult.Solved();
                 else
                     return SolveResult.Failure();
@@ -160,7 +161,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
             bool isGraph = true;
             _graphStrs = new string[_eqSets.Count];
-            string singularVar = null;
+            _graphVarStr = null;
             for (int i = 0; i < _eqSets.Count; ++i)
             {
                 EqSet eqSet = _eqSets[i];
@@ -171,9 +172,9 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                     {
                         AlgebraTerm term = funcDef[1].ToAlgTerm();
                         var vars = term.GetAllAlgebraCompsStr();
-                        if (vars.Count == 1 && (singularVar == null || vars[0] == singularVar))
+                        if (vars.Count == 1 && (_graphVarStr == null || vars[0] == _graphVarStr))
                         {
-                            singularVar = vars[0];
+                            _graphVarStr = vars[0];
                             string graphStr = term.ToJavaScriptString(true);
                             if (graphStr != null)
                             {
@@ -187,9 +188,9 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 {
                     AlgebraTerm term = eqSet.LeftTerm;
                     var vars = term.GetAllAlgebraCompsStr();
-                    if (vars.Count == 1 && (singularVar == null || vars[0] == singularVar))
+                    if (vars.Count == 1 && (_graphVarStr == null || vars[0] == _graphVarStr))
                     {
-                        singularVar = vars[0];
+                        _graphVarStr = vars[0];
                         string graphStr = term.ToJavaScriptString(true);
                         if (graphStr != null)
                         {

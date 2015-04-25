@@ -191,20 +191,24 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             else if (command == "Graph")
             {
                 string graphStr = null;
+                string graphVarStr = null;
+                List<string> compsStrs = null;
                 if (_eqSet.Left is AlgebraComp)
                 {
                     graphStr = _eqSet.Right.ToJavaScriptString(pEvalData.UseRad);
+                    compsStrs = _eqSet.Right.ToAlgTerm().GetAllAlgebraCompsStr();
                 }
 
                 if (graphStr == null && _eqSet.Right is AlgebraComp)
                 {
                     graphStr = _eqSet.Left.ToJavaScriptString(pEvalData.UseRad);
+                    compsStrs = _eqSet.Left.ToAlgTerm().GetAllAlgebraCompsStr();
                 }
 
-                if (graphStr == null)
+                if (graphStr == null || compsStrs == null || compsStrs.Count != 1)
                     return SolveResult.Failure();
 
-                pEvalData.AttemptSetGraphData(graphStr);
+                pEvalData.AttemptSetGraphData(graphStr, compsStrs[0]);
                 return SolveResult.Solved();
             }
 

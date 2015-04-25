@@ -652,7 +652,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             string finalStr = "";
             for (int i = 0; i < groups.Count; ++i)
             {
-                List<ExComp[]> group = groups[i];
+                ExComp[] group = groups[i];
                 if (group.ContainsFrac())
                 {
                     ExComp[] num = group.GetNumerator();

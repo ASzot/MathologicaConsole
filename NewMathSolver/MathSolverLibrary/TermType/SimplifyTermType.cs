@@ -294,7 +294,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             }
             else if (command == "Graph")
             {
-                if (pEvalData.AttemptSetGraphData(_term))
+                string graphStr = _term.ToAlgTerm().GetAllAlgebraCompsStr()[0];
+                if (pEvalData.AttemptSetGraphData(_term, graphStr))
                     return SolveResult.Solved();
                 else
                     return SolveResult.Failure();

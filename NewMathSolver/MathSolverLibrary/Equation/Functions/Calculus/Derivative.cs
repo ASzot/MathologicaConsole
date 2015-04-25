@@ -164,7 +164,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 
         private static AlgebraComp ConstructImplicitDerivAgCmp(ExComp derivOf, ExComp withRespectTo, bool isPartial = false)
         {
-            string iden = partial ? "\\partial" : "d";
+            string iden = isPartial ? "\\partial" : "d";
             return new AlgebraComp("(" + iden + derivOf.ToDispString() + ")/(" + iden + withRespectTo.ToDispString() + ")");
         }
 

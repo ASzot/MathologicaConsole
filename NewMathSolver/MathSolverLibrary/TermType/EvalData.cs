@@ -17,6 +17,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private bool _isWorkable = false;
         private Solving.QuadraticSolveMethod _quadSolveMethod;
         private Information_Helpers.FuncDefHelper _funcDefs;
+        private string _graphVar = null;
         private string[] _graphEqStrs = null;
         private InputType _inputType = InputType.Invalid;
         private InputAddType _inputAddType = InputAddType.Invalid;
@@ -41,7 +42,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         public string[] GraphEqStrs
         {
             get { return _graphEqStrs; }
-            set
+            internal set
             {
                 _graphEqStrs = new string[value.Length];
                 for (int i = 0; i < value.Length; ++i)
@@ -137,10 +138,11 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _inputType = InputTypeHelper.ToInequalityType(_inputType);
         }
 
-        public bool AttemptSetGraphData(ExComp graphEx)
+        public bool AttemptSetGraphData(ExComp graphEx, string graphVar)
         {
             if (_graphEqStrs == null)
             {
+                _graphVar = graphVar;
                 AlgebraTerm term = graphEx.ToAlgTerm();
                 var vars = term.GetAllAlgebraCompsStr();
                 if (vars.Count != 1)
@@ -157,10 +159,11 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             return false;
         }
 
-        public bool AttemptSetGraphData(string str)
+        public bool AttemptSetGraphData(string str, string graphVar)
         {
             if (_graphEqStrs == null)
             {
+                _graphVar = graphVar;
                 GraphEqStrs = new string[1] { str };
                 return true;
             }
@@ -168,12 +171,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             return false;
         }
 
-        public bool AttemptSetGraphData(string[] strs)
+        public bool AttemptSetGraphData(string[] strs, string graphVar)
         {
             if (strs == null)
                 return false;
             if (_graphEqStrs == null)
             {
+                _graphVar = graphVar;
                 GraphEqStrs = strs;
                 return true;
             }

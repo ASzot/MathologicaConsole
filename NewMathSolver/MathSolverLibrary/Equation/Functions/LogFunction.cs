@@ -51,6 +51,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return log;
         }
 
+        public static LogFunction Create(ExComp innerEx, ExComp baseEx)
+        {
+            LogFunction logFunc = new LogFunction(innerEx);
+            logFunc.Base = baseEx;
+
+            return logFunc;
+        }
+
         public override ExComp Clone()
         {
             LogFunction log = new LogFunction(InnerTerm.Clone());

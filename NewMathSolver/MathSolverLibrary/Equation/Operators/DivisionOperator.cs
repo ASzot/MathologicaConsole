@@ -432,7 +432,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                             return powerFuncGcf;
                         }
 
-                        return new PowerFunction(powFunc1.Base, SubOp.StaticCombine(pow1, pow2));
+                        return new PowerFunction(powFunc1.Base, pow2);//SubOp.StaticCombine(pow1, pow2));
                     }
                 }
             }

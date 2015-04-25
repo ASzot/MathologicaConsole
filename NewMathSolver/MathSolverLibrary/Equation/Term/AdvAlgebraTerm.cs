@@ -1344,6 +1344,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
         {
             List<ExComp[]> expandedLogs = new List<ExComp[]>();
 
+            ExComp mulIn = null;
             if (logInnerEx is AlgebraTerm)
             {
                 AlgebraTerm innerTerm = logInnerEx as AlgebraTerm;
@@ -1369,7 +1370,36 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                                 continue;
                             }
                         }
-                        LogFunction posLog = new LogFunction(groupComp);
+                        else if (groupComp is Number && !(groupComp as Number).HasImaginaryComp() && (groupComp as Number) < 0.0)
+                        {
+                            if (expandedLogs.Count != 0)
+                            {
+                                ExComp[] tmpGp = expandedLogs[0];
+                                for (int i = 0; i < tmpGp.Length; ++i)
+                                {
+                                    if (tmpGp[i] is LogFunction)
+                                    {
+                                        (tmpGp[i] as LogFunction).Base = MulOp.StaticCombine((tmpGp[i] as LogFunction).Base, groupComp);
+                                        break;
+                                    }
+                                }
+                            }
+                            else
+                                mulIn = groupComp;
+
+                            continue;
+                        }
+
+                        ExComp innerEx;
+                        if (mulIn != null)
+                        {
+                            innerEx = MulOp.StaticCombine(groupComp, mulIn);
+                            mulIn = null;
+                        }
+                        else
+                            innerEx = groupComp;
+
+                        LogFunction posLog = new LogFunction(innerEx);
                         posLog.Base = baseEx;
 
                         addGroup = new ExComp[1];
@@ -1377,6 +1407,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
 
                         expandedLogs.Add(addGroup);
                     }
+                }
+
+                if (mulIn != null)
+                {
+                    expandedLogs.Add(new ExComp[] { LogFunction.Create(mulIn, baseEx) });
                 }
 
                 return expandedLogs;

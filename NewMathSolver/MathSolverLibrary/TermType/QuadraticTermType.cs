@@ -80,7 +80,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             }
             else if (command == "Graph")
             {
-                if (pEvalData.AttemptSetGraphData(_graphStr))
+                if (pEvalData.AttemptSetGraphData(_graphStr, _solveFor.Var))
                     return SolveResult.Solved();
                 else
                     return SolveResult.Failure();

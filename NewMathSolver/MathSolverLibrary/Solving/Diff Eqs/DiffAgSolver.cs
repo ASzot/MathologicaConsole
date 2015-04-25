@@ -44,6 +44,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
 
         private static ExComp[] SimpleSeperable(ExComp left, ExComp right)
         {
+            left = RemoveDiff(left.ToAlgTerm());
+            if (left == null)
+                return null;
             return new ExComp[] { left, right };
         }
 
@@ -75,11 +78,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
             if (leftGp == null)
                 return null;
 
+            leftGp = RemoveDiff(leftGp);
+            if (leftGp == null)
+                return null;
+
             // Make sure all of the x's are in the right and the y's in the left.
             left = leftGp.ToAlgNoRedunTerm();
             right = rightGp.ToAlgNoRedunTerm();
-            SolveMethod.DivideByVariableCoeffs(ref left, ref right, solveFunc, ref pEvalData);
-            SolveMethod.DivideByVariableCoeffs(ref right, ref left, withRespect, ref pEvalData);
+            SolveMethod.DivideByVariableCoeffs(ref left, ref right, solveFunc, ref pEvalData, true);
+            SolveMethod.DivideByVariableCoeffs(ref right, ref left, withRespect, ref pEvalData, true);
 
             if (left.Contains(withRespect) || right.Contains(solveFunc))
                 return null;
@@ -142,11 +149,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
 
             if (leftRight != null)
             {
-                leftRight[0] = RemoveDiff(leftRight[0].ToAlgTerm());
-
-                if (leftRight[0] == null)
-                    return null;
-
                 leftRight[0] = Integral.TakeAntiDeriv(leftRight[0], solveForFunc, ref pEvalData);
                 leftRight[1] = Integral.TakeAntiDeriv(leftRight[1], withRespect, ref pEvalData);
 
@@ -165,9 +167,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
             if (leftRight == null)
                 return SolveResult.Failure();
 
-            // Put it in implicit form?
+            AlgebraSolver agSolver = new AlgebraSolver();
+            ExComp solved = agSolver.SolveEq(solveForFunc.Var, leftRight[0].Clone().ToAlgTerm(), leftRight[1].Clone().ToAlgTerm(), ref pEvalData);
+            if (solved == null)
+                return SolveResult.Solved(leftRight[0], leftRight[1], ref pEvalData);
 
-            return SolveResult.Solved(leftRight[0], leftRight[1], ref pEvalData);
+            return SolveResult.Solved(solveForFunc, solved, ref pEvalData);
         }
     }
 }

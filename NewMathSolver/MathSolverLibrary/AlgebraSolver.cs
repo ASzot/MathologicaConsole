@@ -51,7 +51,7 @@ namespace MathSolverWebsite.MathSolverLibrary
         public static string GetProbableVar(Dictionary<string, int> idens)
         {
             KeyValuePair<string, int> maxIden = new KeyValuePair<string, int>("-", -1);
-            foreach (string keyVal in idens)
+            foreach (KeyValuePair<string, int> keyVal in idens)
             {
                 if (keyVal.Key == "x")
                     return "x";
