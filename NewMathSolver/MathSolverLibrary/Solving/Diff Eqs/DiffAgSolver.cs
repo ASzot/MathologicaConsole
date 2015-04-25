@@ -42,17 +42,26 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
             return gp;
         }
 
-        private static ExComp[] SimpleSeperable(ExComp left, ExComp right)
+        private static ExComp[] SimpleSeperable(ExComp left, ExComp right, AlgebraComp solveFunc, AlgebraComp withRespect, ref TermType.EvalData pEvalData)
         {
             left = RemoveDiff(left.ToAlgTerm());
             if (left == null)
                 return null;
+
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + WorkMgr.ExFinalToAsciiStr(left) + "d" + solveFunc.ToDispString() + "=" +
+                WorkMgr.ExFinalToAsciiStr(right) + "d" + withRespect.ToDispString() + WorkMgr.EDM, "Multiply both sides by " + WorkMgr.STM +
+                "d" + withRespect.ToDispString() + WorkMgr.EDM);
+
             return new ExComp[] { left, right };
         }
 
         private static ExComp[] Seperable(AlgebraTerm left, AlgebraTerm right, AlgebraComp solveFunc, AlgebraComp withRespect, 
             ref TermType.EvalData pEvalData)
         {
+            pEvalData.WorkMgr.FromSides(left, right, "Isolate " + WorkMgr.STM + solveFunc.ToDispString() + WorkMgr.STM +  " and " + WorkMgr.STM +
+                "d" + solveFunc.ToDispString() + WorkMgr.EDM + " on the left side but " + WorkMgr.STM + withRespect.ToDispString() + WorkMgr.STM +
+                " and " + WorkMgr.STM + "d" + withRespect.ToDispString() + WorkMgr.EDM + " to the right.");
+
             var leftGps = left.GetGroups();
             var rightGps = right.GetGroups();
 
@@ -85,6 +94,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
             // Make sure all of the x's are in the right and the y's in the left.
             left = leftGp.ToAlgNoRedunTerm();
             right = rightGp.ToAlgNoRedunTerm();
+
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + left.FinalToDispStr() + "d" + solveFunc.ToDispString() + "=" + right.FinalToDispStr() + "d" +
+                withRespect.ToDispString() + WorkMgr.EDM, "Multiply both sides by " + WorkMgr.STM + "d" + withRespect.ToDispString() + WorkMgr.EDM);
+
             SolveMethod.DivideByVariableCoeffs(ref left, ref right, solveFunc, ref pEvalData, true);
             SolveMethod.DivideByVariableCoeffs(ref right, ref left, withRespect, ref pEvalData, true);
 
@@ -143,7 +156,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
 
             ExComp[] leftRight = null;
             if (left != null && right != null)
-                leftRight = SimpleSeperable(left, right);
+                leftRight = SimpleSeperable(left, right, solveForFunc, withRespect, ref pEvalData);
             else if (leftRight == null)
                 leftRight = Seperable(ex0Term, ex1Term, solveForFunc, withRespect, ref pEvalData);
 

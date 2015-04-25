@@ -9,6 +9,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
     class ExVector : ExMatrix
     {
+        public const string I = "\\bar{i}";
+        public const string J = "\\bar{j}";
+        public const string K = "\\bar{k}";
+
         public int Length
         {
             get { return base.Cols; }

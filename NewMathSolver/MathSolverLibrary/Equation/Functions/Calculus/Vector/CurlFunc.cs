@@ -39,10 +39,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector
                 return false;
         }
 
-        protected override ExComp CancelWith(ExComp innerEx, ref TermType.EvalData evalData)
+        protected override ExComp CancelWith(ExComp innerEx, ref TermType.EvalData pEvalData)
         {
             if (innerEx is GradientFunc)
             {
+                pEvalData.WorkMgr.FromFormatted(this.FinalToDispStr() + "=0", "From the identity curl(\\nablaF)=0");
                 return Number.Zero;
             }
 
@@ -105,6 +106,37 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector
                 y = new AlgebraComp("y");
                 z = new AlgebraComp("z");
             }
+
+            if (isFuncDeriv)
+            {
+                pEvalData.WorkMgr.FromFormatted("", "Assuming " + WorkMgr.STM + innerEx.ToDispString() + WorkMgr.EDM + " is defined as the vector field " +
+                    "P(x,y,z)" + ExVector.I + " + Q(x,y,z)" + ExVector.J + " + R(x,y,z)" + ExVector.K);
+            }
+
+            string formulaStr = "";
+            string descStr = "";
+
+            if (z != null)
+            {
+                formulaStr += "(\\frac{\\nabla R}{\\nabla y}  - \\frac{\\nabla Q}{\\nabla z})" + ExVector.I + 
+                    "(\\frac{\\nabla P}{\\nabla z} - \\frac{\\nabla R}{\\nabla x})" + ExVector.J;
+            }
+
+            formulaStr += "(\\frac{\\nabal Q}{\\nabla x} - \\frac{\\nabla P}{\\nabla y})" + ExVector.K;
+            if (!isFuncDeriv && innerEx is ExVector)
+            {
+                descStr += "Where ";
+                string funcParamsStr = z == null ? "(x,y)" : "(x,y,z)";
+                ExVector vec = innerEx as ExVector;
+                descStr += WorkMgr.STM + "P" + formulaStr + " = " + WorkMgr.ExFinalToAsciiStr(vec.X) + ",Q" + formulaStr + "=" + 
+                    WorkMgr.ExFinalToAsciiStr(vec.Y);
+                if (z != null)
+                    descStr += "," + "R" + funcParamsStr + "=" + WorkMgr.ExFinalToAsciiStr(vec.Z);
+                descStr += WorkMgr.EDM;
+            }
+
+            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + this.FinalToDispStr() + "=" + formulaStr + WorkMgr.EDM, descStr);
+
 
             ExComp r_y;
             if (z != null)
