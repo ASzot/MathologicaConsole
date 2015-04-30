@@ -194,11 +194,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public AlgebraTerm[] GetNumDenFrac()
         {
-            var groups = GetGroupsNoOps();
+            List<ExComp[]> groups = GetGroupsNoOps();
             if (groups.Count != 1)
                 return null;
 
-            var group = groups[0];
+            ExComp[] group = groups[0];
             if (!group.ContainsFrac())
                 return null;
             ExComp[] num = group.GetNumerator();
@@ -215,13 +215,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             List<AlgebraGroup> varFracGroups = new List<AlgebraGroup>();
 
-            var groups = GetGroupsNoOps();
+            List<ExComp[]> groups = GetGroupsNoOps();
 
-            foreach (var group in groups)
+            foreach (ExComp[] group in groups)
             {
                 if (group.ContainsFrac())
                 {
-                    var denTerm = group.GetDenominator().ToAlgTerm();
+					AlgebraTerm denTerm = group.GetDenominator().ToAlgTerm();
 
                     if (denTerm.Contains(varFor))
                     {
@@ -237,7 +237,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             bool includeNumbers = false)
         {
             //groupToSort = groupToSort.ToArray().RemoveRedundancies();
-            var compareGroup = from comp in groupToSort
+            IEnumerable<ExComp> compareGroup = from comp in groupToSort
                                where !(comp is AgOp)
                                where !(comp is Number) || includeNumbers
                                select comp;

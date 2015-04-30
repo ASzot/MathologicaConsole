@@ -200,7 +200,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 List<ExComp[]> groups = baseTerm.GetGroupsNoOps();
                 if (groups.Count == 1)
                 {
-                    var group = groups[0];
+                    ExComp[] group = groups[0];
                     AlgebraTerm reconstructedTerm = new AlgebraTerm();
                     for (int i = 0; i < group.Length; ++i)
                     {
@@ -412,7 +412,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             }
 
             ExComp ac = MulOp.StaticCombine(a, c);
-            var divisors = ac.GetDivisorsSignInvariant();
+            List<TypePair<ExComp, ExComp>> divisors = ac.GetDivisorsSignInvariant();
             if (divisors == null)
                 return null;
 
@@ -1222,7 +1222,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             {
                 ExComp[] group = groups[i];
 
-				var trigCoeffPairs = getTrigFuncAndCoeff(group);
+				List<TypePair<PowerFunction, ExComp[]>> trigCoeffPairs = getTrigFuncAndCoeff(group);
 
                 for (int j = 0; j < trigCoeffPairs.Count; ++j)
                 {
