@@ -377,7 +377,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     ExComp left = eqSet.Sides[j];
                     ExComp right = eqSet.Sides[j + 1];
 
-                    var comparison = eqSet.ComparisonOps[j];
+                    LexemeType comparison = eqSet.ComparisonOps[j];
 
                     AlgebraTerm leftSubbed = left.Clone().ToAlgTerm().Substitute(Solutions[i].SolveFor, solution);
                     AlgebraTerm rightSubbed = right.Clone().ToAlgTerm().Substitute(Solutions[i].SolveFor, solution);
@@ -570,8 +570,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             {
                 AlgebraTermArray resultArray = result as AlgebraTermArray;
 
-                var rests = from term in resultArray.Terms
-                            select new NotRestriction(varFor, term);
+                IEnumerable<NotRestriction> rests = from term in resultArray.Terms
+													select new NotRestriction(varFor, term);
 
                 return rests.ToArray();
             }
@@ -804,9 +804,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static Restriction CompoundDomains(List<Restriction> rests, AlgebraVar varFor, ref TermType.EvalData pEvalData)
         {
-            var regRests = (from rest in rests
-                            where !(rest is NotRestriction)
-                            select rest).ToList();
+            List<Restriction> regRests = (from rest in rests
+										  where !(rest is NotRestriction)
+										  select rest).ToList();
 
             if (regRests.Count == 0)
                 return OrRestriction.AllNumbers(varFor, ref pEvalData);
@@ -864,20 +864,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     {
                         // Ensure final restrictions doesn't already contain the same thing.
                         bool add = true;
-                        foreach (var finalRest in finalRestrictions)
+                        foreach (Restriction finalRest in finalRestrictions)
                         {
                             if (finalRest is OrRestriction && intersection is OrRestriction)
                             {
-                                var finalRestOr = finalRest as OrRestriction;
-                                var intersectionOr = intersection as OrRestriction;
+                                OrRestriction finalRestOr = finalRest as OrRestriction;
+                                OrRestriction intersectionOr = intersection as OrRestriction;
                                 if (finalRestOr.Compare.IsEqualTo(intersectionOr.Compare) && finalRestOr.Comparison == intersectionOr.Comparison
                                     && finalRestOr.VarComp.IsEqualTo(intersectionOr.VarComp))
                                     add = false;
                             }
                             else if (finalRest is AndRestriction && intersection is AndRestriction)
                             {
-                                var finalRestAnd = finalRest as AndRestriction;
-                                var intersectionAnd = intersection as AndRestriction;
+                                AndRestriction finalRestAnd = finalRest as AndRestriction;
+                                AndRestriction intersectionAnd = intersection as AndRestriction;
 
                                 if (finalRestAnd.Compare0.IsEqualTo(intersectionAnd.Compare0) && finalRestAnd.Compare1.IsEqualTo(intersectionAnd.Compare1) &&
                                     finalRestAnd.Comparison0 == intersectionAnd.Comparison0 && finalRestAnd.Comparison1 == intersectionAnd.Comparison1 &&
@@ -888,8 +888,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                         if (!add)
                             continue;
                         finalRestrictions.Add(intersection);
-                        var rem0 = rests[i];
-                        var rem1 = rests[j];
+                        Restriction rem0 = rests[i];
+						Restriction rem1 = rests[j];
 
                         //rests.Remove(rem0);
                         //rests.Remove(rem1);

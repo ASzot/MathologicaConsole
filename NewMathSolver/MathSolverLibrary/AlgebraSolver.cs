@@ -17,6 +17,7 @@ namespace MathSolverWebsite.MathSolverLibrary
         private int i_subVarIndex = 0;
         private int _linearSolveRepeatCount = 0;
 
+
         public AlgebraComp IterationVar
         {
             get { return _iterationVar; }

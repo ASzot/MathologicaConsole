@@ -197,7 +197,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             {
                 PowerFunction powFunc = term as PowerFunction;
                 AlgebraTerm baseTerm = powFunc.Base.ToAlgTerm();
-                var groups = baseTerm.GetGroupsNoOps();
+                List<ExComp[]> groups = baseTerm.GetGroupsNoOps();
                 if (groups.Count == 1)
                 {
                     var group = groups[0];
@@ -417,7 +417,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 return null;
 
             ExComp n1 = null, n2 = null;
-            foreach (var divisor in divisors)
+            foreach (TypePair<ExComp, ExComp> divisor in divisors)
             {
                 if (AddOp.StaticCombine(divisor.Data1, divisor.Data2).IsEqualTo(b))
                 {
@@ -563,15 +563,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
         public static AlgebraTerm ForceLogPowToCoeff(this LogFunction log)
         {
             AlgebraTerm innerTerm = log.InnerTerm;
-            var groups = innerTerm.GetGroupsNoOps();
+            List<ExComp[]> groups = innerTerm.GetGroupsNoOps();
             if (groups.Count == 1)
             {
-                var group = groups[0];
+                ExComp[] group = groups[0];
 
                 List<Number> powers = new List<Number>();
                 for (int i = 0; i < group.Length; ++i)
                 {
-                    var groupComp = group[i];
+                    ExComp groupComp = group[i];
                     if (groupComp is PowerFunction)
                     {
                         PowerFunction pfGroupComp = groupComp as PowerFunction;
@@ -686,13 +686,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 return null;
 
                 //AlgebraTerm term = ex as AlgebraTerm;
-                //var groups = term.GetGroupsNoOps();
+                //List<ExComp[]> groups = term.GetGroupsNoOps();
                 //if (groups.Count != 1)
                 //    return null;
 
-                //var group = groups[0];
+                //ExComp[] group = groups[0];
 
-                //var seperateDivisors = new List<List<TypePair<ExComp, ExComp>>>();
+                //List<List<TypePair<ExComp, ExComp>> seperateDivisors = new List<List<TypePair<ExComp, ExComp>>>();
 
                 //foreach (ExComp gpSubComp in group)
                 //{
@@ -710,9 +710,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             }
             else if (ex is Number)
             {
-                var numDivisors = (ex as Number).GetDivisors();
-                var exDivisors = from divisor in numDivisors
-                                 select new TypePair<ExComp, ExComp>(divisor.Data1, divisor.Data2);
+                List<TypePair<Number, Number>> numDivisors = (ex as Number).GetDivisors();
+                IEnumerable<TypePair<ExComp, ExComp>> exDivisors = from divisor in numDivisors
+																   select new TypePair<ExComp, ExComp>(divisor.Data1, divisor.Data2);
                 divisors = exDivisors.ToList();
             }
 
@@ -723,13 +723,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
         {
             if (ex is Number)
             {
-                var numDivisors = (ex as Number).GetDivisorsSignInvariant();
-                var exDivisors = from divisor in numDivisors
-                                 select new TypePair<ExComp, ExComp>(divisor.Data1, divisor.Data2);
+                List<TypePair<Number, Number>> numDivisors = (ex as Number).GetDivisorsSignInvariant();
+                IEnumerable<TypePair<ExComp, ExComp>> exDivisors = from divisor in numDivisors
+																	select new TypePair<ExComp, ExComp>(divisor.Data1, divisor.Data2);
                 return exDivisors.ToList();
             }
 
-            var signInvariantDivisors = ex.GetDivisors();
+            List<TypePair<ExComp, ExComp>> signInvariantDivisors = ex.GetDivisors();
             if (signInvariantDivisors == null)
                 return null;
             // We have to account for the negative negative situation.
@@ -831,14 +831,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 restrictions.Add(OrRestriction.GetNoRealNumsRestriction(varFor.ToAlgebraComp(), ref pEvalData));
             }
 
-            var notRests = (from rest in restrictions
-                            where rest is NotRestriction
-                            select rest as NotRestriction).ToList();
+			List<NotRestriction> notRests = (from rest in restrictions
+										  where rest is NotRestriction
+										  select rest as NotRestriction).ToList();
 
             restrictions.Clear();
 
             // Ensure that all the not restrictions are actually included in the compounded if they aren't then the information is just redundnant.
-            foreach (var notRest in notRests)
+            foreach (NotRestriction notRest in notRests)
             {
                 if (compounded.IsValidValue(notRest.NotVal, ref pEvalData))
                     restrictions.Add(notRest);
@@ -852,7 +852,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             if (term.RemoveRedundancies() is Number)
                 return null;
 
-            var polyInfos = term.GetPolynomialInfo();
+            PolyInfo polyInfos = term.GetPolynomialInfo();
             if (polyInfos != null)
             {
                 polyInfos.FillInPowRanges();
@@ -909,7 +909,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 }
             }
 
-            var groups = term.GetGroupsNoOps();
+            List<ExComp[]> groups = term.GetGroupsNoOps();
             if (groups.Count == 2)
             {
                 #region Perfect Powers
@@ -1119,7 +1119,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
 
                     if (pEvalData.PartialSolutions != null && pEvalData.PartialSolutions.Count != 0)
                     {
-                        var partialSolutions = (from partialSol in pEvalData.PartialSolutions
+                        ExComp[] partialSolutions = (from partialSol in pEvalData.PartialSolutions
                                                 select partialSol.ToAlgTerm()).ToArray();
 
                         pEvalData.PartialSolutions.Clear();
@@ -1161,7 +1161,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
 
         public static AlgebraTerm PythagTrigSimplify(AlgebraTerm term)
         {
-            var groups = term.GetGroupsNoOps();
+            List<ExComp[]> groups = term.GetGroupsNoOps();
 
             Func<ExComp[], List<TypePair<PowerFunction, ExComp[]>>> getTrigFuncAndCoeff = (ExComp[] gp) =>
                 {
@@ -1174,8 +1174,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                             if (!(fnPow.Base is SinFunction) && !(fnPow.Base is CosFunction))
                                 continue;
                             // We have a trig function matching pythag substitution.
-                            var prevRange = gp.ToList().GetRange(0, i);
-                            var afterRange = gp.ToList().GetRange(i + 1, gp.Length - (i + 1));
+                            List<ExComp> prevRange = gp.ToList().GetRange(0, i);
+                            List<ExComp> afterRange = gp.ToList().GetRange(i + 1, gp.Length - (i + 1));
                             if (prevRange.Count + afterRange.Count == 0)
                                 afterRange.Add(Number.One);
                             trigCoeffPairs.Add(new TypePair<PowerFunction, ExComp[]>(gp[i] as PowerFunction, prevRange.Concat(afterRange).ToArray()));
@@ -1201,11 +1201,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                         if (!fnBaseTrig.InnerEx.IsEqualTo(innerEx))
                             continue;
                         // We have a trig function matching pythag substitution.
-                        var prevRange = gp.ToList().GetRange(0, i);
-                        var afterRange = gp.ToList().GetRange(i + 1, gp.Length - (i + 1));
+                        List<ExComp> prevRange = gp.ToList().GetRange(0, i);
+                        List<ExComp> afterRange = gp.ToList().GetRange(i + 1, gp.Length - (i + 1));
                         if (prevRange.Count + afterRange.Count == 0)
                             afterRange.Add(Number.One);
-                        var totalRange = prevRange.Concat(afterRange).ToArray();
+                        ExComp[] totalRange = prevRange.Concat(afterRange).ToArray();
                         if (!totalRange.ToAlgNoRedunTerm().IsEqualTo(coeff))
                             continue;
 
@@ -1222,11 +1222,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             {
                 ExComp[] group = groups[i];
 
-                var trigCoeffPairs = getTrigFuncAndCoeff(group);
+				var trigCoeffPairs = getTrigFuncAndCoeff(group);
 
                 for (int j = 0; j < trigCoeffPairs.Count; ++j)
                 {
-                    var trigCoeffPair = trigCoeffPairs[j];
+					TypePair<PowerFunction, ExComp[]> trigCoeffPair = trigCoeffPairs[j];
                     string desiredTrigFunc = TrigFunction.GetTrigType(trigCoeffPair.Data1.Base) == SinFunction.IDEN ? CosFunction.IDEN : SinFunction.IDEN;
                     ExComp innerEx = (trigCoeffPair.Data1.Base as TrigFunction).InnerEx;
 
@@ -1237,7 +1237,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                     {
                         ExComp[] compareGroup = groups[k];
 
-                        var compareTrigCoeffPair = getTrigFuncAndCoeffRestrictions(compareGroup, trigCoeffPair.Data1.Power, innerEx,
+						TypePair<PowerFunction, ExComp[]> compareTrigCoeffPair = getTrigFuncAndCoeffRestrictions(compareGroup, trigCoeffPair.Data1.Power, innerEx,
                             trigCoeffPair.Data2.ToAlgNoRedunTerm(), desiredTrigFunc);
 
                         if (compareTrigCoeffPair == null)
@@ -1283,7 +1283,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 // There is a denominator in this group.
                 ExComp[] num = group.GetNumerator();
                 AlgebraTerm numDenResult = AlgebraTerm.FromFraction(num.ToAlgTerm(), den.ToAlgTerm()).TrigSimplify();
-                var numDenResultGroups = numDenResult.GetGroups();
+                List<ExComp[]> numDenResultGroups = numDenResult.GetGroups();
                 if (numDenResultGroups.Count == 1)
                     return numDenResultGroups[0];
                 else
@@ -1348,11 +1348,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             if (logInnerEx is AlgebraTerm)
             {
                 AlgebraTerm innerTerm = logInnerEx as AlgebraTerm;
-                var groups = innerTerm.GetGroupsNoOps();
+                List<ExComp[]> groups = innerTerm.GetGroupsNoOps();
                 if (groups.Count == 1)
                 {
-                    var group = groups[0];
-                    foreach (var groupComp in group)
+                    ExComp[] group = groups[0];
+                    foreach (ExComp groupComp in group)
                     {
                         ExComp[] addGroup;
                         if (groupComp is PowerFunction)
@@ -1464,7 +1464,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             else
                 numTerm = term;
 
-            var numGroups = numTerm.GetGroupsNoOps();
+            List<ExComp[]> numGroups = numTerm.GetGroupsNoOps();
 
             for (int i = 0; i < numGroups.Count; ++i)
             {
@@ -1473,7 +1473,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
 
             if (numDen != null)
             {
-                var denGroups = numDen[1].GetGroupsNoOps();
+                List<ExComp[]> denGroups = numDen[1].GetGroupsNoOps();
 
                 for (int i = 0; i < denGroups.Count; ++i)
                 {
@@ -1561,7 +1561,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                         if (modDen is AlgebraTerm)
                         {
                             AlgebraTerm modDenTerm = modDen as AlgebraTerm;
-                            var modDenTermGps = modDenTerm.GetGroupsNoOps();
+                            List<ExComp[]> modDenTermGps = modDenTerm.GetGroupsNoOps();
                             if (modDenTermGps.Count == 1)
                             {
                                 List<ExComp> gp = modDenTermGps[0].ToList();
@@ -1638,7 +1638,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                             final.Add(nonModNum);
                     }
 
-                    foreach (var modNumDenPair in modifiedNumDenPairs)
+                    foreach (TypePair<ExComp, ExComp> modNumDenPair in modifiedNumDenPairs)
                     {
                         ExComp addEx;
                         if (modNumDenPair.Data2 is AlgebraTerm && (modNumDenPair.Data2 as AlgebraTerm).TermCount == 0)

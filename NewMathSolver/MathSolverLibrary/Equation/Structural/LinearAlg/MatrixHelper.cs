@@ -172,7 +172,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             else if (ex is AlgebraTerm)
             {
                 AlgebraTerm term = ex as AlgebraTerm;
-                foreach (var subComp in term.SubComps)
+                foreach (ExComp subComp in term.SubComps)
                 {
                     if (TermContainsMatrices(subComp))
                         return true;

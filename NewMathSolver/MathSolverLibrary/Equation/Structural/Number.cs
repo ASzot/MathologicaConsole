@@ -525,7 +525,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (!IsRealInteger() || HasImaginaryComp())
                 return new List<TypePair<Number, Number>>(); ;         // Just an empty list.
 
-            var signInvariantDivisors = GetDivisors();
+            TypePair<Number, Number> signInvariantDivisors = GetDivisors();
 
             if (d_realComp > 0)
             {

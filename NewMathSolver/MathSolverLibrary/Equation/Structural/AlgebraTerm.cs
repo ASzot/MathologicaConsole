@@ -720,7 +720,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (TermCount == 0)
                 return "0";
 
-            var groups = GetGroupsNoOps();
+            List<ExComp[]> groups = GetGroupsNoOps();
 
             string finalStr = "";
             for (int i = 0; i < groups.Count; ++i)
