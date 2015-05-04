@@ -11,6 +11,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private ExComp _assignTo;
         private FunctionDefinition _func;
 
+
         public FunctionTermType()
             : base()
         {
@@ -18,6 +19,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
         public override Equation.SolveResult ExecuteCommand(string command, ref EvalData pEvalData)
         {
+            base.ExecuteCommand(command, ref pEvalData);
+
             _agSolver.ResetIterCount();
 
             if (command == "Find inverse")
@@ -42,19 +45,10 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
                 return _agSolver.SolveEquationEquality(inverseFunc.Var, left, right, ref pEvalData);
             }
-            else if (command == "Assign function")
+            else if (command.StartsWith("Assign"))
             {
-                // Display the assignment as a message.
-                string funcDefStr;
-                if (_assignTo is AlgebraTerm)
-                    funcDefStr = (_assignTo as AlgebraTerm).FinalToDispStr();
-                else
-                    funcDefStr = _assignTo.ToAsciiString();
-                funcDefStr = MathSolver.FinalizeOutput(funcDefStr);
-                pEvalData.AddMsg(WorkMgr.STM + _func.ToAsciiString() + WorkMgr.EDM + " defined as " + WorkMgr.STM + funcDefStr + WorkMgr.EDM);
-
                 // Assign the function.
-                pEvalData.FuncDefs.Define(_func, _assignTo);
+                pEvalData.FuncDefs.Define(_func, _assignTo, ref pEvalData);
                 return SolveResult.Solved();
             }
             else if (command.StartsWith("Domain of "))
@@ -105,14 +99,26 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
             if (funcIden != null)
             {
-                // The input variable for the function needs to be assumed.
-                if (probSolveVar == funcIden.Var.Var)
+                if (_assignTo.ToAlgTerm().Contains(funcIden))
                     return false;
 
-                // For graphing later.
-                solveVars.Remove(funcIden.Var.Var);
+                // The input variable for the function needs to be assumed.
+                AlgebraComp[] useVars;
+                if (_assignTo is Equation.Structural.LinearAlg.ExMatrix ||
+                    _assignTo is Number)
+                {
+                    useVars = new AlgebraComp[] { new AlgebraComp(AlgebraVar.GarbageVar) };
+                }
+                else if (probSolveVar == funcIden.Var.Var)
+                    return false;
+                else
+                {
+                    useVars = new AlgebraComp[] { new AlgebraComp(probSolveVar) };
+                    // For graphing later.
+                    solveVars.Remove(funcIden.Var.Var);
+                }
 
-                _func = new FunctionDefinition(funcIden, new AlgebraComp[] { new AlgebraComp(probSolveVar) }, null, false);
+                _func = new FunctionDefinition(funcIden, useVars, null, false);
             }
 
             if (_assignTo == null || Number.IsUndef(_assignTo))
@@ -136,23 +142,23 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 }
             }
 
+
             solveVarKeys.Insert(0, probSolveVar);
 
             List<string> tmpCmds = new List<string>();
-            if (!_func.IsMultiValued && _assignTo.ToAlgTerm().Contains(_func.InputArgs[0]))
-                tmpCmds.Add("Find inverse");
-            tmpCmds.Add("Assign function");
-            for (int i = 0; i < solveVarKeys.Count; ++i)
-            {
-                tmpCmds.Add("Domain of " + solveVarKeys[i]);
-            }
-
-            if (solveVars.Count == 1 && !_func.IsMultiValued)
+            if (solveVars.Count == 1 && !_func.IsMultiValued && _func.InputArgs != null && _func.HasValidInputArgs)
             {
                 AlgebraTerm term = _assignTo.ToAlgTerm();
                 string graphStr = term.ToJavaScriptString(true);
                 if (graphStr != null)
                     tmpCmds.Add("Graph");
+            }
+            if (!_func.IsMultiValued && _assignTo.ToAlgTerm().Contains(_func.InputArgs[0]))
+                tmpCmds.Add("Find inverse");
+            tmpCmds.Add(_func.HasValidInputArgs ? "Assign function" : "Assign value");
+            for (int i = 0; i < solveVarKeys.Count; ++i)
+            {
+                tmpCmds.Add("Domain of " + solveVarKeys[i]);
             }
 
             _cmds = tmpCmds.ToArray();

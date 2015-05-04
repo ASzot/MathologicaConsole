@@ -53,6 +53,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
         public override Equation.SolveResult ExecuteCommand(string command, ref EvalData pEvalData)
         {
+            base.ExecuteCommand(command, ref pEvalData);
+
             // There is only one thing to be done.
             _side0 = SimpTerm(_side0, ref pEvalData);
             _side1 = SimpTerm(_side1, ref pEvalData);

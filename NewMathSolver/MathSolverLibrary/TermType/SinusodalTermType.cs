@@ -26,6 +26,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
         public override SolveResult ExecuteCommand(string command, ref EvalData pEvalData)
         {
+            base.ExecuteCommand(command, ref pEvalData);
+
             if (command == "Get amplitude")
             {
                 // Get the amplitude.
@@ -77,7 +79,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (probSolveVar == null)
                 return false;
 
-            if (solveVars.Count > 1)
+            if (solveVars.Count > 1 && right != null)
             {
                 if (!(left is AlgebraComp && !right.ToAlgTerm().Contains(left as AlgebraComp)) &&
                     !(right is AlgebraComp && !left.ToAlgTerm().Contains(right as AlgebraComp)))

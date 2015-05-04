@@ -9,7 +9,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 {
     class CrossProductOp : AgOp
     {
-        public const string IDEN = "cross";
+        public const string IDEN = "times";
 
         public override ExComp Clone()
         {
@@ -45,7 +45,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             if (vec0.Length == 1)
                 return Number.Undefined;
 
-            if (vec0.Length != 2 || vec1.Length != 3)
+            if (vec0.Length != 2 && vec1.Length != 3)
                 return StaticWeakCombine(vec0, vec1);
 
             // The formula is a2b3-a3b2,a3b1-a1b3,a1b2-a2b1

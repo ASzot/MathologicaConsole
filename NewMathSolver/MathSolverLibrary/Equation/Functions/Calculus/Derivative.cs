@@ -203,6 +203,98 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     pEvalData.WorkMgr.FromSides(this, null, "The derivative and the integral cancel.");
                     return finalInt.InnerTerm;
                 }
+                else if (!finalInt.IsDefinite)
+                {
+                    bool upperContains = finalInt.UpperLimitTerm.ToAlgTerm().Contains(_withRespectTo);
+                    bool lowerContains = finalInt.LowerLimitTerm.ToAlgTerm().Contains(_withRespectTo);
+                    if (upperContains || lowerContains)
+                    {
+                        pEvalData.WorkMgr.FromSides(this, null, "Use the fundemental theorem of calculus.");
+                        // Fundemental Theorem of calculus should be applied here.
+                        Integral[] ints;
+                        if (upperContains && lowerContains)
+                        {
+                            AlgebraComp tmpBoundryVar = new AlgebraComp("a");
+                            Integral otherInt = Integral.ConstructIntegral(finalInt.InnerTerm, finalInt.DVar, finalInt.LowerLimit, tmpBoundryVar);
+                            finalInt.LowerLimit = tmpBoundryVar;
+
+                            pEvalData.WorkMgr.FromFormatted(ca_derivSymb + "[" + finalInt.FinalToDispStr() + "+" + otherInt.FinalToDispStr() + "]", "Split the integral");
+                            ExComp tmp = otherInt.UpperLimit;
+                            otherInt.UpperLimit = otherInt.LowerLimit;
+                            otherInt.LowerLimit = tmp;
+                            pEvalData.WorkMgr.FromFormatted(ca_derivSymb + "[" + finalInt.FinalToDispStr() + "-" + otherInt.FinalToDispStr() + "]", "Switch the integral bounds");
+
+                            ints = new Integral[] { finalInt, otherInt };
+                        }
+                        else if (lowerContains)
+                        {
+                            ints = new Integral[] { Integral.ConstructIntegral(MulOp.Negate(finalInt.InnerEx), finalInt.DVar, finalInt.UpperLimit, finalInt.LowerLimit) };
+                        }
+                        else
+                            ints = new Integral[] { finalInt };
+
+
+                        ExComp[] modified = new ExComp[ints.Length];
+                        Derivative[] chainRules = new Derivative[ints.Length];
+                        for (int i = 0; i < ints.Length; ++i)
+                        {
+                            modified[i] = ints[i].InnerTerm.Substitute(ints[i].DVar, ints[i].UpperLimit);
+                            chainRules[i] = ints[i].UpperLimit.IsEqualTo(_withRespectTo) ? null : Derivative.ConstructDeriv(ints[i].UpperLimit, _withRespectTo, null);
+                        }
+
+                        string dispStr = "";
+                        bool useChainRule = false;
+                        for (int i = 0; i < modified.Length; ++i)
+                        {
+                            if (chainRules[i] != null)
+                            {
+                                useChainRule = true;
+                                dispStr += chainRules[i].FinalToDispStr();
+                                dispStr += "(";
+                            }
+
+                            dispStr += WorkMgr.ExFinalToAsciiStr(modified[i]);
+
+                            if (chainRules[i] != null)
+                            {
+                                dispStr += ")";
+                            }
+                        }
+
+                        pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + dispStr + WorkMgr.EDM, "Substitute in" + (useChainRule ? " and use the chain rule." : "."));
+
+                        ExComp[] chainRuled = new ExComp[chainRules.Length];
+                        dispStr = "";
+                        for (int i = 0; i < chainRuled.Length; ++i)
+                        {
+                            chainRuled[i] = chainRules[i] == null ? null : chainRules[i].Evaluate(harshEval, ref pEvalData);
+                            if (chainRuled[i] != null)
+                            {
+                                dispStr += WorkMgr.ExFinalToAsciiStr(chainRuled[i]);
+                                dispStr += "(";
+                            }
+
+                            dispStr += WorkMgr.ExFinalToAsciiStr(modified[i]);
+
+                            if (chainRuled[i] != null)
+                                dispStr += ")";
+                        }
+
+                        if (useChainRule)
+                            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + dispStr + WorkMgr.EDM);
+
+                        ExComp totalTerm = new AlgebraTerm();
+                        for (int i = 0; i < chainRuled.Length; ++i)
+                        {
+                            totalTerm = AddOp.StaticCombine(totalTerm, chainRuled[i] == null ? modified[i] : (MulOp.StaticCombine(modified[i], chainRuled[i])));
+                        }
+
+                        if (useChainRule)
+                            pEvalData.WorkMgr.FromSides(totalTerm, null);
+
+                        return totalTerm;
+                    }
+                }
             }
             else if (final is ExVector)
             {

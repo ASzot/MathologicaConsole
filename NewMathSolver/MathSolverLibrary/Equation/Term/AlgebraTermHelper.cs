@@ -10,11 +10,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
     {
         public static bool GroupsCombinable(ExComp[] group1, ExComp[] group2)
         {
-            IEnumerable<ExComp> compareGroup1 = GetCombinableGroup(group1);
-			IEnumerable<ExComp> compareGroup2 = GetCombinableGroup(group2);
+            var compareGroup1 = GetCombinableGroup(group1);
+            var compareGroup2 = GetCombinableGroup(group2);
 
             // For this the coefficients don't matter.
-            List<TypePair<bool, ExComp>> checkGroups2 = (from comp in compareGroup2
+            var checkGroups2 = (from comp in compareGroup2
                                 select new TypePair<bool, ExComp>(false, comp)).ToList();
 
             if (compareGroup1.Count() != compareGroup2.Count())
@@ -24,7 +24,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             {
                 for (int j = 0; j < checkGroups2.Count(); ++j)
                 {
-                    TypePair<bool, ExComp> checkGroup = checkGroups2.ElementAt(j);
+                    var checkGroup = checkGroups2.ElementAt(j);
                     if (checkGroup.Data1)
                         continue;
                     if (checkGroup.Data2.GetType() == comp.GetType())
@@ -35,7 +35,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 }
             }
 
-            foreach (TypePair<bool, ExComp> checkGroup in checkGroups2)
+            foreach (var checkGroup in checkGroups2)
             {
                 if (!checkGroup.Data1)
                     return false;
@@ -122,19 +122,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static ExComp Intersect(AlgebraTerm term1, AlgebraTerm term2)
         {
-            List<TypePair<ExComp[], bool>> group2Checks = (from gr in term2.GetGroupsNoOps()
+            var group2Checks = (from gr in term2.GetGroupsNoOps()
                                 select new TypePair<ExComp[], bool>(gr, false)).ToList();
-            List<ExComp[]> groups1 = term1.GetGroupsNoOps();
+            var groups1 = term1.GetGroupsNoOps();
 
             List<ExComp[]> intersectedGroups = new List<ExComp[]>();
             for (int i = 0; i < groups1.Count; ++i)
             {
-                ExComp[] group1 = groups1[i];
+                var group1 = groups1[i];
 
                 ExComp[] match = null;
                 for (int j = 0; j < group2Checks.Count; ++j)
                 {
-                    TypePair<ExComp[], bool> group2Check = group2Checks[j];
+                    var group2Check = group2Checks[j];
                     if (group2Check.Data2)
                         continue;
                     if (GroupsCombinable(group1, group2Check.Data1))
@@ -150,7 +150,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 }
                 else
                 {
-                    ExComp[] baseGroup = RemoveCoeffs(match);
+                    var baseGroup = RemoveCoeffs(match);
 
                     Number coeff1 = GetCoeffTerm(group1) ?? new Number(1.0);
                     Number coeff2 = GetCoeffTerm(match) ?? new Number(1.0);
@@ -166,7 +166,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 }
             }
 
-            foreach (TypePair<ExComp[], bool> group2Check in group2Checks)
+            foreach (var group2Check in group2Checks)
             {
                 if (!group2Check.Data2)
                     intersectedGroups.Add(group2Check.Data1);
@@ -182,7 +182,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             bool matchingFound = false;
             for (int j = 0; j < group.Count(); ++j)
             {
-                ExComp groupComp = group[j];
+                var groupComp = group[j];
 
                 bool combinable = false;
                 if (groupComp is PowerFunction || comp is PowerFunction)
@@ -278,10 +278,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public void MultiplyGroupsBy(ExComp exComp)
         {
-            List<ExComp[]> groups = GetGroups();
+            var groups = GetGroups();
 
             AlgebraTerm overallTerm = new AlgebraTerm();
-            foreach (ExComp[] group in groups)
+            foreach (var group in groups)
             {
                 AlgebraTerm term = new AlgebraTerm();
             }

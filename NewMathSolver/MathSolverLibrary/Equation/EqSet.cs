@@ -3,6 +3,8 @@ using MathSolverWebsite.MathSolverLibrary.Equation.Term;
 using MathSolverWebsite.MathSolverLibrary.Parsing;
 using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 using System.Collections.Generic;
+using System.Linq;
+using System;
 using MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus;
 using LexemeTable = System.Collections.Generic.List<
 MathSolverWebsite.MathSolverLibrary.TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>>;
@@ -11,6 +13,7 @@ namespace MathSolverWebsite.MathSolverLibrary
 {
     internal struct EqSet
     {
+        private Type _startingType;
         private List<LexemeType> _comparisonOps;
         private List<ExComp> _sides;
         private string _strContent;
@@ -27,9 +30,31 @@ namespace MathSolverWebsite.MathSolverLibrary
             }
         }
 
+        public Type StartingType
+        {
+            set
+            {
+                _startingType = value;
+            }
+            get { return _startingType; }
+        }
+
         public List<LexemeType> ComparisonOps
         {
             get { return _comparisonOps; }
+        }
+
+        /// <summary>
+        /// All of the comparison ops not including the invalid 'ErrorType'.
+        /// </summary>
+        public List<LexemeType> ValidComparisonOps
+        {
+            get
+            {
+                return (from compOp in _comparisonOps
+                        where compOp != LexemeType.ErrorType
+                        select compOp).ToList();
+            }
         }
 
         public string ContentStr
@@ -106,6 +131,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             _sides = new List<ExComp>();
             _comparisonOps = new List<LexemeType>();
             _strContent = strContent;
+            _startingType = null;
             ComparisonOp = LexemeType.ErrorType;
             Left = singleEx;
             Right = null;
@@ -116,6 +142,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             _sides = sides;
             _comparisonOps = comparionOps;
             _strContent = null;
+            _startingType = null;
         }
 
         public EqSet(ExComp left, ExComp right, LexemeType comparisonOp)
@@ -123,6 +150,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             _sides = new List<ExComp>();
             _comparisonOps = new List<LexemeType>();
             _strContent = null;
+            _startingType = null;
             ComparisonOp = comparisonOp;
             Left = left;
             Right = right;
@@ -133,6 +161,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             _sides = new List<ExComp>();
             _comparisonOps = new List<LexemeType>();
             _strContent = null;
+            _startingType = null;
             ComparisonOp = LexemeType.ErrorType;
             Left = singleEx;
             Right = null;
@@ -303,6 +332,23 @@ namespace MathSolverWebsite.MathSolverLibrary
             AlgebraComp solveFor = derivLeft.ConstructImplicitDerivAgCmp();
 
             return agSolver.SolveEquationEquality(solveFor.Var, left.ToAlgTerm(), right.ToAlgTerm(), ref pEvalData);
+        }
+
+        public LexemeTable CreateLexemeTable()
+        {
+            LexemeTable lt = new LexemeTable();
+            for (int i = 0; i < _sides.Count; ++i)
+            {
+                List<string> variables = _sides[i].ToAlgTerm().GetAllAlgebraCompsStr();
+                foreach (string variable in variables)
+                {
+                    lt.Add(new TypePair<LexemeType, string>(LexemeType.Identifier, variable));
+                }
+                if (i + 1 < _sides.Count)
+                    lt.Add(new TypePair<LexemeType, string>(_comparisonOps[i], Restriction.ComparisonOpToStr(_comparisonOps[i])));
+            }
+
+            return lt;
         }
 
         public bool ReparseInfo(out EqSet eqSet, ref TermType.EvalData pEvalData)

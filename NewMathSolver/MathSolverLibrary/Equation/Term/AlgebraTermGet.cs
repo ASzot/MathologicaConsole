@@ -11,7 +11,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             List<string> varStrs = new List<string>();
 
-            foreach (ExComp subComp in _subComps)
+            foreach (var subComp in _subComps)
             {
                 if (subComp is AlgebraComp)
                 {
@@ -33,11 +33,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public List<ExComp[]> GetGroupContainingTerm(ExComp term)
         {
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
             List<ExComp[]> matchingGroups = new List<ExComp[]>();
 
-            foreach (ExComp[] group in groups)
+            foreach (var group in groups)
             {
                 if (group.GroupContains(term))
                     matchingGroups.Add(group);
@@ -48,7 +48,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public ExComp[] GetGroupGCF()
         {
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
             if (groups.Count == 0)
                 return null;
@@ -63,13 +63,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public List<ExComp> GetGroupPow(ExComp power)
         {
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
             List<ExComp> matchingTerms = new List<ExComp>();
 
-            foreach (ExComp[] gp in groups)
+            foreach (var gp in groups)
             {
-                foreach (ExComp gpCmp in gp)
+                foreach (var gpCmp in gp)
                 {
                     if (gpCmp is Functions.PowerFunction && (gpCmp as Functions.PowerFunction).Power.IsEqualTo(power))
                     {
@@ -122,11 +122,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public List<AlgebraGroup> GetGroupsConstantTo(AlgebraComp varFor)
         {
-			List<ExComp[]> groups = GetGroups();
+            var groups = GetGroups();
 
-            IEnumerable<AlgebraGroup> constantGroups = from gp in groups
-													   where !gp.GroupContains(varFor)
-													   select new AlgebraGroup(gp);
+            var constantGroups = from gp in groups
+                                 where !gp.GroupContains(varFor)
+                                 select new AlgebraGroup(gp);
 
             return constantGroups.ToList();
         }
@@ -145,9 +145,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public List<AlgebraGroup> GetGroupsVariableTo(AlgebraComp varFor)
         {
-            List<ExComp[]> groups = GetGroups();
+            var groups = GetGroups();
 
-            IEnumerable<AlgebraGroup> variableGroups = from gp in groups
+            var variableGroups = from gp in groups
                                  where gp.GroupContains(varFor)
                                  select new AlgebraGroup(gp);
 
@@ -156,9 +156,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public List<AlgebraGroup> GetGroupsVariableToNoOps(AlgebraComp varFor)
         {
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
-            IEnumerable<AlgebraGroup> variableGroups = from gp in groups
+            var variableGroups = from gp in groups
                                  where gp.GroupContains(varFor)
                                  select new AlgebraGroup(gp);
 
@@ -194,11 +194,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public AlgebraTerm[] GetNumDenFrac()
         {
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
             if (groups.Count != 1)
                 return null;
 
-            ExComp[] group = groups[0];
+            var group = groups[0];
             if (!group.ContainsFrac())
                 return null;
             ExComp[] num = group.GetNumerator();
@@ -215,13 +215,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             List<AlgebraGroup> varFracGroups = new List<AlgebraGroup>();
 
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
-            foreach (ExComp[] group in groups)
+            foreach (var group in groups)
             {
                 if (group.ContainsFrac())
                 {
-					AlgebraTerm denTerm = group.GetDenominator().ToAlgTerm();
+                    var denTerm = group.GetDenominator().ToAlgTerm();
 
                     if (denTerm.Contains(varFor))
                     {
@@ -237,7 +237,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             bool includeNumbers = false)
         {
             //groupToSort = groupToSort.ToArray().RemoveRedundancies();
-            IEnumerable<ExComp> compareGroup = from comp in groupToSort
+            var compareGroup = from comp in groupToSort
                                where !(comp is AgOp)
                                where !(comp is Number) || includeNumbers
                                select comp;

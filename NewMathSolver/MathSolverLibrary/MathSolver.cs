@@ -12,7 +12,7 @@ namespace MathSolverWebsite.MathSolverLibrary
     internal static class MathSolver
     {
         public const bool USE_TEX_DEBUG = true;
-        public const bool PLAIN_TEXT = true;
+        public const bool PLAIN_TEXT = false;
 
         public static TermType.TermType DetermineSingularEqSet(EqSet singularEqSet, List<TypePair<LexemeType, string>> completeLexemeTable,
             Dictionary<string, int> solveVars, ref TermType.EvalData pEvalData)
@@ -47,16 +47,10 @@ namespace MathSolverWebsite.MathSolverLibrary
                 if (!singularEqSet.FixEqFuncDefs(ref pEvalData))
                     return null;
                 // The single term is always in the left component.
-                return new SimplifyTermType(singularEqSet.Left, completeLexemeTable, solveVars, probSolveVar, isFuncDef);
+                return new SimplifyTermType(singularEqSet.Left, completeLexemeTable, solveVars, probSolveVar, singularEqSet.StartingType, isFuncDef);
             }
             else
             {
-                if (solveVars.Count == 0 && singularEqSet.ComparisonOps.Count == 1)
-                {
-                    // There are no variables in this expression.
-                    return new EqualityCheckTermType(singularEqSet.Left, singularEqSet.Right, singularEqSet.ComparisonOp);
-                }
-
                 if (singularEqSet.ComparisonOp == LexemeType.EqualsOp && singularEqSet.ComparisonOps.Count == 1)
                 {
                     FunctionTermType funcType = new FunctionTermType();
@@ -64,12 +58,19 @@ namespace MathSolverWebsite.MathSolverLibrary
                         return funcType;
                 }
 
+                if (solveVars.Count == 0 && singularEqSet.ComparisonOps.Count == 1)
+                {
+                    // There are no variables in this expression.
+                    return new EqualityCheckTermType(singularEqSet.Left, singularEqSet.Right, singularEqSet.ComparisonOp);
+                }
+
+
                 if (!singularEqSet.FixEqFuncDefs(ref pEvalData))
                     return null;
 
                 if (singularEqSet.IsLinearAlgebraTerm())
                 {
-                    return new LinearAlgebraSolve(singularEqSet);
+                    return new LinearAlgebraSolve(singularEqSet, probSolveVar);
                 }
 
                 return new SolveTermType(singularEqSet, completeLexemeTable, solveVars, probSolveVar);
@@ -124,10 +125,29 @@ namespace MathSolverWebsite.MathSolverLibrary
                 if (diffEqTT.Init(terms))
                     return diffEqTT;
 
+                MultiLineHelper mlh = new MultiLineHelper();
+                int prevCount = terms.Count;
+                terms = mlh.AssignLines(terms, ref lexemeTables, ref solveVars, out completeLexemeTable, ref pEvalData);
+                if (terms.Count == prevCount)
+                    mlh = null;
+
                 for (int i = 0; i < terms.Count; ++i)
                 {
                     if (!terms[i].FixEqFuncDefs(ref pEvalData))
                         return null;
+                }
+
+                if (terms.Count == 1)
+                {
+                    TermType.TermType singularTermType = DetermineSingularEqSet(terms[0], completeLexemeTable, solveVars, ref pEvalData);
+                    singularTermType.AttachMultiLineHelper(mlh);
+                    return singularTermType;
+                }
+                else if (terms.Count == 0)
+                {
+                    SimplifyTermType simp = new SimplifyTermType();
+                    simp.AttachMultiLineHelper(mlh);
+                    return simp;
                 }
 
                 int simpTermCount = 0;
@@ -144,12 +164,14 @@ namespace MathSolverWebsite.MathSolverLibrary
                 if (simpTermCount <= 1)
                 {
                     EquationSystemTermType estt = new EquationSystemTermType(terms, lexemeTables, solveVars);
+                    estt.AttachMultiLineHelper(mlh);
                     if (estt.Init(ref pEvalData))
                         return estt;
                 }
                 else if (simpTermCount == terms.Count)
                 {
                     EquationSystemTermType estt = new EquationSystemTermType(terms, lexemeTables, solveVars);
+                    estt.AttachMultiLineHelper(mlh);
                     if (estt.InitGraphingOnly(ref pEvalData))
                         return estt;
                 }

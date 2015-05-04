@@ -37,6 +37,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 ExComp combineAtmpt = MatrixHelper.AdOpCombine(mat, other);
                 if (combineAtmpt != null)
                     return combineAtmpt;
+
+                // Order has to be preserved with vectors.
+                return AddOp.StaticWeakCombine(ex1, ex2);
             }
             if (ex1 is AlgebraFunction && ex2 is AlgebraFunction)
             {

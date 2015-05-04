@@ -48,6 +48,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector
 
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
+            if (!IsSuitableField(InnerEx))
+                return Number.Undefined;
+
             ExComp p, q, r;
             ExComp innerEx = InnerEx;
             ExComp cancelWithResult = CancelWith(innerEx, ref pEvalData);

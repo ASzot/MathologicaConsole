@@ -12,14 +12,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
     class Integral : AppliedFunction
     {
         private bool _failure = false;
-        private AlgebraComp _dVar = null;
+        protected AlgebraComp _dVar = null;
         private bool _addConstant = true;
         private IntegrationInfo _integralInfo = null;
-        private ExComp _upper = null;
-        private ExComp _lower = null;
+        protected ExComp _upper = null;
+        protected ExComp _lower = null;
 
 
-        private ExComp UpperLimit
+        public AlgebraTerm UpperLimitTerm
+        {
+            get { return _upper.ToAlgTerm(); }
+        }
+
+        public AlgebraTerm LowerLimitTerm
+        {
+            get { return _lower.ToAlgTerm(); }
+        }
+
+        public ExComp UpperLimit
         {
             get { return _upper; }
             set 
@@ -27,7 +37,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 _upper = value;
             }
         }
-        private ExComp LowerLimit
+        public ExComp LowerLimit
         {
             get { return _lower; }
             set
@@ -49,6 +59,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
         public AlgebraComp DVar
         {
             get { return _dVar; }
+            set { _dVar = value; }
         }
 
         public bool IsDefinite
@@ -73,12 +84,76 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return ConstructIntegral(innerEx, dVar, null, null);
         }
 
+        private static Dictionary<string, Integral> GetIntegralDepths(Integral integral, ref Dictionary<string, Integral> dict, out ExComp baseValue)
+        {
+            if (integral.DVar == null || dict.ContainsKey(integral.DVar.Var.Var) || !integral.IsDefinite)
+            {
+                baseValue = integral.InnerTerm;
+                return dict;
+            }
+
+            dict[integral.DVar.Var.Var] = integral;
+
+            ExComp innerEx = integral.InnerEx;
+            if (innerEx is Integral)
+            {
+                return GetIntegralDepths(innerEx as Integral, ref dict, out baseValue);
+            }
+
+            baseValue = innerEx;
+            return dict;
+        }
+
+        private static ExComp RearrangeIntegral(Integral inputIntegral)
+        {
+            ExComp baseValue;
+            Dictionary<string, Integral> dict = new Dictionary<string, Integral>();
+
+            dict = GetIntegralDepths(inputIntegral, ref dict, out baseValue);
+
+            foreach (KeyValuePair<string, Integral> kvPair in dict)
+            {
+                Integral integral = kvPair.Value;
+                if (integral.LowerLimit.ToAlgTerm().Contains(integral.DVar) || integral.UpperLimit.ToAlgTerm().Contains(integral.DVar))
+                {
+                    // The variables need to be switched.
+                    // Find a suitable place to switch the variable where the dvar is not the integration boundary.
+                    foreach (KeyValuePair<string, Integral> compareKvPair in dict)
+                    {
+                        if (compareKvPair.Key != integral.DVar.Var.Var &&
+                            compareKvPair.Value.LowerLimit.ToAlgTerm().Contains(integral.DVar) &&
+                            compareKvPair.Value.UpperLimit.ToAlgTerm().Contains(integral.DVar) &&
+                            integral.LowerLimit.ToAlgTerm().Contains(compareKvPair.Value.DVar) &&
+                            integral.UpperLimit.ToAlgTerm().Contains(compareKvPair.Value.DVar))
+                        {
+                            AlgebraComp tmp = kvPair.Value.DVar;
+                            kvPair.Value.DVar = compareKvPair.Value.DVar;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Go back to the regular integral form.
+            ExComp overallIntegral = baseValue;
+            foreach (Integral value in dict.Values)
+            {
+                overallIntegral = ConstructIntegral(overallIntegral, value.DVar, value.LowerLimit, value.UpperLimit);
+            }
+
+            return overallIntegral;
+        }
+
         public static Integral ConstructIntegral(ExComp innerEx, AlgebraComp dVar, ExComp lower, ExComp upper)
         {
             Integral integral = new Integral(innerEx);
             integral._dVar = dVar;
             integral.LowerLimit = lower;
             integral.UpperLimit = upper;
+
+            // In the case of multidimensional integrals variable boundaries will potentially have to be rearranged.
+            if (innerEx is Integral)
+                return RearrangeIntegral(integral) as Integral;
 
             return integral;
         }

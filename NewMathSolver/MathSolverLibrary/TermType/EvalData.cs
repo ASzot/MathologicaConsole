@@ -21,6 +21,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private string[] _graphEqStrs = null;
         private InputType _inputType = InputType.Invalid;
         private InputAddType _inputAddType = InputAddType.Invalid;
+        private List<AndRestriction> _variableRestrictions = null; 
 
         /// <summary>
         /// Can return null if the input type is invalid.
@@ -37,6 +38,11 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         {
             get { return _quadSolveMethod; }
             set { _quadSolveMethod = value; }
+        }
+
+        public string GraphVar
+        {
+            get { return _graphVar; }
         }
 
         public string[] GraphEqStrs
@@ -119,6 +125,26 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _useRad = useRad;
             _workMgr = workMgr;
             _funcDefs = pFuncDefHelper;
+        }
+
+        public void AddVariableRestriction(AndRestriction andRestriction)
+        {
+            if (_variableRestrictions == null)
+                _variableRestrictions = new List<AndRestriction>();
+            _variableRestrictions.Add(andRestriction);
+        }
+
+        public AndRestriction GetVariableRestriction(AlgebraComp varFor)
+        {
+            if (_variableRestrictions == null)
+                return null;
+            foreach (AndRestriction andRest in _variableRestrictions)
+            {
+                if (andRest.VarComp.IsEqualTo(varFor))
+                    return andRest;
+            }
+
+            return null;
         }
 
         public void AttemptSetInputType(InputType inputType)

@@ -43,9 +43,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public bool ContainsFractions()
         {
-            List<ExComp[]> groups = GetGroups();
+            var groups = GetGroups();
 
-            foreach (ExComp[] group in groups)
+            foreach (var group in groups)
             {
                 if (group.ContainsFrac())
                     return true;
@@ -56,9 +56,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public bool ContainsOnlyFractions()
         {
-            List<ExComp[]> groups = GetGroups();
+            var groups = GetGroups();
 
-            foreach (ExComp[] group in groups)
+            foreach (var group in groups)
             {
                 if (!group.ContainsFrac())
                     return false;
@@ -69,8 +69,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public int GetAppliedFuncCount(AlgebraComp varFor, FunctionType type)
         {
-            List<FunctionType> appliedFuncs = GetAppliedFunctionsNoPow(varFor);
-            IEnumerable<FunctionType> appliedFunc = from af in appliedFuncs
+            var appliedFuncs = GetAppliedFunctionsNoPow(varFor);
+            var appliedFunc = from af in appliedFuncs
                               where af == type
                               select af;
             return appliedFunc.Count();
@@ -143,8 +143,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 return Number.One;
             }
 
-            List<ExComp[]> groups = GetGroupsNoOps();
-            IEnumerable<ExComp[]> unrelatedGroups = from gp in groups
+            var groups = GetGroupsNoOps();
+            var unrelatedGroups = from gp in groups
                                   where gp.ToAlgTerm().Contains(varFor)
                                   select gp.GetUnrelatableTermsOfGroup(varFor);
 
@@ -161,18 +161,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public virtual List<Number> GetCoeffs()
         {
-            List<ExComp[]> groups = GetGroups();
-            IEnumerable<Number> coeffs = from gp in groups
+            var groups = GetGroups();
+            var coeffs = from gp in groups
                          select GetCoeffTerm(gp);
             return coeffs.ToList();
         }
 
         public int GetComplexityOfVar(AlgebraComp varFor)
         {
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
             int complexity = 0;
-            foreach (ExComp[] group in groups)
+            foreach (var group in groups)
             {
                 if (group.Length == 1 && group[0].IsEqualTo(varFor))
                 {
@@ -200,7 +200,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 }
                 else
                 {
-                    foreach (ExComp groupComp in group)
+                    foreach (var groupComp in group)
                     {
                         if (groupComp.IsEqualTo(varFor))
                         {
@@ -237,7 +237,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public LoosePolyInfo GetLoosePolyInfo()
         {
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
             if (groups.Count == 0)
                 return null;
@@ -245,7 +245,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             List<TypePair<ExComp, int>> polyInfo = new List<TypePair<ExComp, int>>();
 
             AlgebraComp polyVar = null;
-            foreach (ExComp[] group in groups)
+            foreach (var group in groups)
             {
                 if (group.Length > 3)
                     return null;
@@ -317,7 +317,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public PolyInfo GetPolynomialInfo()
         {
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
             if (groups.Count == 0)
                 return null;
@@ -325,7 +325,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             List<TypePair<Number, int>> polyInfo = new List<TypePair<Number, int>>();
 
             AlgebraComp polyVar = null;
-            foreach (ExComp[] group in groups)
+            foreach (var group in groups)
             {
                 if (group.Length > 2)
                     return null;
@@ -473,13 +473,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public bool HasVariableDens(AlgebraComp varFor)
         {
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
-            foreach (ExComp[] group in groups)
+            foreach (var group in groups)
             {
                 if (group.ContainsFrac())
                 {
-                    AlgebraTerm denTerm = group.GetDenominator().ToAlgTerm();
+                    var denTerm = group.GetDenominator().ToAlgTerm();
 
                     if (denTerm.Contains(varFor))
                         return true;
@@ -599,9 +599,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 return true;
             else
             {
-                List<ExComp[]> groups = GetGroups();
+                var groups = GetGroups();
                 bool allZero = true;
-                foreach (ExComp[] group in groups)
+                foreach (var group in groups)
                 {
                     Number coeff = GetCoeffTerm(group);
                     if (coeff == null)

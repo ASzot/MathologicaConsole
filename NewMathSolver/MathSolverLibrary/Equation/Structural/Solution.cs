@@ -74,6 +74,42 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return new SolveResult(new Solution(new NoSolutions()));
         }
 
+        /// <summary>
+        /// In the case of AlgebraTerm's the approximate is also automatically calculated.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public static SolveResult SimplifiedCalcApprox(ExComp result, ref TermType.EvalData pEvalData)
+        {
+            SolveResult success;
+            success.Success = true;
+            success.Solutions = new List<Solution>();
+            success.Restrictions = null;
+
+            if (result is AlgebraTermArray)
+            {
+                AlgebraTermArray resultArray = result as AlgebraTermArray;
+
+                foreach (AlgebraTerm resultTerm in resultArray.Terms)
+                {
+                    success.Solutions.Add(new Solution(resultTerm));
+                }
+            }
+            else
+            {
+                Solution solToAdd = new Solution(result);
+                if (result is AlgebraTerm)
+                {
+                    ExComp harshEval = Simplifier.HarshSimplify(result.Clone() as AlgebraTerm, ref pEvalData);
+                    if (!harshEval.IsEqualTo(result))
+                        solToAdd.ApproximateResult = harshEval;
+                }
+                success.Solutions.Add(solToAdd);
+            }
+
+            return success;
+        }
+
         public static SolveResult Simplified(ExComp result)
         {
             SolveResult success;
@@ -91,7 +127,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 }
             }
             else
+            {
                 success.Solutions.Add(new Solution(result));
+            }
 
             return success;
         }
@@ -377,7 +415,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     ExComp left = eqSet.Sides[j];
                     ExComp right = eqSet.Sides[j + 1];
 
-                    LexemeType comparison = eqSet.ComparisonOps[j];
+                    var comparison = eqSet.ComparisonOps[j];
 
                     AlgebraTerm leftSubbed = left.Clone().ToAlgTerm().Substitute(Solutions[i].SolveFor, solution);
                     AlgebraTerm rightSubbed = right.Clone().ToAlgTerm().Substitute(Solutions[i].SolveFor, solution);
@@ -570,8 +608,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             {
                 AlgebraTermArray resultArray = result as AlgebraTermArray;
 
-                IEnumerable<NotRestriction> rests = from term in resultArray.Terms
-													select new NotRestriction(varFor, term);
+                var rests = from term in resultArray.Terms
+                            select new NotRestriction(varFor, term);
 
                 return rests.ToArray();
             }
@@ -804,9 +842,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static Restriction CompoundDomains(List<Restriction> rests, AlgebraVar varFor, ref TermType.EvalData pEvalData)
         {
-            List<Restriction> regRests = (from rest in rests
-										  where !(rest is NotRestriction)
-										  select rest).ToList();
+            var regRests = (from rest in rests
+                            where !(rest is NotRestriction)
+                            select rest).ToList();
 
             if (regRests.Count == 0)
                 return OrRestriction.AllNumbers(varFor, ref pEvalData);
@@ -864,20 +902,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     {
                         // Ensure final restrictions doesn't already contain the same thing.
                         bool add = true;
-                        foreach (Restriction finalRest in finalRestrictions)
+                        foreach (var finalRest in finalRestrictions)
                         {
                             if (finalRest is OrRestriction && intersection is OrRestriction)
                             {
-                                OrRestriction finalRestOr = finalRest as OrRestriction;
-                                OrRestriction intersectionOr = intersection as OrRestriction;
+                                var finalRestOr = finalRest as OrRestriction;
+                                var intersectionOr = intersection as OrRestriction;
                                 if (finalRestOr.Compare.IsEqualTo(intersectionOr.Compare) && finalRestOr.Comparison == intersectionOr.Comparison
                                     && finalRestOr.VarComp.IsEqualTo(intersectionOr.VarComp))
                                     add = false;
                             }
                             else if (finalRest is AndRestriction && intersection is AndRestriction)
                             {
-                                AndRestriction finalRestAnd = finalRest as AndRestriction;
-                                AndRestriction intersectionAnd = intersection as AndRestriction;
+                                var finalRestAnd = finalRest as AndRestriction;
+                                var intersectionAnd = intersection as AndRestriction;
 
                                 if (finalRestAnd.Compare0.IsEqualTo(intersectionAnd.Compare0) && finalRestAnd.Compare1.IsEqualTo(intersectionAnd.Compare1) &&
                                     finalRestAnd.Comparison0 == intersectionAnd.Comparison0 && finalRestAnd.Comparison1 == intersectionAnd.Comparison1 &&
@@ -888,8 +926,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                         if (!add)
                             continue;
                         finalRestrictions.Add(intersection);
-                        Restriction rem0 = rests[i];
-						Restriction rem1 = rests[j];
+                        var rem0 = rests[i];
+                        var rem1 = rests[j];
 
                         //rests.Remove(rem0);
                         //rests.Remove(rem1);

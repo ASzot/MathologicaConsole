@@ -52,6 +52,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector
 
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
+            if (!IsSuitableField(InnerEx))
+                return Number.Undefined;
+
             ExComp cancelWith = CancelWith(InnerEx, ref pEvalData);
             if (cancelWith != null)
                 return cancelWith;
@@ -127,11 +130,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector
             {
                 descStr += "Where ";
                 string funcParamsStr = z == null ? "(x,y)" : "(x,y,z)";
-                ExVector vec = innerEx as ExVector;
-                descStr += WorkMgr.STM + "P" + formulaStr + " = " + WorkMgr.ExFinalToAsciiStr(vec.X) + ",Q" + formulaStr + "=" + 
-                    WorkMgr.ExFinalToAsciiStr(vec.Y);
+                ExVector innerVec = innerEx as ExVector;
+                descStr += WorkMgr.STM + "P" + formulaStr + " = " + WorkMgr.ExFinalToAsciiStr(innerVec.X) + ",Q" + formulaStr + "=" +
+                    WorkMgr.ExFinalToAsciiStr(innerVec.Y);
                 if (z != null)
-                    descStr += "," + "R" + funcParamsStr + "=" + WorkMgr.ExFinalToAsciiStr(vec.Z);
+                    descStr += "," + "R" + funcParamsStr + "=" + WorkMgr.ExFinalToAsciiStr(innerVec.Z);
                 descStr += WorkMgr.EDM;
             }
 

@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
-using System; 
+using System;
+using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
+using System.Linq;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
@@ -134,7 +136,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 {
                     if (j == cancelCol)
                         continue;
-                    comps[i][j] = _exData[i][j];
+                    comps[cancelRow < i ? i - 1 : i][cancelCol < j ? j - 1 : j] = _exData[i][j];
                 }
             }
 
@@ -154,6 +156,80 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             }
 
             return new ExMatrix(transposedData);
+        }
+
+        public ExComp GetCofactor(int row, int col)
+       { 
+            ExMatrix minor = GetMatrixMinor(row, col);
+            ExComp minorDet = Determinant.TakeDeteriment(minor);
+
+            ExComp signedVal = Operators.PowOp.StaticCombine(Number.NegOne, Operators.AddOp.StaticCombine(new Number(row), new Number(col)));
+
+            return Operators.MulOp.StaticCombine(signedVal, minorDet);
+        }
+
+        public ExMatrix GetAdjointMatrix()
+        {
+            if (Rows == 2 && Cols == 2)
+            {
+                ExComp a = Get(0, 0);
+                ExComp b = Get(0, 1);
+                ExComp c = Get(1, 0);
+                ExComp d = Get(1, 1);
+
+                return new ExMatrix(new ExComp[][] { new ExComp[] { d, MulOp.Negate(b) }, new ExComp[] { MulOp.Negate(c), a } });
+            }
+
+            ExComp[][] matrixEles = new ExComp[Rows][];
+
+            for (int i = 0; i < Rows; ++i)
+            {
+                matrixEles[i] = new ExComp[Cols];
+                for (int j = 0; j < Cols; ++j)
+                {
+                    matrixEles[i][j] = GetCofactor(i, j);
+                }
+            }
+
+            ExMatrix cofactorMatrix = new ExMatrix(matrixEles);
+            return cofactorMatrix.Transpose();
+        }
+
+        public List<string> GetAllVariables()
+        {
+            List<string> overallList = new List<string>();
+            for (int i = 0; i < Rows; ++i)
+            {
+                for (int j = 0; j < Cols; ++j)
+                {
+                    List<string> allVars = _exData[i][j].ToAlgTerm().GetAllAlgebraCompsStr();
+                    overallList.Intersect(allVars);
+                }
+            }
+
+            return overallList;
+        }
+
+        /// <summary>
+        /// Inverse is returned if no inverse exists.
+        /// </summary>
+        /// <returns></returns>
+        public ExMatrix GetInverse()
+        {
+            if (!IsSquare)
+                return null;
+
+            ExComp det = Determinant.TakeDeteriment((ExMatrix)this.Clone());
+            if (det.IsEqualTo(Number.Zero))
+                return null;
+
+            ExComp recipDet = Operators.DivOp.StaticCombine(Number.One, det);
+
+            ExMatrix adjoint = this.GetAdjointMatrix();
+            ExComp inverse = Operators.MulOp.StaticCombine(recipDet, adjoint);
+
+            // Null will be returned if the cast was unsuccessful.
+            return inverse as ExMatrix;
         }
 
         public void ModifyEach(Func<ExComp, ExComp> func)
@@ -621,15 +697,22 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         public override string ToAsciiString()
         {
             string totalStr = "[";
-            for (int i = 0; i < _exData.Length; ++i)
+            for (int i = 0; i < Rows; ++i)
             {
+                if (Rows != 1)
+                    totalStr += "[";
                 for (int j = 0; j < _exData[i].Length; ++j)
                 {
                     totalStr += _exData[i][j].ToAsciiString();
 
-                    if (j != _exData.Length - 1)
+                    if (j != Cols - 1)
                         totalStr += ",";
                 }
+
+                if (Rows != 1)
+                    totalStr += "]";
+                if (i != Rows - 1)
+                    totalStr += ",";
             }
             totalStr += "]";
 

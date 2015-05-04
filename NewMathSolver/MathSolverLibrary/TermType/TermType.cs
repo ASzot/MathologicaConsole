@@ -8,6 +8,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
     internal abstract class TermType
     {
         protected string[] _cmds = null;
+        private MultiLineHelper _multiLineHelper = null;
 
         public int CmdCount
         {
@@ -23,7 +24,18 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         {
         }
 
-        public abstract SolveResult ExecuteCommand(string command, ref EvalData pEvalData);
+        public void AttachMultiLineHelper(MultiLineHelper mlh)
+        {
+            _multiLineHelper = mlh;
+        }
+
+        public virtual SolveResult ExecuteCommand(string command, ref EvalData pEvalData)
+        {
+            if (_multiLineHelper != null)
+                _multiLineHelper.DoAssigns(ref pEvalData);
+
+            return SolveResult.Failure();
+        }
 
         public virtual SolveResult ExecuteCommandIndex(int cmdIndex, ref EvalData pEvalData)
         {

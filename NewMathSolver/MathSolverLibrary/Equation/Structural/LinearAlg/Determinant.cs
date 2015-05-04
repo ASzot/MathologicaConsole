@@ -12,13 +12,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
     {
         private const int MAX_DET_DIMEN = 4;
 
-        public Determinant(ExMatrix innerMat)
+        public Determinant(ExComp innerMat)
             : base(innerMat, FunctionType.Deteriment, typeof(Determinant))
         {
 
         }
 
-        private ExComp TakeDeteriment(ExMatrix mat)
+        public static ExComp TakeDeteriment(ExMatrix mat)
         {
             if (mat.Rows == 2)
             {
@@ -27,21 +27,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 ExComp c = mat.Get(1, 0);
                 ExComp d = mat.Get(1, 1);
 
-                return SubOp.StaticCombine(MulOp.StaticCombine(a, c), MulOp.StaticCombine(b, d));
+                return SubOp.StaticCombine(MulOp.StaticCombine(a, d), MulOp.StaticCombine(b, c));
             }
 
             ExComp total = Number.Zero;
             for (int i = 0; i < mat.Cols; ++i)
             {
-                ExComp cofactor = mat.Get(0, i);
-                // Multiply by the matrix minor not including the current row or column.
-                // Cancel the 0th row and the ith col.
-                ExMatrix minor = mat.GetMatrixMinor(0, i);
-                ExComp minorDet = TakeDeteriment(minor);
-
-                ExComp comp = MulOp.StaticCombine(cofactor, minorDet);
-                if (i != 0 && i % 2 != 0)
-                    comp = MulOp.Negate(comp);
+                ExComp factor = mat.Get(0, i);
+                ExComp cofactor = mat.GetCofactor(0, i);
+                ExComp comp = MulOp.StaticCombine(factor, cofactor);
 
                 total = AddOp.StaticCombine(total, comp);
             }
@@ -52,11 +46,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
             ExComp innerEx = InnerEx;
-            if (!(innerEx is ExMatrix))
-                return Number.Undefined;
 
             ExMatrix mat = innerEx as ExMatrix;
-            if (!mat.IsSquare)
+            if (mat == null || !mat.IsSquare)
             {
                 pEvalData.AddMsg("Only the deteriment of square matrices can be taken");
                 return Number.Undefined;

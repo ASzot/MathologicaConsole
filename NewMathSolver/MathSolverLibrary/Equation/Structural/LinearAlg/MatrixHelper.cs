@@ -99,7 +99,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         {
             if (!(ex is ExMatrix))
             {
-                if (!(ex is Number))
+
+                if (ex is AlgebraTerm)
+                {
+                    AlgebraTerm term = ex as AlgebraTerm;
+                    AlgebraTerm[] numDen = term.GetNumDenFrac();
+                    if (numDen == null)
+                        return null;
+
+                    if (!(numDen[0].RemoveRedundancies() is Number) ||
+                        !(numDen[1].RemoveRedundancies() is Number))
+                        return null;
+                }
+                else if (!(ex is Number))
                     return null;
                 mat0.ModifyEach((ExComp ele) =>
                 {
@@ -172,7 +184,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             else if (ex is AlgebraTerm)
             {
                 AlgebraTerm term = ex as AlgebraTerm;
-                foreach (ExComp subComp in term.SubComps)
+                foreach (var subComp in term.SubComps)
                 {
                     if (TermContainsMatrices(subComp))
                         return true;

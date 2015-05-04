@@ -27,6 +27,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
         public override SolveResult ExecuteCommand(string command, ref EvalData pEvalData)
         {
+            base.ExecuteCommand(command, ref pEvalData);
+
             if (command == "To vertex form")
             {
                 // To vertex form.

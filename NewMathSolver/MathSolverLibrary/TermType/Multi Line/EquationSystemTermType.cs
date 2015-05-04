@@ -11,7 +11,6 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private Dictionary<string, int> _allIdens;
         private List<EqSet> _eqSets;
         private List<List<TypePair<LexemeType, string>>> _lts;
-        private int _singularIndex = -1;
         private string[] _graphStrs;
         private string _graphVarStr = null;
 
@@ -21,6 +20,15 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _lts = lts;
             _eqSets = eqSets;
             _allIdens = allIdens;
+        }
+
+        /// <summary>
+        /// Everything will be created automatically.
+        /// </summary>
+        /// <param name="eqSets"></param>
+        public EquationSystemTermType(List<EqSet> eqSets)
+        {
+            
         }
 
         public override SolveResult ExecuteCommand(string command, ref EvalData pEvalData)
@@ -40,66 +48,6 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                                   select eqSet.Clone();
                 solveMethod.SolvingMethod = Solving.EquationSystemSolveMethod.Substitution;
                 return solveMethod.SolveEquationArray(clonedEqSet.ToList(), _lts, _allIdens, ref pEvalData);
-            }
-            else if (command == SimplifyTermType.KEY_SIMPLIFY)
-            {
-                if (_singularIndex == -1 || _eqSets[_singularIndex].ContentStr == null)
-                {
-                    pEvalData.AddFailureMsg("Internal error.");
-                    return SolveResult.Failure();
-                }
-                // Do all of the substitutions.
-                for (int i = 0; i < _eqSets.Count; ++i)
-                {
-                    if (i == _singularIndex)
-                        continue;
-
-                    if (!(_eqSets[i].Left is FunctionDefinition || _eqSets[i].Right is FunctionDefinition))
-                    {
-                        pEvalData.AddFailureMsg("Internal error.");
-                        return SolveResult.Failure();
-                    }
-
-                    FunctionDefinition funcDef;
-                    ExComp assignTo;
-                    if (_eqSets[i].Left is FunctionDefinition)
-                    {
-                        funcDef = _eqSets[i].Left as FunctionDefinition;
-                        assignTo = _eqSets[i].Right;
-                    }
-                    else
-                    {
-                        funcDef = _eqSets[i].Right as FunctionDefinition;
-                        assignTo = _eqSets[i].Left;
-                    }
-
-                    // Display the assignment as a message.
-                    string funcDefStr;
-                    if (assignTo is AlgebraTerm)
-                        funcDefStr = (assignTo as AlgebraTerm).FinalToDispStr();
-                    else
-                        funcDefStr = assignTo.ToAsciiString();
-                    funcDefStr = MathSolver.FinalizeOutput(funcDefStr);
-                    pEvalData.AddMsg(WorkMgr.STM + funcDef.ToAsciiString() + WorkMgr.EDM + " defined as " + WorkMgr.STM + funcDefStr + WorkMgr.EDM);
-
-                    pEvalData.FuncDefs.Define((FunctionDefinition)funcDef.Clone(), assignTo.Clone());
-                }
-                EqSet tmpEqSet;
-                if (!_eqSets[_singularIndex].ReparseInfo(out tmpEqSet, ref pEvalData))
-                {
-                    pEvalData.AddFailureMsg("Internal error.");
-                    return SolveResult.Failure();
-                }
-
-                _eqSets[_singularIndex] = tmpEqSet;
-
-                if (!_eqSets[_singularIndex].FixEqFuncDefs(ref pEvalData))
-                {
-                    pEvalData.AddFailureMsg("Internal error.");
-                    return SolveResult.Failure();
-                }
-
-                return SimplifyTermType.SimplfyTerm(_eqSets[_singularIndex].Left, ref pEvalData);
             }
             else if (command.StartsWith("Solve by elimination for "))
             {
@@ -249,38 +197,6 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 options = (from comb in combinations
                            where (comb.Split(',').Length == _eqSets.Count)
                            select comb).ToList();
-            }
-
-            // Check if we have assigns and then one statement.
-            _singularIndex = -1;
-            for (int i = 0; i < _eqSets.Count; ++i)
-            {
-                bool leftIsFunc = _eqSets[i].Left is FunctionDefinition;
-                bool rightIsFunc = _eqSets[i].Right is FunctionDefinition;
-                if ((leftIsFunc || rightIsFunc) && !(leftIsFunc && rightIsFunc))
-                {
-                    if (_eqSets[i].Left != null && _eqSets[i].Right != null)
-                        continue;
-                }
-
-                if (_singularIndex != -1)
-                {
-                    _singularIndex = -1;
-                    break;
-                }
-
-                _singularIndex = i;
-            }
-
-            if (_singularIndex != -1 && _eqSets[_singularIndex].ContentStr != null)
-            {
-                var singularEqSet = _eqSets[_singularIndex];
-                if (singularEqSet.Left == null || singularEqSet.Right == null)
-                {
-                    _cmds = new String[1];
-                    _cmds[0] = SimplifyTermType.KEY_SIMPLIFY;
-                    return true;
-                }
             }
 
             if (options == null || options.Count == 0)

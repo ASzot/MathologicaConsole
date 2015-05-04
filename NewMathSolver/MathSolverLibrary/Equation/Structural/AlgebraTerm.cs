@@ -236,6 +236,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             for (int i = 0; i < _subComps.Count; ++i)
             {
+                if (_subComps[i] is AlgebraComp)
+                {
+                    AlgebraComp iden = _subComps[i] as AlgebraComp;
+                    ExComp definition = pEvalData.FuncDefs.GetSingleVarDefinition(iden);
+                    if (definition == null)
+                        continue;
+                    _subComps[i] = definition;
+                }
                 if (_subComps[i] is AlgebraTerm)
                 {
                     if (!(_subComps[i] as AlgebraTerm).CallFunctions(ref pEvalData))
@@ -720,7 +728,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (TermCount == 0)
                 return "0";
 
-            List<ExComp[]> groups = GetGroupsNoOps();
+            var groups = GetGroupsNoOps();
 
             string finalStr = "";
             for (int i = 0; i < groups.Count; ++i)
@@ -815,6 +823,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         /// <summary>
         /// Makes the messy numbers where there previously was the reduced term.
         /// Like (1/4) will turn into 0.25.
+        /// This is not intended for evaluating functions.
+        /// For that functionality see Simplifier.HarshSimplify
         /// </summary>
         /// <returns></returns>
         public virtual AlgebraTerm HarshEvaluation()

@@ -74,6 +74,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
                 ExComp atmpt = MatrixHelper.MulOpCombine(mat, other);
                 if (atmpt != null)
                     return atmpt;
+
+                return MulOp.StaticWeakCombine(ex1, ex2);
             }
 
             if (ex1 is AlgebraFunction && ex2 is AlgebraFunction)

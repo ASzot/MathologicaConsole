@@ -556,6 +556,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static ExComp[] OrderGroup(this ExComp[] group)
         {
+
             List<Number> coeffs = new List<Number>();
             foreach (ExComp gpCmp in group)
             {
@@ -578,6 +579,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 final.AddRange(group);
                 group = final.ToArray();
             }
+
+            if (group.ContainsVectors())
+                return group;
 
             for (int i = 0; i < group.Length; ++i)
             {
@@ -774,6 +778,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             exs.Insert(0, combined);
 
             return AccumulateTermsRecur(exs);
+        }
+
+        private static bool ContainsVectors(this ExComp[] group)
+        {
+            foreach (ExComp cmp in group)
+            {
+                if (cmp is Equation.Structural.LinearAlg.ExMatrix)
+                    return true;
+            }
+            return false;
         }
     }
 }

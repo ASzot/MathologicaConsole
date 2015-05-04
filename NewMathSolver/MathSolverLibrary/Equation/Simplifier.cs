@@ -38,6 +38,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return divided;
         }
 
+        /// <summary>
+        /// Simplifies the term to the most primitive expression possible.
+        /// This includes function evaluations, dividing fractions, and making the expression workable to ensure that everything possible is in the approximate form.
+        /// </summary>
+        /// <param name="term"></param>
+        /// <param name="pEvalData"></param>
+        /// <param name="order"></param>
+        /// <returns></returns>
         public static ExComp HarshSimplify(AlgebraTerm term, ref TermType.EvalData pEvalData, bool order = true)
         {
             // Harsh simplify per component.

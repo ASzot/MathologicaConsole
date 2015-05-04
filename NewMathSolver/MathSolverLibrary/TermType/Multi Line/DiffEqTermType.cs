@@ -155,9 +155,10 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                     if (eqIndex != -1)
                         return false;
                     eqIndex = i;
+                    continue;
                 }
 
-                if (funcDef.CallArgs.Length != 1)
+                if (funcDef.CallArgs == null || funcDef.CallArgs.Length != 1)
                 {
                     return false;
                 }

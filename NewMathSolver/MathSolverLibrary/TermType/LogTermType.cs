@@ -29,6 +29,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
         public override Equation.SolveResult ExecuteCommand(string command, ref EvalData pEvalData)
         {
+            base.ExecuteCommand(command, ref pEvalData);
+
             if (command == "Find vertical asymptote")
             {
                 return SolveResult.Simplified(MulOp.Negate(_horizontalShift));

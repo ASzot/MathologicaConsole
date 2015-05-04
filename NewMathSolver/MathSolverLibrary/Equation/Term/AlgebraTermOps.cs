@@ -40,7 +40,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (term1.TermCount == 0)
                 return term2;
 
-            Operators.SubOp op = new Operators.SubOp();
+            var op = new Operators.SubOp();
             ExComp combined = op.Combine(term1, term2);
             if (combined is AlgebraTerm)
                 return combined as AlgebraTerm;
@@ -80,7 +80,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 return term;
 
             AlgebraTerm groupTerm = group.ToTerm();
-            Operators.MulOp op = new Operators.MulOp();
+            var op = new Operators.MulOp();
             ExComp combined = op.Combine(term, groupTerm);
             if (combined is AlgebraTerm)
                 return combined as AlgebraTerm;
@@ -99,7 +99,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (term1.TermCount == 0)
                 return term2;
 
-            Operators.MulOp op = new Operators.MulOp();
+            var op = new Operators.MulOp();
             ExComp combined = op.Combine(term1, term2);
             if (combined is AlgebraTerm)
                 return combined as AlgebraTerm;
@@ -117,7 +117,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 return term;
 
             AlgebraTerm groupTerm = group.ToTerm();
-            Operators.DivOp op = new Operators.DivOp();
+            var op = new Operators.DivOp();
             ExComp combined = op.Combine(term, groupTerm);
             if (combined is AlgebraTerm)
                 return combined as AlgebraTerm;
@@ -136,7 +136,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (term1.TermCount == 0)
                 return Number.Zero.ToAlgTerm();
 
-            Operators.DivOp op = new Operators.DivOp();
+            var op = new Operators.DivOp();
             ExComp combined = op.Combine(term1, term2);
             if (combined is AlgebraTerm)
                 return combined as AlgebraTerm;
@@ -154,7 +154,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 return term;
 
             AlgebraTerm groupTerm = group.ToTerm();
-            Operators.AddOp op = new Operators.AddOp();
+            var op = new Operators.AddOp();
             ExComp combined = op.Combine(term, groupTerm);
             if (combined is AlgebraTerm)
                 return combined as AlgebraTerm;
@@ -173,7 +173,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (term1.TermCount == 0)
                 return term2;
 
-            Operators.AddOp op = new Operators.AddOp();
+            var op = new Operators.AddOp();
             ExComp combined = op.Combine(term1, term2);
             if (combined is AlgebraTerm)
                 return combined as AlgebraTerm;

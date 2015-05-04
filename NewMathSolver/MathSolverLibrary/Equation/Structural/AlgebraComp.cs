@@ -95,6 +95,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             get { return _var; }
         }
 
+        public bool IsTrash
+        {
+            get { return _var.Var == AlgebraVar.GARBAGE_VALUE; }
+        }
+
         public AlgebraComp()
         {
             _var = new AlgebraVar(AlgebraVar.GARBAGE_VALUE);

@@ -525,7 +525,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (!IsRealInteger() || HasImaginaryComp())
                 return new List<TypePair<Number, Number>>(); ;         // Just an empty list.
 
-            TypePair<Number, Number> signInvariantDivisors = GetDivisors();
+            var signInvariantDivisors = GetDivisors();
 
             if (d_realComp > 0)
             {
@@ -584,7 +584,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 return;
             }
             ExComp div = Operators.DivOp.StaticCombine(Imag, Real);
-            Functions.TanFunction tan = new Functions.TanFunction(div);
+            Functions.ATanFunction tan = new Functions.ATanFunction(div);
             ExComp evaluated = tan.Evaluate(false, ref pEvalData);
 
             Term.SimpleFraction simpFrac = new Term.SimpleFraction();

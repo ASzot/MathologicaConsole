@@ -87,7 +87,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             ExComp sum = Number.Zero;
             for (int i = 0; i < this.Length; ++i)
             {
-                sum = AddOp.StaticCombine(Get(i), sum);
+                sum = AddOp.StaticCombine(PowOp.StaticCombine(Get(i), new Number(2.0)), sum);
             }
 
             return PowOp.StaticCombine(sum, AlgebraTerm.FromFraction(Number.One, new Number(2.0)));

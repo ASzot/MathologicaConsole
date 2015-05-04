@@ -576,7 +576,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             if (_power is AlgebraTerm)
                 evalPow = (_power as AlgebraTerm).HarshEvaluation();
 
-            return new PowerFunction(evalBase, evalPow);
+            PowerFunction powFunc = new PowerFunction(evalBase, evalPow);
+            return powFunc;
         }
 
         public bool HasIntPow()

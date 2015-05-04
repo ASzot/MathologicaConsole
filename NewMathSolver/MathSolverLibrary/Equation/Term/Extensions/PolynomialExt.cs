@@ -172,7 +172,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
         {
             AlgebraTerm finalTerm = new AlgebraTerm();
 
-            foreach (TypePair<ExComp, int> coeffPow in _info.Info)
+            foreach (var coeffPow in _info.Info)
             {
                 if (Number.Zero.IsEqualTo(coeffPow.Data1))
                     continue;
