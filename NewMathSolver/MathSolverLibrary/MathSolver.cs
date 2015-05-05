@@ -12,7 +12,7 @@ namespace MathSolverWebsite.MathSolverLibrary
     internal static class MathSolver
     {
         public const bool USE_TEX_DEBUG = true;
-        public const bool PLAIN_TEXT = false;
+        public const bool PLAIN_TEXT = true;
 
         public static TermType.TermType DetermineSingularEqSet(EqSet singularEqSet, List<TypePair<LexemeType, string>> completeLexemeTable,
             Dictionary<string, int> solveVars, ref TermType.EvalData pEvalData)

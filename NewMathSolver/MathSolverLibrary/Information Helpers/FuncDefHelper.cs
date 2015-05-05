@@ -9,6 +9,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
         private int _defineIndex = 0;
         private Dictionary<FunctionDefinition, ExComp> _defs = new Dictionary<FunctionDefinition, ExComp>();
 
+        public IEnumerable<KeyValuePair<FunctionDefinition, ExComp>> AllDefinitions
+        {
+            get { return _defs; }
+        }
+
         public FuncDefHelper()
         {
         }
