@@ -433,10 +433,10 @@ namespace MathSolverWebsite.MathSolverLibrary
                 return null;
 
             // Clean up the formatting.
-            if (solved is AlgebraTerm && !(solved is GeneralSolution))
-            {
-                solved = (solved as AlgebraTerm).MakeFormattingCorrect(ref pEvalData);
-            }
+            //if (solved is AlgebraTerm && !(solved is GeneralSolution))
+            //{
+            //    solved = (solved as AlgebraTerm).MakeFormattingCorrect(ref pEvalData);
+            //}
 
             return solved;
         }

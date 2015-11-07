@@ -5,6 +5,12 @@ using System.Collections.Generic;
 
 namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
 {
+    /// <summary>
+    /// Keeps and manages all of the information about the unit circle. 
+    /// Initializes the information on the unit circle.
+    /// Stores the information.
+    /// Methods to fetch the information all returned values are always cloned values.
+    /// </summary>
     internal class UnitCircle
     {
         public static List<UnitCirclePoint> UnitCirclePoints = new List<UnitCirclePoint>(16);
@@ -24,12 +30,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
                     ucX = (ucX as AlgebraTerm).RemoveRedundancies(false);
 
                 if (ucX.IsEqualTo(x))
-                    return unitCirclePoint;
+                    return unitCirclePoint.CloneInformation();
 
                 AlgebraTerm secondCheck = ucX.ToAlgTerm();
                 secondCheck.ConvertPowFracsToDecimal();
                 if (secondCheck.RemoveRedundancies(false).IsEqualTo(x))
-                    return unitCirclePoint;
+                    return unitCirclePoint.CloneInformation();
             }
 
             return null;
@@ -51,13 +57,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
 
                 if (ucY.IsEqualTo(y))
                 {
-                    return UnitCirclePoints[i];
+                    return UnitCirclePoints[i].CloneInformation();
                 }
 
                 AlgebraTerm secondCheck = ucY.ToAlgTerm();
                 secondCheck.ConvertPowFracsToDecimal();
                 if (secondCheck.RemoveRedundancies(false).IsEqualTo(y))
-                    return UnitCirclePoints[i];
+                    return UnitCirclePoints[i].CloneInformation();
             }
 
             // Check the first quadrant.
@@ -69,13 +75,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
 
                 if (ucY.IsEqualTo(y))
                 {
-                    return UnitCirclePoints[i];
+                    return UnitCirclePoints[i].CloneInformation();
                 }
 
                 AlgebraTerm secondCheck = ucY.ToAlgTerm();
                 secondCheck.ConvertPowFracsToDecimal();
                 if (secondCheck.RemoveRedundancies(false).IsEqualTo(y))
-                    return UnitCirclePoints[i];
+                    return UnitCirclePoints[i].CloneInformation();
             }
 
             return null;
@@ -95,11 +101,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
                     ucYoverX = (ucYoverX as AlgebraTerm).RemoveRedundancies(false);
 
                 if (ucYoverX.IsEqualTo(y_over_x))
-                    return UnitCirclePoints[i];
+                    return UnitCirclePoints[i].CloneInformation();
                 AlgebraTerm secondCheck = ucYoverX.ToAlgTerm();
                 secondCheck.ConvertPowFracsToDecimal();
                 if (secondCheck.RemoveRedundancies(false).IsEqualTo(y_over_x))
-                    return UnitCirclePoints[i];
+                    return UnitCirclePoints[i].CloneInformation();
             }
 
             // Check the first quadrant.
@@ -110,7 +116,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
                     ucYoverX = (ucYoverX as AlgebraTerm).RemoveRedundancies(false);
 
                 if (ucYoverX.IsEqualTo(y_over_x))
-                    return UnitCirclePoints[i];
+                    return UnitCirclePoints[i].CloneInformation();
             }
 
             return null;
@@ -120,8 +126,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
         {
             foreach (UnitCirclePoint unitCirclePoint in UnitCirclePoints)
             {
-                if (unitCirclePoint != null && unitCirclePoint.AngleNum == angleNum && unitCirclePoint.AngleDen == angleDen)
-                    return unitCirclePoint;
+                if (unitCirclePoint != null && unitCirclePoint.AngleNum.IsEqualTo(angleNum) && unitCirclePoint.AngleDen.IsEqualTo(angleDen))
+                    return unitCirclePoint.CloneInformation();
             }
 
             return null;
@@ -251,8 +257,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
 
         public ExComp GetAngle()
         {
-            //Number nAngNum = (Number)AngleNum.Clone();
-            //Number nAngDen = (Number)AngleDen.Clone();
             ExNumber nAngNum = AngleNum;
             ExNumber nAngDen = AngleDen;
 
@@ -263,6 +267,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Information_Helpers
             ExComp num = MulOp.StaticCombine(nAngNum, Constant.ParseConstant("pi"));
             ExComp finalDivided = DivOp.StaticCombine(num, nAngDen);
             return finalDivided;
+        }
+
+        public UnitCirclePoint CloneInformation()
+        {
+            // The numbers will always be real.
+            return new UnitCirclePoint(AngleNum.GetRealComp(), AngleDen.GetRealComp(), 
+                X.CloneEx(), Y.CloneEx(), Y_over_X.CloneEx(), X_over_Y.CloneEx(), over_X.CloneEx(), 
+                over_Y.CloneEx());
         }
 
         public override string ToString()
