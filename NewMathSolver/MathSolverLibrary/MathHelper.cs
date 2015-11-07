@@ -1,17 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary
 {
     internal static class MathHelper
     {
+        // The max decimal place where the GCF will be calculated in terms of a whole number.
+        private const int MAX_GCF_ZERO_DIST = 5;
+
         public static double GCFDouble(double n1, double n2)
         {
-            n1 = Equation.Number.EpsilonCorrect(n1);
-            n2 = Equation.Number.EpsilonCorrect(n2);
+            n1 = Equation.ExNumber.EpsilonCorrect(n1);
+            n2 = Equation.ExNumber.EpsilonCorrect(n2);
             if (n1 == 0.0 || n2 == 0.0)
                 return 0.0;
+
+            if (double.IsNaN(n1) || double.IsNaN(n2))
+                return double.NaN;
+
+            if (DoubleFunc.IsInfinity(n1) || DoubleFunc.IsInfinity(n2))
+                return double.PositiveInfinity;
 
             double an1 = Math.Abs(n1);
             double an2 = Math.Abs(n2);
@@ -43,7 +54,11 @@ namespace MathSolverWebsite.MathSolverLibrary
                     distanceFromZero2 = afterPointStr.Length - 1;
                 }
 
-                multiple *= Math.Pow(10, Math.Max(distanceFromZero1, distanceFromZero2));
+                int maxDistanceFromZero = Math.Max(distanceFromZero1, distanceFromZero2);
+                //if (maxDistanceFromZero > MAX_GCF_ZERO_DIST)
+                //    return n1 * n2;
+
+                multiple *= Math.Pow(10, maxDistanceFromZero);
                 an1 *= multiple;
                 an2 *= multiple;
             }
@@ -79,11 +94,11 @@ namespace MathSolverWebsite.MathSolverLibrary
             return an2;
         }
 
-        public static int[] GetCommonDivisors(int n1, int n2, bool includeSelf = false)
+        public static int[] GetCommonDivisors(int n1, int n2, bool includeSelf)
         {
             List<int> divisors = new List<int>();
-            int[] divisorsN1 = n1.GetDivisors(includeSelf);
-            int[] divisorsN2 = n2.GetDivisors(includeSelf);
+            int[] divisorsN1 = GetDivisors(n1, includeSelf, false);
+            int[] divisorsN2 = GetDivisors(n2, includeSelf, false);
 
             divisors.AddRange(divisorsN1);
             divisors.AddRange(divisorsN2);
@@ -91,7 +106,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             return divisors.Distinct().ToArray();
         }
 
-        public static string GetCountingPrefix(this int num)
+        public static string GetCountingPrefix(int num)
         {
             string numStr = num.ToString();
 
@@ -105,7 +120,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             return "th";
         }
 
-        public static int[] GetDivisors(this int n, bool includeSelf = false, bool includeOne = false)
+        public static int[] GetDivisors(int n, bool includeSelf, bool includeOne)
         {
             List<int> divisors = new List<int>();
             if (includeSelf)
@@ -131,7 +146,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             return divisors.ToArray();
         }
 
-        public static bool IsPerfectRoot(this int n, int root, out int resultInt)
+        public static bool IsPerfectRoot(int n, int root, out int resultInt)
         {
             double result = Math.Pow(n, 1.0 / root);
 
@@ -142,8 +157,8 @@ namespace MathSolverWebsite.MathSolverLibrary
 
         public static double LCFDouble(double d1, double d2)
         {
-            d1 = Equation.Number.EpsilonCorrect(d1);
-            d2 = Equation.Number.EpsilonCorrect(d2);
+            d1 = Equation.ExNumber.EpsilonCorrect(d1);
+            d2 = Equation.ExNumber.EpsilonCorrect(d2);
 
             if (d1 == 0.0 || d2 == 0.0)
                 return 0.0;

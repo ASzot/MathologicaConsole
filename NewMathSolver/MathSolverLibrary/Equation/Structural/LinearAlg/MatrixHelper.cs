@@ -1,16 +1,11 @@
-﻿using System;
+﻿using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
+using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
-using MathSolverWebsite.MathSolverLibrary.Equation;
-using MathSolverWebsite.MathSolverLibrary.Equation.Structural;
-using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
-    static class MatrixHelper
+    internal static class MatrixHelper
     {
         public static ExMatrix CreateMatrix(List<ExComp> exs)
         {
@@ -30,6 +25,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             if (containsMatrix && !allMatrices)
                 return null;
 
+            // If each of the components is a 1D vector then we have a column vector not a matrix.
+            List<ExComp> transposedEles = new List<ExComp>();
+            foreach (ExComp ex in exs)
+            {
+                if (ex is ExVector && (ex as ExVector).GetLength() == 1)
+                    transposedEles.Add((ex as ExVector).Get(0));
+                else
+                    break;
+            }
+
+            if (transposedEles.Count == exs.Count)
+            {
+                // Return the column vector.
+                if (transposedEles.Count < 2)
+                    return null;
+                return new ExColVec(transposedEles.ToArray());
+            }
+
             if (allMatrices)
             {
                 // Create a matrix.
@@ -40,8 +53,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                     if (!(exs[i] is ExVector))
                         return null;
                     ExVector vec = exs[i] as ExVector;
-                    if (i != 0 && vectors[i - 1].Length != vec.Length)
+                    if (i != 0 && vectors[i - 1].Length != vec.GetLength())
                         return null;
+
                     vectors[i] = vec.Components;
                 }
 
@@ -56,10 +70,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             if (ex is ExMatrix)
                 return null;
 
-            if (ex is AlgebraComp && (ex as AlgebraComp).Var.Var == "T")
+            if (ex is AlgebraComp && (ex as AlgebraComp).GetVar().GetVar() == "T")
             {
                 // This is the transpose operation.
                 return mat.Transpose();
+            }
+            else if (ex is ExNumber && ExNumber.OpEqual((ex as ExNumber), -1) && !(mat is ExVector))
+            {
+                // This is the inverse operation.
+                return mat.GetInverse();
             }
 
             mat.ModifyEach((ExComp comp) =>
@@ -77,11 +96,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
             ExMatrix mat1 = ex as ExMatrix;
 
-            if (mat0.Cols != mat1.Cols || mat0.Rows != mat1.Rows)
+            if (mat0.GetCols() != mat1.GetCols() || mat0.GetRows() != mat1.GetRows())
                 return null;
 
-            int m = mat0.Rows;
-            int n = mat0.Cols;
+            int m = mat0.GetRows();
+            int n = mat0.GetCols();
             ExMatrix finalMat = new ExMatrix(m, n);
             for (int i = 0; i < m; ++i)
             {
@@ -99,20 +118,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         {
             if (!(ex is ExMatrix))
             {
+                //if (ex is AlgebraTerm)
+                //{
+                //    AlgebraTerm term = ex as AlgebraTerm;
+                //    AlgebraTerm[] numDen = term.GetNumDenFrac();
+                //    if (numDen == null)
+                //        return null;
 
-                if (ex is AlgebraTerm)
-                {
-                    AlgebraTerm term = ex as AlgebraTerm;
-                    AlgebraTerm[] numDen = term.GetNumDenFrac();
-                    if (numDen == null)
-                        return null;
-
-                    if (!(numDen[0].RemoveRedundancies() is Number) ||
-                        !(numDen[1].RemoveRedundancies() is Number))
-                        return null;
-                }
-                else if (!(ex is Number))
-                    return null;
+                //    if (!(numDen[0].RemoveRedundancies() is Number) ||
+                //        !(numDen[1].RemoveRedundancies() is Number))
+                //        return null;
+                //}
+                //else if (!(ex is Number))
+                //    return null;
                 mat0.ModifyEach((ExComp ele) =>
                 {
                     return MulOp.StaticCombine(ele, ex);
@@ -126,17 +144,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             }
 
             ExMatrix mat1 = ex as ExMatrix;
-            
+
             // Matrix multiplication.
-            if (mat0.Cols != mat1.Rows)
-                return Number.Undefined;
+            if (mat0.GetCols() != mat1.GetRows())
+                return ExNumber.GetUndefined();
 
-            ExMatrix resultant = new ExMatrix(mat0.Rows, mat1.Cols);
+            ExMatrix resultant = new ExMatrix(mat0.GetRows(), mat1.GetCols());
 
-            for (int i = 0; i < mat0.Rows; ++i)
+            for (int i = 0; i < mat0.GetRows(); ++i)
             {
                 ExVector rowVecMat0 = mat0.GetRowVec(i);
-                for (int j = 0; j < mat1.Cols; ++j)
+                for (int j = 0; j < mat1.GetCols(); ++j)
                 {
                     ExVector colVecMat1 = mat1.GetColVec(j);
                     ExComp matEntry = ExVector.Dot(rowVecMat0, colVecMat1);
@@ -149,9 +167,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public static ExComp DivOpCombine(ExMatrix mat, ExComp ex)
         {
-            if (ex is Number)
+            if (ex is ExNumber)
             {
-                Number n = ex as Number;
+                ExNumber n = ex as ExNumber;
                 // Divide each component by n.
                 mat.ModifyEach((ExComp ele) =>
                     {
@@ -169,22 +187,22 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             if (ex is PowerFunction)
             {
                 PowerFunction pf = ex as PowerFunction;
-                return TermContainsMatrices(pf.Base) || TermContainsMatrices(pf.Power);
+                return TermContainsMatrices(pf.GetBase()) || TermContainsMatrices(pf.GetPower());
             }
             else if (ex is LogFunction)
             {
                 LogFunction log = ex as LogFunction;
-                return TermContainsMatrices(log.Base) || TermContainsMatrices(log.InnerTerm);
+                return TermContainsMatrices(log.GetBase()) || TermContainsMatrices(log.GetInnerTerm());
             }
             else if (ex is ChooseFunction)
             {
                 ChooseFunction choose = ex as ChooseFunction;
-                return TermContainsMatrices(choose.Bottom) || TermContainsMatrices(choose.Top);
+                return TermContainsMatrices(choose.GetBottom()) || TermContainsMatrices(choose.GetTop());
             }
             else if (ex is AlgebraTerm)
             {
                 AlgebraTerm term = ex as AlgebraTerm;
-                foreach (var subComp in term.SubComps)
+                foreach (ExComp subComp in term.GetSubComps())
                 {
                     if (TermContainsMatrices(subComp))
                         return true;

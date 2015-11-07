@@ -3,6 +3,7 @@ using MathSolverWebsite.MathSolverLibrary.Parsing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary
 {
@@ -15,36 +16,43 @@ namespace MathSolverWebsite.MathSolverLibrary
         private bool b_allowWork = true;
         private string _workLabel = null;
 
-        public bool AllowWork
+        public void SetAllowWork(bool value)
         {
-            get
-            {
-                return b_allowWork;
-            }
-            set
-            {
-                b_allowWork = value;
-            }
+            b_allowWork = value;
         }
 
-        public string WorkLabel
+        public bool GetAllowWork()
         {
-            set { _workLabel = value; }
-            get { return _workLabel ?? ""; }
+            return b_allowWork;
         }
 
-        public string UseComparison
+        public void SetWorkLabel(string value)
         {
-            set { _useComparison = value; }
+            _workLabel = value;
         }
 
-        public List<WorkStep> WorkSteps
+        public string GetWorkLabel()
         {
-            get { return _workSteps; }
+            return _workLabel ?? "";
+        }
+
+        public void SetUseComparison(string value)
+        {
+            _useComparison = value;
+        }
+
+        public List<WorkStep> GetWorkSteps()
+        {
+            return _workSteps;
         }
 
         public WorkMgr()
         {
+        }
+
+        public WorkMgr(List<WorkStep> workSteps)
+        {
+            _workSteps = workSteps;
         }
 
         public static string CG_TXT_TG(string inStr)
@@ -52,41 +60,41 @@ namespace MathSolverWebsite.MathSolverLibrary
             return "<span class='changeText'>" + inStr + "</span>";
         }
 
-        public static string ExFinalToAsciiStr(ExComp ex)
+        public static string ToDisp(ExComp ex)
         {
             if (ex is AlgebraTerm)
                 return (ex as AlgebraTerm).FinalToDispStr();
-            if (ex is Number)
-                return (ex as Number).FinalToDispString();
+            if (ex is ExNumber)
+                return (ex as ExNumber).FinalToDispString();
             return ex.ToAsciiString();
         }
 
         public static string WorkFromSynthDivTable(ExComp root, IEnumerable<ExComp> poly, IEnumerable<ExComp> muls, IEnumerable<ExComp> results)
         {
-            if (poly.Count() - 1 != muls.Count() || poly.Count() - 1 != results.Count())
+            if (ArrayFunc.GetCount(poly) - 1 != ArrayFunc.GetCount(muls) || ArrayFunc.GetCount(poly) - 1 != ArrayFunc.GetCount(results))
                 return null;
 
             string finalHtml = "";
             finalHtml += "<table>";
 
-            finalHtml += "<tr>"; 
-            finalHtml += "<td><span class='changeText'>" + STM + WorkMgr.ExFinalToAsciiStr(root) + EDM + "</span></td>";
+            finalHtml += "<tr>";
+            finalHtml += "<td><span class='changeText'>" + STM + WorkMgr.ToDisp(root) + EDM + "</span></td>";
             foreach (ExComp polyEx in poly)
-                finalHtml += "<td>" + STM + WorkMgr.ExFinalToAsciiStr(polyEx) + EDM + "</td>";
+                finalHtml += "<td>" + STM + WorkMgr.ToDisp(polyEx) + EDM + "</td>";
             finalHtml += "</tr>";
 
             finalHtml += "<tr>";
             finalHtml += "<td></td>";
             finalHtml += "<td></td>";
             foreach (ExComp resultEx in results)
-                finalHtml += "<td>" + STM + WorkMgr.ExFinalToAsciiStr(resultEx) + EDM + "</td>";
+                finalHtml += "<td>" + STM + WorkMgr.ToDisp(resultEx) + EDM + "</td>";
             finalHtml += "</tr>";
 
             finalHtml += "<tr>";
             finalHtml += "<td></td>";
             finalHtml += "<td></td>";
             foreach (ExComp mulEx in muls)
-                finalHtml += "<td>" + STM + WorkMgr.ExFinalToAsciiStr(mulEx) + EDM + "</td>";
+                finalHtml += "<td>" + STM + WorkMgr.ToDisp(mulEx) + EDM + "</td>";
             finalHtml += "</tr>";
 
             finalHtml += "</table>";
@@ -96,13 +104,13 @@ namespace MathSolverWebsite.MathSolverLibrary
 
         public void FromAlgGpSubtraction(List<AlgebraGroup> groups, ExComp left, ExComp right)
         {
-            if (!AllowWork)
+            if (!GetAllowWork())
                 return;
 
             string algGpStr = "";
             for (int i = 0; i < groups.Count; ++i)
             {
-                algGpStr += groups[i].ToTerm().FinalDispKeepFormatting();
+                algGpStr += groups[i].ToTerm().FinalToDispStr();
                 if (i != groups.Count - 1)
                     algGpStr += "+";
             }
@@ -124,8 +132,8 @@ namespace MathSolverWebsite.MathSolverLibrary
             }
             else
             {
-                algGpStr = algGpStr.Insert(0, "(");
-                algGpStr = algGpStr.Insert(algGpStr.Length, ")");
+                algGpStr = StringFunc.Ins(algGpStr, 0, "(");
+                algGpStr = StringFunc.Ins(algGpStr, algGpStr.Length, ")");
             }
 
             string workDescStr = "";
@@ -135,12 +143,12 @@ namespace MathSolverWebsite.MathSolverLibrary
                 workDescStr = "Subtract " + WorkMgr.STM + "{2}" + WorkMgr.EDM + " from both sides";
 
             _workSteps.Add(WorkStep.Formatted(WorkMgr.STM + "{0}-" + WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "{2}" + WorkMgr.EDM +
-                "</span>" + WorkMgr.STM + _useComparison + "{1}-" + WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "{2}" + WorkMgr.EDM + "</span>", workDescStr + WorkLabel, left, right, algGpStr));
+                "</span>" + WorkMgr.STM + _useComparison + "{1}-" + WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "{2}" + WorkMgr.EDM + "</span>", workDescStr + GetWorkLabel(), left, right, algGpStr));
         }
 
         public void FromArraySides(string desc, params ExComp[] sides)
         {
-            if (!AllowWork || sides.Length % 2 != 0)
+            if (!GetAllowWork() || sides.Length % 2 != 0)
                 return;
 
             string finalStr = "";
@@ -151,12 +159,12 @@ namespace MathSolverWebsite.MathSolverLibrary
                     finalStr += "<br />";
             }
 
-            _workSteps.Add(WorkStep.Formatted(finalStr, desc + WorkLabel, sides));
+            _workSteps.Add(WorkStep.Formatted(finalStr, desc + GetWorkLabel(), sides));
         }
 
         public void FromArraySides(params ExComp[] sides)
         {
-            if (!AllowWork || sides.Length % 2 != 0)
+            if (!GetAllowWork() || sides.Length % 2 != 0)
                 return;
 
             string finalStr = "";
@@ -172,7 +180,7 @@ namespace MathSolverWebsite.MathSolverLibrary
 
         public void FromDivision(AlgebraTerm divBy, ExComp left, ExComp right)
         {
-            if (!AllowWork)
+            if (!GetAllowWork())
                 return;
 
             AlgebraTerm[] numDen = divBy.GetNumDenFrac();
@@ -180,29 +188,34 @@ namespace MathSolverWebsite.MathSolverLibrary
             {
                 ExComp tmpleft = Equation.Operators.MulOp.StaticWeakCombine(left, numDen[1]);
                 ExComp tmpright = Equation.Operators.MulOp.StaticWeakCombine(right, numDen[1]);
-                _workSteps.Add(WorkStep.Formatted(WorkMgr.STM + "{0}" + _useComparison + "{1}" + WorkMgr.EDM, "Multiply both sides by " + WorkMgr.STM + WorkMgr.ExFinalToAsciiStr(numDen[1]) + WorkMgr.EDM + WorkLabel,
+                _workSteps.Add(WorkStep.Formatted(WorkMgr.STM + "{0} " + _useComparison + " {1}" + WorkMgr.EDM, "Multiply both sides by " + WorkMgr.STM + WorkMgr.ToDisp(numDen[1]) + WorkMgr.EDM + GetWorkLabel(),
                     tmpleft, tmpright));
             }
             else
             {
                 //string divStr = CG_TXT_TG("{1}");
                 string divStr = "{1}";
-                _workSteps.Add(WorkStep.Formatted(WorkMgr.STM + "({0})/(" + divStr + ")" + _useComparison + "({2})/(" + divStr + ")" + WorkMgr.EDM, "Divide both sides by " + WorkMgr.STM +
-                    WorkMgr.ExFinalToAsciiStr(divBy) + WorkMgr.EDM + WorkLabel, left, divBy, right));
+                _workSteps.Add(WorkStep.Formatted(WorkMgr.STM + "({0})/(" + divStr + ") " + _useComparison + " ({2})/(" + divStr + ")" + WorkMgr.EDM, "Divide both sides by " + WorkMgr.STM +
+                    WorkMgr.ToDisp(divBy) + WorkMgr.EDM + GetWorkLabel(), left, divBy, right));
             }
         }
 
         public void FromFormatted(string work, string workDesc, params object[] args)
         {
-            if (!AllowWork)
+            if (!GetAllowWork())
                 return;
 
-            _workSteps.Add(WorkStep.Formatted(work, workDesc + WorkLabel, args));
+            _workSteps.Add(WorkStep.Formatted(work, workDesc + GetWorkLabel(), args));
+        }
+
+        public WorkStep GetLast()
+        {
+            return _workSteps[_workSteps.Count - 1];
         }
 
         public void FromFormatted(string work, params object[] args)
         {
-            if (!AllowWork)
+            if (!GetAllowWork())
                 return;
 
             _workSteps.Add(WorkStep.Formatted(work, null, args));
@@ -210,42 +223,42 @@ namespace MathSolverWebsite.MathSolverLibrary
 
         public void FromSides(ExComp left, ExComp right)
         {
-            if (!AllowWork)
+            if (!GetAllowWork())
                 return;
 
-            _workSteps.Add(WorkStep.Formatted(STM + "{0}" + ((left == null || right == null) ? "" : _useComparison) + "{1}" + EDM, null, (left == null ? (object)"" : left), (right == null ? (object)"" : right)));
+            _workSteps.Add(WorkStep.Formatted(STM + "{0} " + ((left == null || right == null) ? "" : _useComparison) + " {1}" + EDM, null, (left == null ? (object)"" : left), (right == null ? (object)"" : right)));
         }
 
         public void FromSides(ExComp left, ExComp right, string desc)
         {
-            if (!AllowWork)
+            if (!GetAllowWork())
                 return;
 
-            _workSteps.Add(WorkStep.Formatted(STM + "{0}" + ((left == null || right == null) ? "" : _useComparison) + "{1}" + EDM, desc + WorkLabel, 
-                (left == null ? (object)"" : left), 
+            _workSteps.Add(WorkStep.Formatted(STM + "{0} " + ((left == null || right == null) ? "" : _useComparison) + " {1}" + EDM, desc + GetWorkLabel(),
+                (left == null ? (object)"" : left),
                 (right == null ? (object)"" : right)));
         }
 
         public void FromSidesAndComps(IEnumerable<ExComp> enumSides, IEnumerable<LexemeType> enumComparisons, string desc)
         {
-            if (!AllowWork)
+            if (!GetAllowWork())
                 return;
 
-            ExComp[] sides = enumSides.ToArray();
-            LexemeType[] comparisons = enumComparisons.ToArray();
+            ExComp[] sides = ArrayFunc.ToArray(enumSides);
+            LexemeType[] comparisons = ArrayFunc.ToArray(enumComparisons);
 
             if (sides.Length + 1 != comparisons.Length)
                 return;
 
-            string finalFormatted = ExFinalToAsciiStr(sides[0]);
+            string finalFormatted = ToDisp(sides[0]);
 
             for (int i = 0; i < comparisons.Length; ++i)
             {
                 finalFormatted += Restriction.ComparisonOpToStr(comparisons[i]);
-                finalFormatted += ExFinalToAsciiStr(sides[i + 1]);
+                finalFormatted += ToDisp(sides[i + 1]);
             }
 
-            _workSteps.Add(new WorkStep(finalFormatted + WorkLabel, desc));
+            _workSteps.Add(new WorkStep(finalFormatted + GetWorkLabel(), desc, false));
         }
 
         /// <summary>
@@ -256,19 +269,19 @@ namespace MathSolverWebsite.MathSolverLibrary
         /// <param name="right"></param>
         public void FromSubtraction(ExComp sub, ExComp left, ExComp right)
         {
-            if (!AllowWork)
+            if (!GetAllowWork())
                 return;
 
             bool isNeg = false;
 
-            string subStr = sub is AlgebraTerm ? (sub as AlgebraTerm).FinalDispKeepFormatting() : sub.ToAsciiString();
+            string subStr = sub is AlgebraTerm ? (sub as AlgebraTerm).FinalToDispStr() : sub.ToDispString();
 
-            if (sub is Number && (sub as Number) < 0.0)
+            if (sub is ExNumber && ExNumber.OpLT((sub as ExNumber), 0.0))
                 isNeg = true;
 
             if (sub is AlgebraTerm)
             {
-                if ((sub as AlgebraTerm).GroupCount == 1)
+                if ((sub as AlgebraTerm).GetGroupCount() == 1)
                 {
                     int negCount = 0;
                     foreach (char subStrChar in subStr)
@@ -281,8 +294,8 @@ namespace MathSolverWebsite.MathSolverLibrary
                 }
                 else
                 {
-                    subStr = subStr.Insert(0, "(");
-                    subStr = subStr.Insert(subStr.Length, ")");
+                    subStr = StringFunc.Ins(subStr, 0, "(");
+                    subStr = StringFunc.Ins(subStr, subStr.Length, ")");
                 }
             }
 
@@ -294,18 +307,27 @@ namespace MathSolverWebsite.MathSolverLibrary
                 workDescStr = "Subtract " + WorkMgr.STM + "{2}" + WorkMgr.EDM + " from both sides";
 
             _workSteps.Add(WorkStep.Formatted(WorkMgr.STM + "{0}-" + WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "{2}" + WorkMgr.EDM + "</span>" + WorkMgr.STM +
-                "={1}-" + WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "{2}" + WorkMgr.EDM + "</span>", workDescStr + WorkLabel, left, right, subStr));
+                "={1}-" + WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "{2}" + WorkMgr.EDM + "</span>", workDescStr + GetWorkLabel(), left, right, subStr));
         }
 
         public void PopStep()
         {
-            _workSteps.RemoveAt(_workSteps.Count - 1);
+            ArrayFunc.RemoveIndex(_workSteps, _workSteps.Count - 1);
         }
 
-        public void PopSteps(int count)
+        public void PopStepsCount(int count)
         {
             for (int i = 0; i < count; ++i)
                 PopStep();
+        }
+
+        /// <summary>
+        /// Pop the steps from the start index to the current index.
+        /// </summary>
+        /// <param name="startIndex"></param>
+        public void PopSteps(int startIndex)
+        {
+            PopStepsCount(GetWorkSteps().Count - startIndex);
         }
     }
 
@@ -313,23 +335,74 @@ namespace MathSolverWebsite.MathSolverLibrary
     {
         private string _work;
         private string _workDesc;
+        private List<WorkStep> _subWorkSteps = null;
+        private WorkMgr _origWorkMgr = null;
 
-        public string WorkDesc
+        public void SetWorkDesc(string value)
         {
-            get { return _workDesc; }
-            set { _workDesc = value; }
+            _workDesc = value;
         }
 
-        public string WorkHtml
+        public string GetWorkDesc()
         {
-            get { return _work; }
-            set { _work = value; }
+            return _workDesc;
         }
 
-        public WorkStep(string work, string workDesc)
+        public void SetWorkHtml(string value)
+        {
+            _work = value;
+            _work = CorrectString(_work);
+        }
+
+        public string GetWorkHtml()
+        {
+            return _work;
+        }
+
+        public void SetSubWorkSteps(List<WorkStep> value)
+        {
+            _subWorkSteps = value;
+        }
+
+        public List<WorkStep> GetSubWorkSteps()
+        {
+            return _subWorkSteps;
+        }
+
+        public WorkStep(string work, string workDesc, bool correctOutput)
         {
             _work = work;
             _workDesc = workDesc;
+
+            if (correctOutput)
+            {
+                _work = MathSolver.FinalizeOutput(_work);
+                _workDesc = MathSolver.FinalizeOutput(_workDesc);
+            }
+        }
+
+        public void GoDown(ref TermType.EvalData pEvalData)
+        {
+            _subWorkSteps = new List<WorkStep>();
+            _origWorkMgr = pEvalData.GetWorkMgr();
+            pEvalData.SetWorkMgr(new WorkMgr(_subWorkSteps));
+        }
+
+        public void GoUp(ref TermType.EvalData pEvalData)
+        {
+            pEvalData.SetWorkMgr(_origWorkMgr);
+            _origWorkMgr = null;
+        }
+
+        private static string CorrectString(string str)
+        {
+            str = MathSolver.FinalizeOutput(str);
+            str = str.Replace("--", "+");
+            str = str.Replace(WorkMgr.STM + "+", WorkMgr.STM);
+            str = str.Replace("&", "+-");
+            str = str.Replace("-" + WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "-", WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "+");
+
+            return str;
         }
 
         public static string FormatStr(string str, params object[] args)
@@ -354,13 +427,9 @@ namespace MathSolverWebsite.MathSolverLibrary
 
             if (str != null)
             {
-                str = String.Format(str, argStrs);
+                str = StringFunc.Format(str, argStrs);
 
-                str = MathSolver.FinalizeOutput(str);
-                str = str.Replace("--", "+");
-                str = str.Replace(WorkMgr.STM + "+", WorkMgr.STM);
-                str = str.Replace("&", "+-");
-                str = str.Replace("-" + WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "-", WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "+");
+                str = CorrectString(str);
             }
 
             return str;
@@ -380,7 +449,7 @@ namespace MathSolverWebsite.MathSolverLibrary
 
                         if (args[i] is Equation.Functions.PowerFunction)
                         {
-                            string powStr = (args[i] as Equation.Functions.PowerFunction).Power.ToDispString();
+                            string powStr = (args[i] as Equation.Functions.PowerFunction).GetPower().ToDispString();
                             if (powStr.StartsWith("-1"))
                             {
                                 argStrs[i] = "\\frac{1}{" + (args[i] as AlgebraTerm).FinalToDispStr() + "}";
@@ -400,7 +469,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             {
                 // The LaTex text command will cause problems in the string formatter as it has the '{' and '}' grouping characters.
                 if (argStrs.Length != 0 && !work.Contains("{Undefined}"))
-                    work = String.Format(work, argStrs);
+                    work = StringFunc.Format(work, argStrs);
 
                 work = MathSolver.FinalizeOutput(work);
                 work = work.Replace("--", "+");
@@ -416,7 +485,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                 {
                     try
                     {
-                        workDesc = String.Format(workDesc, argStrs);
+                        workDesc = StringFunc.Format(workDesc, argStrs);
                     }
                     catch (Exception)
                     {
@@ -430,7 +499,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                 workDesc = workDesc.Replace("-" + WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "-", WorkMgr.EDM + "<span class='changeText'>" + WorkMgr.STM + "+");
             }
 
-            return new WorkStep(work, workDesc);
+            return new WorkStep(work, workDesc, false);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
 using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace MathSolverWebsite.MathSolverLibrary.Solving
 {
@@ -24,7 +25,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
         {
             AlgebraComp solveForComp = solveFor.ToAlgebraComp();
             AlgebraTerm nonZeroTerm = left.IsZero() ? right : left;
-            AlgebraTerm zero = new AlgebraTerm(Number.Zero);
+            AlgebraTerm zero = new AlgebraTerm(ExNumber.GetZero());
 
             if (_overallTerm != null)
             {
@@ -36,48 +37,53 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 nonZeroTerm = left.IsZero() ? right : left;
             }
 
-            DivideByVariableCoeffs(ref nonZeroTerm, ref zero, solveForComp, ref pEvalData);
+            DivideByVariableCoeffs(ref nonZeroTerm, ref zero, solveForComp, ref pEvalData, false);
 
-            var groups = nonZeroTerm.GetGroupsNoOps();
+            List<ExComp[]> groups = nonZeroTerm.GetGroupsNoOps();
 
             p_agSolver.ClearLinearSolveRepeatCount();
             if (groups.Count != 1)
-                return p_agSolver.Solve(solveFor, left, right, ref pEvalData);
+            {
+                ExComp agSolve = p_agSolver.Solve(solveFor, left, right, ref pEvalData);
+                return agSolve;
+            }
 
-            var onlyGroup = nonZeroTerm.GetGroupsNoOps()[0];
-            onlyGroup = onlyGroup.RemoveOneCoeffs();
+            ExComp[] onlyGroup = nonZeroTerm.GetGroupsNoOps()[0];
+            onlyGroup = GroupHelper.RemoveOneCoeffs(onlyGroup);
 
             // The factors are the algebra terms of this groups.
-            AlgebraTerm[] factors = (from onlyGroupComp in onlyGroup
-                                     select onlyGroupComp.ToAlgTerm().RemoveRedundancies().ToAlgTerm()).ToArray();
+            AlgebraTerm[] factors = new AlgebraTerm[onlyGroup.Length];
 
-            return SolveEquationFactors(solveFor, ref pEvalData, factors);
+            for (int i = 0; i < onlyGroup.Length; ++i)
+                factors[i] = onlyGroup[i].ToAlgTerm().RemoveRedundancies(false).ToAlgTerm();
+
+            ExComp factorsSolve = SolveEquationFactors(solveFor, ref pEvalData, factors);
+            return factorsSolve;
         }
 
         public ExComp SolveEquationFactors(AlgebraVar solveFor, ref TermType.EvalData pEvalData, params AlgebraTerm[] factors)
         {
-            AlgebraTermArray factorTermArray = new AlgebraTermArray(factors);
             AlgebraTermArray solutions = new AlgebraTermArray();
             foreach (AlgebraTerm factor in factors)
             {
                 int mulplicity = 1;
                 AlgebraTerm leftSolve = factor;
-                pEvalData.WorkMgr.FromSides(leftSolve, Number.Zero, "Solve when one of the factors equals zero.");
+                pEvalData.GetWorkMgr().FromSides(leftSolve, ExNumber.GetZero(), "Solve when one of the factors equals zero.");
                 if (factor is PowerFunction)
                 {
                     PowerFunction pfFactor = factor as PowerFunction;
-                    if (pfFactor.Power is Number && (pfFactor.Power as Number).IsRealInteger())
+                    if (pfFactor.GetPower() is ExNumber && (pfFactor.GetPower() as ExNumber).IsRealInteger())
                     {
-                        mulplicity = (int)(pfFactor.Power as Number).RealComp;
-                        pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{1}={2}" + WorkMgr.EDM, "Since the factor has a power of " + WorkMgr.STM + "{0}" + WorkMgr.EDM + " it also has a mulplicity of " +
+                        mulplicity = (int)(pfFactor.GetPower() as ExNumber).GetRealComp();
+                        pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "{1}={2}" + WorkMgr.EDM, "Since the factor has a power of " + WorkMgr.STM + "{0}" + WorkMgr.EDM + " it also has a mulplicity of " +
                             WorkMgr.STM + "{0}" + WorkMgr.EDM +
-                            " Just ignore the power when solving as it determines the multiplicity not the solution.", mulplicity, leftSolve, Number.Zero);
-                        leftSolve = pfFactor.Base.ToAlgTerm();
+                            " Just ignore the power when solving as it determines the multiplicity not the solution.", mulplicity, leftSolve, ExNumber.GetZero());
+                        leftSolve = pfFactor.GetBase().ToAlgTerm();
                     }
                 }
 
                 p_agSolver.ClearLinearSolveRepeatCount();
-                ExComp solved = p_agSolver.SolveEq(solveFor, leftSolve, Number.Zero.ToAlgTerm(), ref pEvalData, true);
+                ExComp solved = p_agSolver.SolveEq(solveFor, leftSolve, ExNumber.GetZero().ToAlgTerm(), ref pEvalData, true);
                 for (int i = 0; i < mulplicity; ++i)
                 {
                     solutions.Add(solved);

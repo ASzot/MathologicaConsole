@@ -2,17 +2,18 @@
 using MathSolverWebsite.MathSolverLibrary.Parsing;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
-    internal class SolveTermType : TermType
+    internal class SolveGenTermType : GenTermType
     {
         private AlgebraSolver _agSolver;
         private EqSet _eqSet;
         private List<TypePair<LexemeType, string>> _lt;
         private string[] s_promptStrs;
 
-        public SolveTermType(EqSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, 
+        public SolveGenTermType(EqSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars,
             string probSolveVar, string[] promptStrs, string noIncludeVar)
         {
             s_promptStrs = promptStrs;
@@ -23,14 +24,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
             _agSolver.CreateUSubTable(solveVars);
 
-            List<string> solveVarKeys = (from solveVar in solveVars
-                                         select solveVar.Key).Distinct().ToList();
+            List<string> solveVarKeys = ArrayFunc.Distinct(solveVars);
 
             for (int i = 0; i < solveVarKeys.Count; ++i)
             {
                 if (solveVarKeys[i] == probSolveVar)
                 {
-                    solveVarKeys.RemoveAt(i);
+                    ArrayFunc.RemoveIndex(solveVarKeys, i);
                     break;
                 }
             }
@@ -41,7 +41,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             {
                 if (solveVarKeys[i] == noIncludeVar)
                 {
-                    solveVarKeys.RemoveAt(i);
+                    ArrayFunc.RemoveIndex(solveVarKeys, i);
                     break;
                 }
             }
@@ -66,7 +66,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _cmds = tmpCmds.ToArray();
         }
 
-        public SolveTermType(EqSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar, string promptStr)
+        public SolveGenTermType(EqSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar, string promptStr)
             : base()
         {
             s_promptStrs = new string[1];
@@ -79,14 +79,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
             _agSolver.CreateUSubTable(solveVars);
 
-            List<string> solveVarKeys = (from solveVar in solveVars
-                                         select solveVar.Key).Distinct().ToList();
+            List<string> solveVarKeys = ArrayFunc.Distinct(solveVars);
 
             for (int i = 0; i < solveVarKeys.Count; ++i)
             {
                 if (solveVarKeys[i] == probSolveVar)
                 {
-                    solveVarKeys.RemoveAt(i);
+                    ArrayFunc.RemoveIndex(solveVarKeys, i);
                     break;
                 }
             }
@@ -119,7 +118,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _cmds = cmds.ToArray();
         }
 
-        public SolveTermType(EqSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, 
+        public SolveGenTermType(EqSet eqSet, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars,
             string probSolveVar)
             : this(eqSet, lt, solveVars, probSolveVar, "Solve for ")
         {
@@ -140,17 +139,21 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
                     EqSet useSet = _eqSet.Clone();
 
-                    pEvalData.IsWorkable = false;
+                    pEvalData.SetIsWorkable(false);
                     SolveResult result;
-                    if (_eqSet.ComparisonOp == LexemeType.EqualsOp)
-                        result = _agSolver.SolveEquationEquality(solveFor, useSet.Left.ToAlgTerm(), useSet.Right.ToAlgTerm(), ref pEvalData);
+                    if (_eqSet.GetComparisonOp() == LexemeType.EqualsOp)
+                        result = _agSolver.SolveEquationEquality(solveFor, useSet.GetLeft().ToAlgTerm(), useSet.GetRight().ToAlgTerm(), ref pEvalData);
                     else
-                        result = _agSolver.SolveEquationInequality(useSet.Sides, useSet.ComparisonOps, solveFor, ref pEvalData);
+                        result = _agSolver.SolveEquationInequality(useSet.GetSides(), useSet.GetComparisonOps(), solveFor, ref pEvalData);
 
                     result.RemoveUndefinedSolutions();
                     result.RemoveExtraneousSolutions(_eqSet, ref pEvalData);
-                    if (!result.HasSolutions && !result.HasRestrictions && !pEvalData.HasPartialSolutions && result.Success)
-                        return SolveResult.Solved(solveFor, new NoSolutions(), ref pEvalData);
+                    if (!result.GetHasSolutions() && !result.GetHasRestrictions() && !pEvalData.GetHasPartialSolutions() &&
+                        result.Success)
+                    {
+                        SolveResult solved = SolveResult.Solved(solveFor, new NoSolutions(), ref pEvalData);
+                        return solved;
+                    }
 
                     return result;
                 }
@@ -161,15 +164,16 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 string varForKey = command.Substring("Domain of ".Length, command.Length - "Domain of ".Length);
                 AlgebraVar varFor = new AlgebraVar(varForKey);
 
-                return _agSolver.CalculateDomain(_eqSet, varFor, ref pEvalData);
+                SolveResult domainResult = _agSolver.CalculateDomain(_eqSet, varFor, ref pEvalData);
+                return domainResult;
             }
             else if (command.StartsWith("Implicit differentiation "))
             {
-                string differential = command.Remove(0, "Implicit differentiation ".Length);
+                string differential = StringFunc.Rm(command, 0, "Implicit differentiation ".Length);
                 string[] split = differential.Split('/');
 
-                split[0] = split[0].Remove(0, 1);
-                split[1] = split[1].Remove(0, 1);
+                split[0] = StringFunc.Rm(split[0], 0, 1);
+                split[1] = StringFunc.Rm(split[1], 0, 1);
 
                 SolveResult result = _eqSet.ImplicitDifferentiation(split[0], split[1], _agSolver, ref pEvalData);
                 result.RemoveUndefinedSolutions();
@@ -177,7 +181,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 return result;
             }
 
-            return SolveResult.InvalidCmd(ref pEvalData);
+            SolveResult invalidResult = SolveResult.InvalidCmd(ref pEvalData);
+            return invalidResult;
         }
     }
 }

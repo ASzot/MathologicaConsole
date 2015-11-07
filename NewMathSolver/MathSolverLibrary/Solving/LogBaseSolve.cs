@@ -29,12 +29,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 else
                     return new NoSolutions();
             }
-            left = left.CompoundLogs();
+            left = AdvAlgebraTerm.CompoundLogs(left, null);
 
-            if (left.GroupCount != 1)
+            if (left.GetGroupCount() != 1)
                 return null;
 
-            ExComp leftLogEx = left.RemoveRedundancies();
+            ExComp leftLogEx = left.RemoveRedundancies(false);
 
             if (!(leftLogEx is LogFunction))
             {
@@ -44,11 +44,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             LogFunction log = leftLogEx as LogFunction;
 
-            PowerFunction powFunc = new PowerFunction(log.Base, right);
+            PowerFunction powFunc = new PowerFunction(log.GetBase(), right);
 
-            pEvalData.WorkMgr.FromSides(powFunc, log.InnerEx, "Convert from logarithm form to exponential form.");
+            pEvalData.GetWorkMgr().FromSides(powFunc, log.GetInnerEx(), "Convert from logarithm form to exponential form.");
 
-            return p_agSolver.SolveEq(solveFor, powFunc, log.InnerTerm, ref pEvalData);
+            ExComp solveResult = p_agSolver.SolveEq(solveFor, powFunc, log.GetInnerTerm(), ref pEvalData);
+            return solveResult;
         }
     }
 }

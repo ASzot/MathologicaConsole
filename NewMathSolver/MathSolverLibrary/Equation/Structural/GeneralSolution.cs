@@ -6,9 +6,9 @@
         private ExComp _interval;
         private AlgebraComp _iterVar;
 
-        public ExComp Result
+        public ExComp GetResult()
         {
-            get { return _result; }
+            return _result;
         }
 
         public GeneralSolution(ExComp result, ExComp interval, AlgebraComp iterationVar)
@@ -23,9 +23,9 @@
             _iterVar = iterationVar;
         }
 
-        public override ExComp Clone()
+        public override ExComp CloneEx()
         {
-            return new GeneralSolution(_result.Clone(), _interval.Clone(), (AlgebraComp)_iterVar.Clone());
+            return new GeneralSolution(_result.CloneEx(), _interval.CloneEx(), (AlgebraComp)_iterVar.CloneEx());
         }
 
         public override AlgebraTerm Order()
@@ -38,7 +38,7 @@
 
         public bool IsResultUndef()
         {
-            return Number.IsUndef(_result);
+            return ExNumber.IsUndef(_result);
         }
 
         public override bool IsEqualTo(ExComp ex)
@@ -86,10 +86,10 @@
         {
             string finalStr = "";
 
-            if (Number.IsUndef(_result))
-                return Number.Undefined.ToAsciiString();
+            if (ExNumber.IsUndef(_result))
+                return ExNumber.GetUndefined().ToAsciiString();
 
-            if (!Number.Zero.IsEqualTo(_result) && !(_result is AlgebraTerm && (_result as AlgebraTerm).IsZero()))
+            if (!ExNumber.GetZero().IsEqualTo(_result) && !(_result is AlgebraTerm && (_result as AlgebraTerm).IsZero()))
             {
                 if (_result is AlgebraTerm)
                     finalStr += (_result as AlgebraTerm).FinalToDispStr();
@@ -107,71 +107,14 @@
             return finalStr;
         }
 
-        public override string FinalToAsciiKeepFormatting()
-        {
-            string finalStr = "";
-
-            if (Number.IsUndef(_result))
-                return Number.Undefined.ToAsciiString();
-
-            if (!Number.Zero.IsEqualTo(_result) && !(_result is AlgebraTerm && (_result as AlgebraTerm).IsZero()))
-            {
-                if (_result is AlgebraTerm)
-                    finalStr += (_result as AlgebraTerm).FinalToAsciiKeepFormatting();
-                else
-                    finalStr += _result.ToAsciiString();
-
-                finalStr += "+";
-            }
-
-            if (_interval is AlgebraTerm)
-                finalStr += (_interval as AlgebraTerm).FinalToAsciiKeepFormatting();
-            else
-                finalStr += _interval.ToAsciiString();
-
-            return finalStr;
-        }
-
-        public override string FinalToTexKeepFormatting()
-        {
-            string finalStr = "";
-
-            if (Number.IsUndef(_result))
-                return Number.Undefined.ToTexString();
-
-            if (!Number.Zero.IsEqualTo(_result) && !(_result is AlgebraTerm && (_result as AlgebraTerm).IsZero()))
-            {
-                if (_result is AlgebraTerm)
-                    finalStr += (_result as AlgebraTerm).FinalToTexKeepFormatting();
-                else
-                    finalStr += _result.ToTexString();
-
-                finalStr += "+";
-            }
-
-            if (_interval is AlgebraTerm)
-                finalStr += (_interval as AlgebraTerm).FinalToTexKeepFormatting();
-            else
-                finalStr += _interval.ToTexString();
-
-            return finalStr;
-        }
-
-        public override string FinalDispKeepFormatting()
-        {
-            if (USE_TEX)
-                return FinalToTexKeepFormatting();
-            return FinalToAsciiKeepFormatting();
-        }
-
         public override string FinalToTexString()
         {
             string finalStr = "";
 
-            if (Number.IsUndef(_result))
-                return Number.Undefined.ToTexString();
+            if (ExNumber.IsUndef(_result))
+                return ExNumber.GetUndefined().ToTexString();
 
-            if (!Number.Zero.IsEqualTo(_result) && !(_result is AlgebraTerm && (_result as AlgebraTerm).IsZero()))
+            if (!ExNumber.GetZero().IsEqualTo(_result) && !(_result is AlgebraTerm && (_result as AlgebraTerm).IsZero()))
             {
                 if (_result is AlgebraTerm)
                     finalStr += (_result as AlgebraTerm).FinalToTexString();

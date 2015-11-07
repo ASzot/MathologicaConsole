@@ -1,14 +1,15 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
-using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 using MathSolverWebsite.MathSolverLibrary.Equation.Term;
 using MathSolverWebsite.MathSolverLibrary.Parsing;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
-    internal class QuadraticTermType : TermType
+    internal class QuadraticGenTermType : GenTermType
     {
         private ExComp _a;
         private ExComp _b;
@@ -16,11 +17,11 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private AlgebraTerm _eq;
         private ExComp _funcIden;
         private AlgebraVar _solveFor;
-        private FunctionTermType tt_func = null;
-        private SolveTermType tt_solve = null;
+        private FunctionGenTermType tt_func = null;
+        private SolveGenTermType _ttSolveGen = null;
         private string _graphStr = null;
 
-        public QuadraticTermType()
+        public QuadraticGenTermType()
             : base()
         {
         }
@@ -34,8 +35,11 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 // To vertex form.
                 ExComp vertexForm = ToVertexForm(_a, _b, _c, _solveFor.ToAlgebraComp(), ref pEvalData);
                 if (_funcIden != null)
-                    return SolveResult.SolvedForceFormatting(_funcIden, vertexForm);
-                return SolveResult.SimplifiedForceFormatting(vertexForm);
+                {
+                    SolveResult solvedResult = SolveResult.Solved(_funcIden, vertexForm, ref pEvalData);
+                    return solvedResult;
+                }
+                return SolveResult.Simplified(vertexForm);
             }
             else if (command == "Find the vertex")
             {
@@ -45,7 +49,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             }
             else if (command == "Factor")
             {
-                AlgebraTerm[] factors = AdvAlgebraTerm.Factorize(_a, _b, _c, _solveFor, ref pEvalData);
+                AlgebraTerm[] factors = AdvAlgebraTerm.Factorize(_a, _b, _c, _solveFor, ref pEvalData, false);
                 if (factors == null)
                 {
                     pEvalData.AddFailureMsg("Couldn't factor.");
@@ -54,23 +58,26 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 // Factor.
                 AlgebraTerm factored = AlgebraTerm.FromFactors(factors);
                 if (_funcIden != null)
-                    return SolveResult.Solved(_funcIden, factored, ref pEvalData);
+                {
+                    SolveResult solvedResult = SolveResult.Solved(_funcIden, factored, ref pEvalData);
+                    return solvedResult;
+                }
                 else
                     return SolveResult.Simplified(factored);
             }
             else if (command == "Find the discriminant")
             {
                 // Discriminant.
-                pEvalData.WorkMgr.FromFormatted("`" + _eq.FinalToDispStr() + "`", "In the quadratic above `a=" + _a.ToDispString() + ", b=" + _b.ToDispString() + ",c=" + _c.ToDispString() +
+                pEvalData.GetWorkMgr().FromFormatted("`" + _eq.FinalToDispStr() + "`", "In the quadratic above `a=" + _a.ToDispString() + ", b=" + _b.ToDispString() + ",c=" + _c.ToDispString() +
                     "`. The equation for getting the discriminant of a quadratic is `b^2-4ac`.");
 
-                pEvalData.WorkMgr.FromFormatted("`({0})^2-4({1})({2})`", "Plug the values into the equation.", _a, _b, _c);
+                pEvalData.GetWorkMgr().FromFormatted("`({0})^2-4({1})({2})`", "Plug the values into the equation.", _a, _b, _c);
 
                 ExComp subVal = MulOp.StaticCombine(_a, _c);
-                subVal = MulOp.StaticCombine(subVal, new Number(4.0));
-                ExComp discriminant = SubOp.StaticCombine(PowOp.StaticCombine(_b, new Number(2.0)), subVal);
+                subVal = MulOp.StaticCombine(subVal, new ExNumber(4.0));
+                ExComp discriminant = SubOp.StaticCombine(PowOp.StaticCombine(_b, new ExNumber(2.0)), subVal);
 
-                pEvalData.WorkMgr.FromFormatted("`" + WorkMgr.ExFinalToAsciiStr(discriminant) + "`", "Simplify getting the final discriminant.");
+                pEvalData.GetWorkMgr().FromFormatted("`" + WorkMgr.ToDisp(discriminant) + "`", "Simplify getting the final discriminant.");
 
                 return SolveResult.Simplified(discriminant);
             }
@@ -78,36 +85,41 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             {
                 // Axis of symmetry.
                 ExComp aos = FindAOS(_a, _b);
-                return SolveResult.Solved(_solveFor, aos, ref pEvalData);
+                SolveResult aosSolveResult = SolveResult.Solved(_solveFor, aos, ref pEvalData);
+                return aosSolveResult;
             }
             else if (command == "Graph")
             {
-                if (pEvalData.AttemptSetGraphData(_graphStr, _solveFor.Var))
+                if (pEvalData.AttemptSetGraphData(_graphStr, _solveFor.GetVar()))
                     return SolveResult.Solved();
                 else
                     return SolveResult.Failure();
             }
 
             if (tt_func != null && tt_func.IsValidCommand(command))
-                return tt_func.ExecuteCommand(command, ref pEvalData);
-            else if (tt_solve != null && tt_solve.IsValidCommand(command))
+            {
+                SolveResult funcSolveResult = tt_func.ExecuteCommand(command, ref pEvalData);
+                return funcSolveResult;
+            }
+            else if (_ttSolveGen != null && _ttSolveGen.IsValidCommand(command))
             {
                 if (command.Contains("completing the square"))
-                    pEvalData.QuadSolveMethod = Solving.QuadraticSolveMethod.CompleteSquare;
+                    pEvalData.SetQuadSolveMethod(Solving.QuadraticSolveMethod.CompleteSquare);
                 else if (command.Contains("quadratic equation"))
-                    pEvalData.QuadSolveMethod = Solving.QuadraticSolveMethod.Formula;
+                    pEvalData.SetQuadSolveMethod(Solving.QuadraticSolveMethod.Formula);
                 else
                 {
                     // The default is factoring as this will go on to the quadratic formula method if necessary.
-                    pEvalData.QuadSolveMethod = Solving.QuadraticSolveMethod.Factor;
+                    pEvalData.SetQuadSolveMethod(Solving.QuadraticSolveMethod.Factor);
                 }
-                return tt_solve.ExecuteCommand(command, ref pEvalData);
+                return _ttSolveGen.ExecuteCommand(command, ref pEvalData);
             }
 
-            return SolveResult.InvalidCmd(ref pEvalData);
+            SolveResult invalidSolveResult = SolveResult.InvalidCmd(ref pEvalData);
+            return invalidSolveResult;
         }
 
-        public bool Init(EquationInformation eqInfo, ExComp left, ExComp right, List<TypePair<LexemeType, string>> lexemeTable, 
+        public bool Init(EquationInformation eqInfo, ExComp left, ExComp right, List<TypePair<LexemeType, string>> lexemeTable,
             Dictionary<string, int> solveVars, string probSolveVar, ref EvalData pEvalData)
         {
             if (eqInfo.OnlyFactors)
@@ -119,7 +131,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _solveFor = new AlgebraVar(probSolveVar);
             AlgebraComp solveForComp = _solveFor.ToAlgebraComp();
 
-            if (eqInfo.AppliedFunctions.Count != 0 || !eqInfo.HasOnlyPowers(new Number(2.0), new Number(1.0)))
+            if (eqInfo.AppliedFunctions.Count != 0 || !eqInfo.HasOnlyPowers(new ExNumber(2.0), new ExNumber(1.0)))
                 return false;
 
             if ((left is AlgebraComp && !solveForComp.IsEqualTo(left)) || left is FunctionDefinition)
@@ -135,7 +147,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
             if (_funcIden is FunctionDefinition)
             {
-                tt_func = new FunctionTermType();
+                tt_func = new FunctionGenTermType();
                 if (!tt_func.Init(new EqSet(_funcIden, left == null ? right : left, LexemeType.EqualsOp), lexemeTable, solveVars, probSolveVar))
                     tt_func = null;
             }
@@ -166,59 +178,67 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             }
 
             if (promptStrs != null)
-                tt_solve = new SolveTermType(new EqSet(_eq, Number.Zero, LexemeType.EqualsOp), lexemeTable, solveVars, probSolveVar, promptStrs,
-                    _funcIden is AlgebraComp ? (_funcIden as AlgebraComp).Var.Var : "");
+                _ttSolveGen = new SolveGenTermType(new EqSet(_eq, ExNumber.GetZero(), LexemeType.EqualsOp), lexemeTable, solveVars, probSolveVar, promptStrs,
+                    _funcIden is AlgebraComp ? (_funcIden as AlgebraComp).GetVar().GetVar() : "");
 
             AlgebraTerm nullTerm = null;
 
             Solving.SolveMethod.PrepareForSolving(ref _eq, ref nullTerm, ref pEvalData);
 
-            _eq = _eq.RemoveRedundancies().ToAlgTerm();
+            _eq = _eq.RemoveRedundancies(false).ToAlgTerm();
 
-            var squaredGroups = _eq.GetGroupContainingTerm(solveForComp.ToPow(2.0));
-            var linearGroups = _eq.GetGroupContainingTerm(solveForComp);
-            var constantGroup = _eq.GetGroupsConstantTo(solveForComp);
+            List<ExComp[]> squaredGroups = _eq.GetGroupContainingTerm(solveForComp.ToPow(2.0));
+            List<ExComp[]> linearGroups = _eq.GetGroupContainingTerm(solveForComp);
+            List<AlgebraGroup> constantGroup = _eq.GetGroupsConstantTo(solveForComp);
 
-            var aTerms = from squaredGroup in squaredGroups
-                         select squaredGroup.GetUnrelatableTermsOfGroup(solveForComp).ToAlgTerm();
+            AlgebraTerm[] aTermsArr = new AlgebraTerm[squaredGroups.Count];
+            for (int i = 0; i < squaredGroups.Count; ++i)
+            {
+                aTermsArr[i] =
+                    GroupHelper.ToAlgTerm(GroupHelper.GetUnrelatableTermsOfGroup(squaredGroups[i], solveForComp));
+            }
 
-            var bTerms = from linearGroup in linearGroups
-                         select linearGroup.GetUnrelatableTermsOfGroup(solveForComp).ToAlgTerm();
+            AlgebraTerm[] bTermsArr = new AlgebraTerm[linearGroups.Count];
+            for (int i = 0; i < linearGroups.Count; ++i)
+            {
+                bTermsArr[i] =
+                    GroupHelper.ToAlgTerm(GroupHelper.GetUnrelatableTermsOfGroup(linearGroups[i], solveForComp));
+            }
 
-            if (aTerms.Count() == 0)
+            if (aTermsArr.Length == 0)
                 return false;
 
             AlgebraTerm a = new AlgebraTerm();
-            foreach (AlgebraTerm aTerm in aTerms)
+            foreach (AlgebraTerm aTerm in aTermsArr)
             {
-                a = a + aTerm;
+                a = AlgebraTerm.OpAdd(a, aTerm);
             }
 
             AlgebraTerm b = new AlgebraTerm();
-            foreach (AlgebraTerm bTerm in bTerms)
+            foreach (AlgebraTerm bTerm in bTermsArr)
             {
-                b = b + bTerm;
+                b = AlgebraTerm.OpAdd(b, bTerm);
             }
 
             AlgebraTerm c = new AlgebraTerm(constantGroup.ToArray());
 
             _a = a;
             _b = b;
-            if (c.TermCount == 0)
-                c.Add(Number.Zero);
+            if (c.GetTermCount() == 0)
+                c.Add(ExNumber.GetZero());
             _c = c;
 
             if (_a is AlgebraTerm)
-                _a = (_a as AlgebraTerm).RemoveRedundancies();
+                _a = (_a as AlgebraTerm).RemoveRedundancies(false);
             if (_b is AlgebraTerm)
-                _b = (_b as AlgebraTerm).RemoveRedundancies();
+                _b = (_b as AlgebraTerm).RemoveRedundancies(false);
             if (_c is AlgebraTerm)
-                _c = (_c as AlgebraTerm).RemoveRedundancies();
+                _c = (_c as AlgebraTerm).RemoveRedundancies(false);
 
             List<string> tmpCmds = new List<string>();
-            if (tt_solve != null)
+            if (_ttSolveGen != null)
             {
-                tmpCmds.AddRange(tt_solve.GetCommands());
+                tmpCmds.AddRange(_ttSolveGen.GetCommands());
             }
             tmpCmds.Add("To vertex form");
             tmpCmds.Add("Find the vertex");
@@ -228,15 +248,18 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
             if (tt_func != null)
             {
-                if (tt_solve != null)
-                    tmpCmds.AddRange(tt_func.GetCommands().ToList().GetRange(0, 2));
+                if (_ttSolveGen != null)
+                    tmpCmds.AddRange(ArrayFunc.ToList(tt_func.GetCommands()).GetRange(0, 2));
                 else
                     tmpCmds.AddRange(tt_func.GetCommands());
             }
 
-            _graphStr = _eq.ToJavaScriptString(pEvalData.UseRad);
-            if (_graphStr != null)
-                tmpCmds.Add("Graph");
+            if (_eq.GetAllAlgebraCompsStr().Count == 1)
+            {
+                _graphStr = _eq.ToJavaScriptString(pEvalData.GetUseRad());
+                if (_graphStr != null)
+                    tmpCmds.Add("Graph");
+            }
 
             _cmds = tmpCmds.ToArray();
 
@@ -246,7 +269,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private static ExComp FindAOS(ExComp a, ExComp b)
         {
             ExComp num = MulOp.Negate(b);
-            ExComp den = MulOp.StaticCombine(new Number(2.0), a);
+            ExComp den = MulOp.StaticCombine(new ExNumber(2.0), a);
 
             return DivOp.StaticCombine(num, den);
         }
@@ -257,15 +280,15 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             ex0 = MulOp.StaticCombine(ex0, a);
             ExComp ex1 = MulOp.StaticCombine(b, aos);
 
-            ExComp final = AddOp.StaticCombine(ex0, ex1);
-            if (final is AlgebraTerm)
-                final = (final as AlgebraTerm).CompoundFractions();
-            final = AddOp.StaticCombine(final, c);
+            ExComp finalCombined = AddOp.StaticCombine(ex0, ex1);
+            if (finalCombined is AlgebraTerm)
+                finalCombined = (finalCombined as AlgebraTerm).CompoundFractions();
+            finalCombined = AddOp.StaticCombine(finalCombined, c);
 
-            if (final is AlgebraTerm)
-                final = (final as AlgebraTerm).CompoundFractions();
+            if (finalCombined is AlgebraTerm)
+                finalCombined = (finalCombined as AlgebraTerm).CompoundFractions();
 
-            return new ExVector(aos, final);
+            return new ExVector(aos, finalCombined);
         }
 
         private static ExComp FindVertex(ExComp a, ExComp b, ExComp c)
@@ -277,14 +300,14 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
         private static ExComp ToVertexForm(ExComp a, ExComp b, ExComp c, AlgebraComp solveFor, ref EvalData pEvalData)
         {
-            if (!Number.One.IsEqualTo(a))
+            if (!ExNumber.GetOne().IsEqualTo(a))
             {
                 b = DivOp.StaticCombine(b, a);
                 c = DivOp.StaticCombine(c, a);
             }
 
-            ExComp halfB = DivOp.StaticCombine(b, new Number(2.0));
-            ExComp completeTheSquareTerm = PowOp.RaiseToPower(halfB, new Number(2.0), ref pEvalData);
+            ExComp halfB = DivOp.StaticCombine(b, new ExNumber(2.0));
+            ExComp completeTheSquareTerm = PowOp.RaiseToPower(halfB, new ExNumber(2.0), ref pEvalData, false);
 
             ExComp hVal = AddOp.StaticCombine(c, MulOp.Negate(completeTheSquareTerm));
 
@@ -293,19 +316,19 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 hVal = (hVal as AlgebraTerm).CompoundFractions();
             }
 
-            AlgebraTerm final = new AlgebraTerm();
-            if (!Number.One.IsEqualTo(a))
-                final.Add(a, new MulOp());
+            AlgebraTerm finalTerm = new AlgebraTerm();
+            if (!ExNumber.GetOne().IsEqualTo(a))
+                finalTerm.Add(a, new MulOp());
 
-            if (!Number.Zero.IsEqualTo(halfB))
-                final.Add(new Equation.Functions.PowerFunction(new AlgebraTerm(solveFor, new AddOp(), halfB), new Number(2.0)));
+            if (!ExNumber.GetZero().IsEqualTo(halfB))
+                finalTerm.Add(new Equation.Functions.PowerFunction(new AlgebraTerm(solveFor, new AddOp(), halfB), new ExNumber(2.0)));
             else
-                final.Add(solveFor);
+                finalTerm.Add(solveFor);
 
-            if (!Number.Zero.IsEqualTo(hVal))
-                final.Add(new AddOp(), hVal);
+            if (!ExNumber.GetZero().IsEqualTo(hVal))
+                finalTerm.Add(new AddOp(), hVal);
 
-            return final;
+            return finalTerm;
         }
     }
 }

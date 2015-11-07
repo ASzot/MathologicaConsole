@@ -28,17 +28,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             if (_root is AlgebraTerm)
             {
-                _root = (_root as AlgebraTerm).RemoveRedundancies();
+                _root = (_root as AlgebraTerm).RemoveRedundancies(false);
             }
 
-            var rootTerms = left.GetGroupPow(_root);
+            System.Collections.Generic.List<ExComp> rootTerms = left.GetGroupPow(_root);
             if (rootTerms == null || rootTerms.Count == 0)
                 return null;
 
-            var rootTerm = new AlgebraTerm();
-            foreach (var rt in rootTerms)
+            AlgebraTerm rootTerm = new AlgebraTerm();
+            foreach (ExComp rt in rootTerms)
             {
-                rootTerm = rootTerm + rt.ToAlgTerm();
+                rootTerm = AlgebraTerm.OpAdd(rootTerm, rt.ToAlgTerm());
             }
 
             if (!left.Contains(solveForComp))
@@ -49,35 +49,39 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                     return new NoSolutions();
             }
 
-            pEvalData.CheckSolutions = true;
+            pEvalData.SetCheckSolutions(true);
 
             CombineFractions(ref left, ref right, ref pEvalData);
 
             left = SubOp.StaticCombine(left, rootTerm).ToAlgTerm();
             right = SubOp.StaticCombine(right, rootTerm).ToAlgTerm();
 
-            pEvalData.WorkMgr.FromSides(left, right, "Isolate the radical term to the right side.");
+            pEvalData.GetWorkMgr().FromSides(left, right, "Isolate the radical term to the right side.");
 
             SimpleFraction fracPow = new SimpleFraction();
             if (!fracPow.Init(_root as AlgebraTerm))
                 return null;
 
             ExComp rootEx = fracPow.GetReciprocal();
-            if (!(rootEx is Number))
+            if (!(rootEx is ExNumber))
             {
                 pEvalData.AddFailureMsg("Cannot solve with the expression due to non integer roots");
                 return null;
             }
 
-            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM, "Raise both sides to the " + WorkMgr.STM + "{2}" + WorkMgr.EDM + " power.",
+            pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM, "Raise both sides to the " + WorkMgr.STM + "{2}" + WorkMgr.EDM + " power.",
                 PowOp.StaticWeakCombine(left, rootEx), PowOp.StaticWeakCombine(right, rootEx), rootEx);
 
-            left = PowOp.RaiseToPower(left, rootEx as Number, ref pEvalData).ToAlgTerm();
-            right = PowOp.RaiseToPower(right, rootEx as Number, ref pEvalData).ToAlgTerm();
+            left = PowOp.RaiseToPower(left, rootEx as ExNumber, ref pEvalData, true).ToAlgTerm();
+            right = PowOp.RaiseToPower(right, rootEx as ExNumber, ref pEvalData, true).ToAlgTerm();
 
-            pEvalData.WorkMgr.FromSides(left, right, "Simplify.");
+            if (right is Equation.Functions.PowerFunction)
+                return null;
 
-            return p_solver.SolveEq(solveFor, left, right, ref pEvalData);
+            pEvalData.GetWorkMgr().FromSides(left, right, "Simplify.");
+
+            ExComp agSolveResult = p_solver.SolveEq(solveFor, left, right, ref pEvalData);
+            return agSolveResult;
         }
     }
 }

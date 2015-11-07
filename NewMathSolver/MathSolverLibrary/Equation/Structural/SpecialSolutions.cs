@@ -28,7 +28,7 @@
 
     internal abstract class SpecialSolution : ExComp
     {
-        public override ExComp Clone()
+        public override ExComp CloneEx()
         {
             throw null;
         }

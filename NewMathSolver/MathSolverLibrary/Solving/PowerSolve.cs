@@ -13,12 +13,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
         public PowerSolve(AlgebraSolver pAgSolver, ExComp powerFor)
         {
             p_agSolver = pAgSolver;
-            _solveForPower = powerFor.Clone().ToAlgTerm();
+            _solveForPower = powerFor.CloneEx().ToAlgTerm();
         }
 
         public override ExComp SolveEquation(AlgebraTerm left, AlgebraTerm right, AlgebraVar solveFor, ref TermType.EvalData pEvalData)
         {
-            pEvalData.CheckSolutions = true;
+            pEvalData.SetCheckSolutions(true);
 
             AlgebraComp solveForComp = solveFor.ToAlgebraComp();
 
@@ -30,8 +30,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 left = right;
                 right = leftTmp;
 
-                if (pEvalData.NegDivCount != -1)
-                    pEvalData.NegDivCount++;
+                if (pEvalData.GetNegDivCount() != -1)
+                    pEvalData.SetNegDivCount(pEvalData.GetNegDivCount() + 1);
             }
 
             ConstantsToRight(ref left, ref right, solveForComp, ref pEvalData);
@@ -45,12 +45,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                     return new NoSolutions();
             }
             CombineFractions(ref left, ref right, ref pEvalData);
-            if (left.GroupCount != 1)
+            if (left.GetGroupCount() != 1)
             {
-                if (_solveForPower.IsSimpleFraction())
+                if (AdvAlgebraTerm.IsSimpleFraction(_solveForPower))
                 {
                     // We are dealing with simple radicals.
-                    return SolveMultipleRadicalEq(left, right, solveFor, ref pEvalData);
+                    ExComp radicalSolve = SolveMultipleRadicalEq(left, right, solveFor, ref pEvalData);
+                    return radicalSolve;
                 }
                 else
                 {
@@ -60,17 +61,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 }
             }
 
-            DivideByVariableCoeffs(ref left, ref right, solveForComp, ref pEvalData);
+            DivideByVariableCoeffs(ref left, ref right, solveForComp, ref pEvalData, false);
 
             // Get the reciprocal of the power.
-            ExComp tmp = left.RemoveRedundancies();
+            ExComp tmp = left.RemoveRedundancies(false);
             if (!(tmp is PowerFunction))
             {
                 return null;
             }
             PowerFunction powFunc = tmp as PowerFunction;
 
-            ExComp power = powFunc.Power;
+            ExComp power = powFunc.GetPower();
 
             // We can't be taking the root of the variable we are trying to solve for.
             if (power.ToAlgTerm().Contains(solveForComp))
@@ -83,57 +84,57 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             if (power is AlgebraTerm && (power as AlgebraTerm).ContainsOnlyFractions())
             {
                 AlgebraTerm powerTerm = power as AlgebraTerm;
-                var numDen = powerTerm.GetNumDenFrac();
+                AlgebraTerm[] numDen = powerTerm.GetNumDenFrac();
                 if (numDen == null)
                     return null;
                 reciprocalPow = AlgebraTerm.FromFraction(numDen[1], numDen[0]);
             }
             else
-                reciprocalPow = AlgebraTerm.FromFraction(Number.One, power);
+                reciprocalPow = AlgebraTerm.FromFraction(ExNumber.GetOne(), power);
 
-            if (power is Number)
+            if (power is ExNumber)
             {
-                Number nPower = power as Number;
+                ExNumber nPower = power as ExNumber;
                 string rootStr;
                 string rootName;
-                if (nPower == 2.0)
+                if (ExNumber.OpEqual(nPower, 2.0))
                 {
                     rootName = "square";
                     rootStr = "sqrt";
                 }
-                else if (nPower == 3.0)
+                else if (ExNumber.OpEqual(nPower, 3.0))
                 {
                     rootName = "cube";
-                    rootStr = "root(" + (power as Number).FinalToDispString() + ")";
+                    rootStr = "root(" + (power as ExNumber).FinalToDispString() + ")";
                 }
                 else
                 {
                     rootName = WorkMgr.STM + nPower.FinalToDispString() + WorkMgr.EDM + nPower.GetCountingPrefix();
-                    rootStr = "root(" + (power as Number).FinalToDispString() + ")";
+                    rootStr = "root(" + (power as ExNumber).FinalToDispString() + ")";
                 }
 
-                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + rootStr + "({0})=" + rootStr + "({1})" + WorkMgr.EDM, "Take the " +
+                pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + rootStr + "({0})=" + rootStr + "({1})" + WorkMgr.EDM, "Take the " +
                     rootName +
                     " root of both sides. " + WorkMgr.STM + "{2}" + WorkMgr.EDM + " results must exist", left, right, power);
 
                 // The powers should cancel.
                 left = PowOp.StaticCombine(left, reciprocalPow).ToAlgTerm();
 
-                ExComp tmpRight = PowOp.TakeRoot(right.RemoveRedundancies(), power as Number, ref pEvalData, true);
+                ExComp tmpRight = PowOp.TakeRoot(right.RemoveRedundancies(false), power as ExNumber, ref pEvalData, true);
                 if (tmpRight is AlgebraTermArray)
                 {
                     AlgebraTermArray rights = tmpRight as AlgebraTermArray;
-                    string[] descs = new string[rights.TermCount];
-                    for (int i = 0; i < rights.TermCount; ++i)
+                    string[] descs = new string[rights.GetTermCount()];
+                    for (int i = 0; i < rights.GetTermCount(); ++i)
                     {
-                        if (left.SubComps.Count == 1 && left.SubComps[0] is AlgebraComp)
+                        if (left.GetSubComps().Count == 1 && left.GetSubComps()[0] is AlgebraComp)
                             descs[i] = "Above is a solution for " + WorkMgr.STM + solveForComp.ToDispString() + WorkMgr.EDM + ".";
                         else
-                            descs[i] = "Solve with the found " + (i + 1).ToString() + (i + 1).GetCountingPrefix() + " root.";
+                            descs[i] = "Solve with the found " + (i + 1).ToString() + MathHelper.GetCountingPrefix((i + 1)) + " root.";
                     }
-                    rights.SolveDescs = descs;
+                    rights.SetSolveDescs(descs);
                     bool allSols;
-                    AlgebraTermArray solutions = rights.SimulSolve(left, solveFor, p_agSolver, ref pEvalData, out allSols);
+                    AlgebraTermArray solutions = rights.SimulSolve(left, solveFor, p_agSolver, ref pEvalData, out allSols, false);
                     if (allSols)
                         return new AllSolutions();
                     if (solutions == null)
@@ -143,66 +144,68 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 }
                 else
                 {
-                    pEvalData.WorkMgr.FromSides(left, tmpRight, "Simplify.");
+                    pEvalData.GetWorkMgr().FromSides(left, tmpRight, "Simplify.");
                     right = tmpRight.ToAlgTerm();
                 }
             }
             else
             {
-                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "({0})^({2})=({1})^({2})" + WorkMgr.EDM, "Raise both sides to the " + WorkMgr.STM + WorkMgr.ExFinalToAsciiStr(reciprocalPow) + WorkMgr.EDM + " power.", left, right, reciprocalPow);
+                pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "({0})^({2})=({1})^({2})" + WorkMgr.EDM, "Raise both sides to the " + WorkMgr.STM + WorkMgr.ToDisp(reciprocalPow) + WorkMgr.EDM + " power.", left, right, reciprocalPow);
 
                 // The powers should cancel.
                 left = PowOp.StaticCombine(left, reciprocalPow).ToAlgTerm();
 
                 right = PowOp.StaticCombine(right, reciprocalPow).ToAlgTerm();
 
-                pEvalData.WorkMgr.FromSides(left, right, "Simplify.");
+                pEvalData.GetWorkMgr().FromSides(left, right, "Simplify.");
             }
 
-            return p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+            ExComp finalSolveResult = p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+            return finalSolveResult;
         }
 
         private ExComp Solve_N_Group_2_Root_Eq(AlgebraTerm left, AlgebraTerm right, AlgebraVar solveFor,
             SimpleFraction solveForPowFrac, ref TermType.EvalData pEvalData)
         {
-            var groups = left.GetGroups();
+            System.Collections.Generic.List<ExComp[]> groups = left.GetGroups();
 
-            var subGroup = groups[1].ToAlgTerm();
+            AlgebraTerm subGroup = GroupHelper.ToAlgTerm(groups[1]);
 
-            pEvalData.WorkMgr.FromSubtraction(subGroup, left, right);
+            pEvalData.GetWorkMgr().FromSubtraction(subGroup, left, right);
 
-            left = left - subGroup;
-            right = right - subGroup;
+            left = AlgebraTerm.OpSub(left, subGroup);
+            right = AlgebraTerm.OpSub(right, subGroup);
 
-            pEvalData.WorkMgr.FromSides(left, right);
+            pEvalData.GetWorkMgr().FromSides(left, right);
 
-            if (!solveForPowFrac.Num.IsOne())
+            if (!solveForPowFrac.GetNum().IsOne())
             {
                 pEvalData.AddFailureMsg("Cannot deal with radical index.");
                 return null;
             }
 
-            if (solveForPowFrac.DenEx is Number)
+            if (solveForPowFrac.GetDenEx() is ExNumber)
             {
-                Number root = solveForPowFrac.DenEx as Number;
+                ExNumber root = solveForPowFrac.GetDenEx() as ExNumber;
 
-                pEvalData.WorkMgr.FromFormatted("`({1})^({0})=({2})^({0})`", "Raise both sides to the `{0}` power.", root, left, right);
+                pEvalData.GetWorkMgr().FromFormatted("`({1})^({0})=({2})^({0})`", "Raise both sides to the `{0}` power.", root, left, right);
 
-                left = left.RaiseToPow(root, ref pEvalData).ToAlgTerm();
-                right = right.RaiseToPow(root, ref pEvalData).ToAlgTerm();
+                left = AdvAlgebraTerm.RaiseToPow(left, root, ref pEvalData).ToAlgTerm();
+                right = AdvAlgebraTerm.RaiseToPow(right, root, ref pEvalData).ToAlgTerm();
 
-                pEvalData.WorkMgr.FromSides(left, right);
+                pEvalData.GetWorkMgr().FromSides(left, right);
 
-                pEvalData.WorkMgr.FromSubtraction(right, left, right);
+                pEvalData.GetWorkMgr().FromSubtraction(right, left, right);
 
-                left = SubOp.StaticCombine(left, right.Clone()).ToAlgTerm();
+                left = SubOp.StaticCombine(left, right.CloneEx()).ToAlgTerm();
 
                 left = left.RemoveZeros();
-                right = Number.Zero.ToAlgTerm();
+                right = ExNumber.GetZero().ToAlgTerm();
 
-                pEvalData.WorkMgr.FromSides(left, right);
+                pEvalData.GetWorkMgr().FromSides(left, right);
 
-                return p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+                ExComp agSolveResult = p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+                return agSolveResult;
             }
 
             pEvalData.AddFailureMsg("There is a variable power which can't be dealt with.");
@@ -211,7 +214,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
         private ExComp SolveMultipleRadicalEq(AlgebraTerm left, AlgebraTerm right, AlgebraVar solveFor, ref TermType.EvalData pEvalData)
         {
-            int groupCount = left.GroupCount;
+            int groupCount = left.GetGroupCount();
 
             SimpleFraction frac = new SimpleFraction();
             if (!frac.Init(_solveForPower))

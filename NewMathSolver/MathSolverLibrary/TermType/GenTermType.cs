@@ -1,30 +1,29 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
-using System.Collections.Generic;
 using System.Linq;
-using System;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
-    internal abstract class TermType
+    internal abstract class GenTermType
     {
         protected string[] _cmds = null;
-        private MultiLineHelper _multiLineHelper = null;
+        protected MultiLineHelper _multiLineHelper = null;
 
-        public int CmdCount
+        public int GetCmdCount()
         {
-            get { return _cmds.Length; }
+            return _cmds.Length;
         }
 
-        public TermType(params string[] cmds)
+        public GenTermType(params string[] cmds)
         {
             _cmds = cmds;
         }
 
-        public TermType()
+        public GenTermType()
         {
         }
 
-        public void AttachMultiLineHelper(MultiLineHelper mlh)
+        public virtual void AttachMultiLineHelper(MultiLineHelper mlh)
         {
             _multiLineHelper = mlh;
         }
@@ -42,7 +41,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (_cmds == null || cmdIndex < 0 || cmdIndex >= _cmds.Length)
                 return SolveResult.Failure();
 
-            return ExecuteCommand(_cmds[cmdIndex], ref pEvalData);
+            SolveResult executed = ExecuteCommand(_cmds[cmdIndex], ref pEvalData);
+            return executed;
         }
 
         public virtual string[] GetCommands()
@@ -52,7 +52,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
         public virtual bool IsValidCommand(string cmd)
         {
-            if (_cmds.Contains(cmd))
+            if (ArrayFunc.Contains(_cmds, cmd))
                 return true;
             return false;
         }

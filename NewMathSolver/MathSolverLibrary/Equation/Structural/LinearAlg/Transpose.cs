@@ -1,53 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
-using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
+﻿using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
-    class Transpose : AppliedFunction
+    internal class Transpose : AppliedFunction
     {
-        public Transpose(ExMatrix exMat)
+        public Transpose(ExComp exMat)
             : base(exMat, FunctionType.Transpose, typeof(Transpose))
         {
-
         }
 
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
-            ExMatrix mat = InnerEx as ExMatrix;
+            CallChildren(harshEval, ref pEvalData);
+
+            ExMatrix mat = GetInnerEx() as ExMatrix;
             if (mat == null)
-                return Number.Undefined;
+                return ExNumber.GetUndefined();
 
             return mat.Transpose();
         }
 
-        public override string FinalToAsciiKeepFormatting()
-        {
-            return InnerTerm.FinalToAsciiKeepFormatting() + "^{T}";
-        }
-
         public override string FinalToAsciiString()
         {
-            return InnerTerm.FinalToAsciiString() + "^{T}";
-        }
-
-        public override string FinalToTexKeepFormatting()
-        {
-            return InnerTerm.FinalToTexKeepFormatting() + "^{T}";
+            return GetInnerTerm().FinalToAsciiString() + "^{T}";
         }
 
         public override string FinalToTexString()
         {
-            return InnerTerm.FinalToTexString() + "^{T}";
+            return GetInnerTerm().FinalToTexString() + "^{T}";
         }
 
         public override string ToAsciiString()
         {
-            return InnerTerm.ToAsciiString() + "^{T}";
+            return GetInnerTerm().ToAsciiString() + "^{T}";
         }
 
         public override string ToTexString()

@@ -1,14 +1,16 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
+using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 using MathSolverWebsite.MathSolverLibrary.Equation.Term;
 using MathSolverWebsite.MathSolverLibrary.Parsing;
-using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
-    internal class SimplifyTermType : TermType
+    internal class SimplifyGenTermType : GenTermType
     {
         public const string KEY_SIMPLIFY = "Simplify";
         private AlgebraSolver _agSolver;
@@ -16,18 +18,18 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private PolynomialExt _numPolyInfo = null;
         private ExComp _term;
 
-        public SimplifyTermType()
+        public SimplifyGenTermType()
         {
             _cmds = new string[] { KEY_SIMPLIFY };
         }
 
-        public SimplifyTermType(ExComp term)
+        public SimplifyGenTermType(ExComp term)
         {
             _term = term;
             _agSolver = new AlgebraSolver();
         }
 
-        public SimplifyTermType(ExComp term, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar, Type startingType, bool isFuncDef = false)
+        public SimplifyGenTermType(ExComp term, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar, Type startingType, bool isFuncDef)
             : base()
         {
             _term = term;
@@ -43,8 +45,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                     _denPolyInfo = new PolynomialExt();
 
                     if (!_numPolyInfo.Init(numDen[0]) || !_denPolyInfo.Init(numDen[1]) ||
-                        _numPolyInfo.Info.Var == null || _denPolyInfo.Info.Var == null ||
-                        !_numPolyInfo.Info.Var.IsEqualTo(_denPolyInfo.Info.Var))
+                        _numPolyInfo.GetInfo().GetVar() == null || _denPolyInfo.GetInfo().GetVar() == null ||
+                        !_numPolyInfo.GetInfo().GetVar().IsEqualTo(_denPolyInfo.GetInfo().GetVar()))
                     {
                         _numPolyInfo = null;
                         _denPolyInfo = null;
@@ -52,16 +54,15 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 }
             }
 
-            List<string> solveVarKeys = (from solveVar in solveVars
-                                         select solveVar.Key).Distinct().ToList();
+            List<string> solveVarKeys = ArrayFunc.Distinct(solveVars);
 
             for (int i = 0; i < solveVarKeys.Count; ++i)
             {
                 if (solveVarKeys[i] == null)
-                    solveVarKeys.RemoveAt(i--);
+                    ArrayFunc.RemoveIndex(solveVarKeys, i--);
                 else if (solveVarKeys[i] == probSolveVar)
                 {
-                    solveVarKeys.RemoveAt(i);
+                    ArrayFunc.RemoveIndex(solveVarKeys, i);
                     break;
                 }
             }
@@ -77,9 +78,16 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (isFuncDef)
                 tmpCmds.Add(KEY_SIMPLIFY);
 
-            if (_numPolyInfo != null && _denPolyInfo != null && _numPolyInfo.MaxPow > _denPolyInfo.MaxPow)
+            if (_numPolyInfo != null && _denPolyInfo != null && _numPolyInfo.GetMaxPow() > _denPolyInfo.GetMaxPow())
             {
                 tmpCmds.Add("Divide");
+            }
+
+            if (term is SumFunction)
+            {
+                SumFunction sum = term as SumFunction;
+                if (sum.GetIsInfiniteSeries())
+                    tmpCmds.Add("Test for convergence");
             }
 
             if ((startingType != null && startingType != typeof(ExMatrix) && startingType != typeof(ExVector)) && !tmpCmds.Contains(KEY_SIMPLIFY))
@@ -93,8 +101,12 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 }
                 else
                 {
-                    tmpCmds.Add("Find inverse");
-                    tmpCmds.Add("Find determinant");
+                    ExMatrix mat = _term as ExMatrix;
+                    if (mat.GetIsSquare())
+                    {
+                        tmpCmds.Add("Find inverse");
+                        tmpCmds.Add("Find determinant");
+                    }
                     tmpCmds.Add("Transpose");
                 }
             }
@@ -102,13 +114,13 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (!tmpCmds.Contains(KEY_SIMPLIFY))
                 tmpCmds.Add(KEY_SIMPLIFY);
 
-            if (!(_term is ExMatrix) && _numPolyInfo == null && _denPolyInfo == null && !(term is AlgebraFunction) && 
+            if (!(_term is ExMatrix) && _numPolyInfo == null && _denPolyInfo == null && !(term is AlgebraFunction) &&
                 solveVarKeys.Count != 0)
                 tmpCmds.Add("Factor");
 
-            if (term is Number)
+            if (term is ExNumber)
             {
-                Number num = term as Number;
+                ExNumber num = term as ExNumber;
                 if (num.HasImaginaryComp())
                 {
                     tmpCmds.Add("To polar form");
@@ -130,7 +142,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                         tmpCmds.Add("Domain of " + solveVarKeys[i - 1]);
                 }
 
-                foreach (var solveKey in solveVarKeys)
+                foreach (string solveKey in solveVarKeys)
                 {
                     if (solveKey != null)
                         tmpCmds.Add("Derivative d/d" + solveKey);
@@ -153,11 +165,25 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _agSolver.CreateUSubTable(solveVars);
         }
 
-        public static ExComp BasicSimplify(ExComp term, ref EvalData pEvalData)
+        public override void AttachMultiLineHelper(MultiLineHelper mlh)
+        {
+            base.AttachMultiLineHelper(mlh);
+
+            if (_term == null && mlh.GetShouldGraph())
+            {
+                // Adjust to allow for graphing.
+                _cmds = new string[] { "Graph", KEY_SIMPLIFY };
+            }
+        }
+
+        public static ExComp BasicSimplify(ExComp term, ref EvalData pEvalData, bool factor)
         {
             AlgebraTerm tmpTerm = term.ToAlgTerm();
+
+            // Surround in AlgebraTerm body to ensure that all of the functions are called.
+            tmpTerm = new AlgebraTerm(tmpTerm);
             tmpTerm.CallFunctions(ref pEvalData);
-            term = tmpTerm.RemoveRedundancies();
+            term = tmpTerm.RemoveRedundancies(false);
 
             AlgebraTerm agTerm;
             if (term is AlgebraTerm)
@@ -165,8 +191,9 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 agTerm = term as AlgebraTerm;
 
                 agTerm = agTerm.ApplyOrderOfOperations();
-                agTerm = agTerm.WeakMakeWorkable().ToAlgTerm();
-                agTerm = Simplifier.AttemptCancelations(agTerm, ref pEvalData).ToAlgTerm();
+                agTerm = agTerm.WeakMakeWorkable(ref pEvalData).ToAlgTerm();
+                if (factor)
+                    agTerm = Simplifier.AttemptCancelations(agTerm, ref pEvalData).ToAlgTerm();
 
                 agTerm = agTerm.ApplyOrderOfOperations();
                 term = agTerm.MakeWorkable();
@@ -175,14 +202,14 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                     if ((term as AlgebraTerm).HasTrigFunctions())
                     {
                         // There are trig functions in this expression.
-                        term = (term as AlgebraTerm).TrigSimplify();
+                        term = AdvAlgebraTerm.TrigSimplify((term as AlgebraTerm), ref pEvalData);
                     }
                     term = (term as AlgebraTerm).CompoundFractions();
                 }
 
                 term = Equation.Functions.PowerFunction.FixFraction(term);
                 if (term is AlgebraTerm)
-                    term = (term as AlgebraTerm).RemoveRedundancies();
+                    term = (term as AlgebraTerm).RemoveRedundancies(false);
             }
 
             agTerm = term.ToAlgTerm();
@@ -191,22 +218,22 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             ExComp simpEx = Simplifier.Simplify(surroundedAgTerm, ref pEvalData);
 
             if (simpEx is AlgebraTerm)
-                simpEx = (simpEx as AlgebraTerm).RemoveRedundancies();
+                simpEx = (simpEx as AlgebraTerm).RemoveRedundancies(false);
             return simpEx;
         }
 
         public static SolveResult SimplfyTerm(ExComp term, ref EvalData pEvalData)
         {
-            if (Number.IsUndef(term))
-                return SolveResult.Simplified(Number.Undefined);
-            ExComp simpEx = BasicSimplify(term, ref pEvalData);
+            if (ExNumber.IsUndef(term))
+                return SolveResult.Simplified(ExNumber.GetUndefined());
+            ExComp simpEx = BasicSimplify(term, ref pEvalData, true);
 
             Solution solution;
 
             solution = new Solution(simpEx);
             if (simpEx is AlgebraTerm)
             {
-                ExComp harshSimpEx = Simplifier.HarshSimplify(simpEx.Clone() as AlgebraTerm, ref pEvalData);
+                ExComp harshSimpEx = Simplifier.HarshSimplify(simpEx.CloneEx() as AlgebraTerm, ref pEvalData, true);
                 if (!harshSimpEx.IsEqualTo(simpEx))
                 {
                     // Display the harsh simplified equation as well.
@@ -214,7 +241,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 }
             }
             else if (simpEx is Constant)
-                solution.ApproximateResult = (simpEx as Constant).Value;
+                solution.ApproximateResult = (simpEx as Constant).GetValue();
 
             return solution.ToSolveResult();
         }
@@ -230,23 +257,25 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             {
                 if (_term == null)
                     return SolveResult.Solved();
-                return SimplfyTerm(_term.Clone(), ref pEvalData);
+                return SimplfyTerm(_term.CloneEx(), ref pEvalData);
             }
             else if (command == "To polar form")
             {
-                Number num = _term as Number;
+                ExNumber num = _term as ExNumber;
                 if (num == null)
                     return SolveResult.Failure();
 
-                return SolveResult.Simplified(num.ToPolarForm(ref pEvalData));
+                SolveResult polarResult = SolveResult.Simplified(num.ToPolarForm(ref pEvalData));
+                return polarResult;
             }
             else if (command == "To exponential form")
             {
-                Number num = _term as Number;
+                ExNumber num = _term as ExNumber;
                 if (num == null)
                     return SolveResult.Failure();
 
-                return SolveResult.Simplified(num.ToExponentialForm(ref pEvalData));
+                SolveResult expResult = SolveResult.Simplified(num.ToExponentialForm(ref pEvalData));
+                return expResult;
             }
             else if (command == "Normalize")
             {
@@ -254,7 +283,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 if (vec == null)
                     return SolveResult.Failure();
 
-                return SolveResult.SimplifiedCalcApprox(vec.Normalize(), ref pEvalData);
+                SolveResult normResult = SolveResult.SimplifiedCalcApprox(vec.Normalize(), ref pEvalData);
+                return normResult;
             }
             else if (command == "Find determinant")
             {
@@ -264,7 +294,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
                 Determinant det = new Determinant(mat);
 
-                return SolveResult.SimplifiedCalcApprox(det.Evaluate(false, ref pEvalData), ref pEvalData);
+                SolveResult detResult = SolveResult.SimplifiedCalcApprox(det.Evaluate(false, ref pEvalData), ref pEvalData);
+                return detResult;
             }
             else if (command == "Find inverse")
             {
@@ -290,9 +321,9 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             }
             else if (command == "Factor")
             {
-                ExComp factorized = _term.Clone().ToAlgTerm().FactorizeTerm(ref pEvalData);
+                ExComp factorized = AdvAlgebraTerm.FactorizeTerm(_term.CloneEx().ToAlgTerm(), ref pEvalData, true);
                 if (factorized is AlgebraTerm)
-                    factorized = (factorized as AlgebraTerm).RemoveRedundancies();
+                    factorized = (factorized as AlgebraTerm).RemoveRedundancies(false);
 
                 return SolveResult.Simplified(factorized);
             }
@@ -301,40 +332,63 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 string varForKey = command.Substring("Derivative d/d".Length, command.Length - "Derivative d/d".Length);
 
                 Equation.Functions.Calculus.Derivative deriv = new Equation.Functions.Calculus.Derivative(_term);
-                deriv.WithRespectTo = new AlgebraComp(varForKey);
+                deriv.SetWithRespectTo(new AlgebraComp(varForKey));
 
-                return SolveResult.Simplified(deriv.Evaluate(false, ref pEvalData));
+                SolveResult derivResult = SolveResult.Simplified(deriv.Evaluate(false, ref pEvalData));
+                return derivResult;
             }
             else if (command == "Condense logs")
             {
-                return SolveResult.Simplified(_term.ToAlgTerm().CompoundLogs());
+                return SolveResult.Simplified(AdvAlgebraTerm.CompoundLogs(_term.ToAlgTerm(), null));
             }
             else if (command == "Expand logs")
             {
-                return SolveResult.Simplified(_term.ToAlgTerm().ExpandLogs());
+                return SolveResult.Simplified(AdvAlgebraTerm.ExpandLogs(_term.ToAlgTerm()));
             }
             else if (command == "Divide" && _numPolyInfo != null && _denPolyInfo != null)
             {
                 ExComp divided = Equation.Operators.DivOp.AttemptPolyDiv(_numPolyInfo.Clone(), _denPolyInfo.Clone(), ref pEvalData);
-                return SolveResult.Simplified(divided);
+                if (divided != null)
+                    return SolveResult.Simplified(divided);
+                else
+                    return SolveResult.Failure();
             }
             else if (command.StartsWith("Domain of "))
             {
                 string varForKey = command.Substring("Domain of ".Length, command.Length - "Domain of ".Length);
                 AlgebraVar varFor = new AlgebraVar(varForKey);
 
-                return _agSolver.CalculateDomain(_term, varFor, ref pEvalData);
+                SolveResult domainResult = _agSolver.CalculateDomain(_term, varFor, ref pEvalData);
+                return domainResult;
             }
             else if (command == "Graph")
             {
+                if (_term == null && _multiLineHelper.GetShouldGraph())
+                {
+                    pEvalData.AttemptSetGraphData(_multiLineHelper.GetGraphStrs(), _multiLineHelper.GetGraphVar());
+                    return SolveResult.Solved();
+                }
                 string graphStr = _term.ToAlgTerm().GetAllAlgebraCompsStr()[0];
                 if (pEvalData.AttemptSetGraphData(_term, graphStr))
                     return SolveResult.Solved();
                 else
                     return SolveResult.Failure();
             }
+            else if (command == "Test for convergence")
+            {
+                SumFunction sum = _term as SumFunction;
+                ExComp result = null;
+                bool? converges = sum.Converges(ref pEvalData, out result);
+                if (converges == null)
+                    return SolveResult.Failure("Cannot determine convergence or divergence", ref pEvalData);
 
-            return SolveResult.InvalidCmd(ref pEvalData);
+                pEvalData.AddMsg(converges.Value ? "Converges" : "Diverges");
+
+                return result == null ? SolveResult.Solved() : SolveResult.Simplified(result);
+            }
+
+            SolveResult invalidResult = SolveResult.InvalidCmd(ref pEvalData);
+            return invalidResult;
         }
 
         public void SetToSimpOnly()

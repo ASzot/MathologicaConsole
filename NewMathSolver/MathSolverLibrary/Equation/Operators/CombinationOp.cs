@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
+﻿namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 {
-    class CombinationOp : AgOp
+    internal class CombinationOp : AgOp
     {
-        public override ExComp Clone()
+        public override ExComp CloneEx()
         {
             return new PermutationOp();
         }

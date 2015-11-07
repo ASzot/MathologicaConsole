@@ -17,7 +17,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
         public override ExComp SolveEquation(AlgebraTerm left, AlgebraTerm right, AlgebraVar solveFor, ref TermType.EvalData pEvalData)
         {
-            pEvalData.CheckSolutions = true;
+            pEvalData.SetCheckSolutions(true);
 
             AlgebraComp solveForComp = solveFor.ToAlgebraComp();
 
@@ -33,42 +33,43 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                     return new NoSolutions();
             }
             CombineFractions(ref left, ref right, ref pEvalData);
-            DivideByVariableCoeffs(ref left, ref right, solveForComp, ref pEvalData);
+            DivideByVariableCoeffs(ref left, ref right, solveForComp, ref pEvalData, false);
 
             pEvalData.AttemptSetInputType(TermType.InputType.AbsoluteValue);
 
-            if (left.GroupCount == 1)
+            if (left.GetGroupCount() == 1)
             {
-                AbsValFunction absValFunc = left.RemoveRedundancies() as AbsValFunction;
+                AbsValFunction absValFunc = left.RemoveRedundancies(false) as AbsValFunction;
                 if (absValFunc == null)
                 {
                     pEvalData.AddFailureMsg("Couldn't solve absolute value equation.");
                     return null;
                 }
 
-                ExComp rightEx = right.RemoveRedundancies();
-                if (rightEx is Number && !(rightEx as Number).HasImaginaryComp() && (rightEx as Number) < -1.0)
+                ExComp rightEx = right.RemoveRedundancies(false);
+                if (rightEx is ExNumber && !(rightEx as ExNumber).HasImaginaryComp() && ExNumber.OpLT((rightEx as ExNumber), -1.0))
                 {
-                    pEvalData.WorkMgr.FromSides(left, right, "An absolute value will never equal a negative number. So there are no solutions to this equation.");
+                    pEvalData.GetWorkMgr().FromSides(left, right, "An absolute value will never equal a negative number. So there are no solutions to this equation.");
                     return new NoSolutions();
                 }
 
-                AlgebraTerm innerTerm = absValFunc.InnerTerm;
+                AlgebraTerm innerTerm = absValFunc.GetInnerTerm();
                 if (right.IsZero())
                 {
-                    pEvalData.WorkMgr.FromSides(left, right, "The absolute value has no effect as it equals zero which is neither positive or negative.");
-                    return p_agSolver.Solve(solveFor, innerTerm, right, ref pEvalData);
+                    pEvalData.GetWorkMgr().FromSides(left, right, "The absolute value has no effect as it equals zero which is neither positive or negative.");
+                    ExComp agSolved = p_agSolver.Solve(solveFor, innerTerm, right, ref pEvalData);
+                    return agSolved;
                 }
                 AlgebraTerm solve1 = right;
-                AlgebraTerm solve2 = MulOp.StaticCombine(Number.NegOne, right).ToAlgTerm();
+                AlgebraTerm solve2 = MulOp.StaticCombine(ExNumber.GetNegOne(), right).ToAlgTerm();
 
-                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}=\\pm({1})" + WorkMgr.EDM, "The absolute value function allows the right hand side to be both positive and negative.", absValFunc, right);
+                pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "{0}=\\pm({1})" + WorkMgr.EDM, "The absolute value function allows the right hand side to be both positive and negative.", absValFunc, right);
 
                 AlgebraTermArray termArray = new AlgebraTermArray(solve1, solve2);
-                string[] solveDescs = { "Solve for the positive case.", "Solve for the negative case" };
-                termArray.SolveDescs = solveDescs;
+                string[] solveDescs = new string[] { "Solve for the positive case.", "Solve for the negative case" };
+                termArray.SetSolveDescs(solveDescs);
                 bool allSols;
-                AlgebraTermArray solvedTermArray = termArray.SimulSolve(innerTerm, solveFor, p_agSolver, ref pEvalData, out allSols);
+                AlgebraTermArray solvedTermArray = termArray.SimulSolve(innerTerm, solveFor, p_agSolver, ref pEvalData, out allSols, false);
                 if (allSols)
                     return new AllSolutions();
                 if (solvedTermArray == null)
@@ -76,30 +77,28 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
                 return solvedTermArray;
             }
-            else if (left.GroupCount == 2 && right.IsZero())
+            else if (left.GetGroupCount() == 2 && right.IsZero())
             {
                 List<ExComp[]> groups = left.GetGroups();
-                AlgebraTerm groupTerm0 = groups[0].ToAlgTerm();
-                AlgebraTerm groupTerm1 = groups[1].ToAlgTerm();
+                AlgebraTerm groupTerm0 = GroupHelper.ToAlgTerm(groups[0]);
+                AlgebraTerm groupTerm1 = GroupHelper.ToAlgTerm(groups[1]);
                 groupTerm1 = MulOp.Negate(groupTerm1).ToAlgTerm();
 
-                groupTerm0 = groupTerm0.AbsValToParas();
-                groupTerm1 = groupTerm1.AbsValToParas();
+                groupTerm0 = AdvAlgebraTerm.AbsValToParas(groupTerm0);
+                groupTerm1 = AdvAlgebraTerm.AbsValToParas(groupTerm1);
 
                 // Solve when one is negative and when they are both positive.
 
-                pEvalData.WorkMgr.FromSides(left, right, "Solve when one of the absolute values is negative and when they are both positive.");
+                pEvalData.GetWorkMgr().FromSides(left, right, "Solve when one of the absolute values is negative and when they are both positive.");
 
                 AlgebraTerm solve1 = groupTerm1;
                 AlgebraTerm solve2 = MulOp.Negate(groupTerm1).ToAlgTerm();
 
                 AlgebraTermArray termArray = new AlgebraTermArray(solve1, solve2);
                 bool allSols;
-                AlgebraTermArray solvedArray = termArray.SimulSolve(groupTerm0, solveFor, p_agSolver, ref pEvalData, out allSols);
+                AlgebraTermArray solvedArray = termArray.SimulSolve(groupTerm0, solveFor, p_agSolver, ref pEvalData, out allSols, false);
                 if (allSols)
                     return new AllSolutions();
-                if (solvedArray == null)
-                    return null;
 
                 return solvedArray;
             }

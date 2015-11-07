@@ -1,55 +1,60 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
 using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
-using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
+using MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus;
 using MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector;
 using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
+using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
+using MathSolverWebsite.MathSolverLibrary.TermType;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Lexeme = MathSolverWebsite.MathSolverLibrary.TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>;
-using LexemeTable = System.Collections.Generic.List<
-MathSolverWebsite.MathSolverLibrary.TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>>;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.Parsing
 {
-    
-
     internal class LexicalParser
     {
-        private TermType.EvalData p_EvalData;
-        private Dictionary<string, LexemeTable> _vectorStore = new Dictionary<string, LexemeTable>();
-        private Dictionary<string, List<LexemeTable>> _funcStore = new Dictionary<string, List<LexemeTable>>();
-        private int _vecStoreIndex = 0;
-        private bool _fixIntegrals = true;
         private const string MATH_EMPTY_GP = "EMPTYGP";
 
-        public const string IDEN_MATCH = @"alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|rho|sigma|tau|usilon|phi|varphi|" +
-                "chi|psi|omega|Gamma|Theta|Lambda|Xi|Phsi|Psi|Omega|[a-zA-Z]";
+        public const string IDEN_MATCH =
+            @"alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|rho|sigma|tau|usilon|phi|varphi|" +
+            "chi|psi|omega|Gamma|Theta|Lambda|Xi|Phsi|Psi|Omega|Sigma|[a-zA-Z]";
 
         public const string NUM_MATCH = @"((?<![\d])\.[\d]+)|([\d]+([.][\d]+)?)";
-
+        public const string INF_MATCH = @"inf";
         public const string OPTIONAL_REALIMAG_NUM_PATTERN = @"^(-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?$";
         public const string REAL_NUM_PATTERN = @"-?[\d]+([.,][\d]+)?";
-        public const string REALIMAG_FRAC_NUM_PATTERN = @"^-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?(\/-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?)?$";
+
+        public const string REALIMAG_FRAC_NUM_PATTERN =
+            @"^-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?(\/-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?)?$";
+
         public const string REALIMAG_NUM_PATTERN = @"^-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?$";
-        public const string REALIMAG_OPPOW_NUM_PATTERN = @"^-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?(\^\(-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?\))?$";
+
+        public const string REALIMAG_OPPOW_NUM_PATTERN =
+            @"^-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?(\^\(-?[\d]+([.,][\d]+)?((\+|\-)i[0-9])?\))?$";
 
         public const int DIFF_RULE_INDEX = 24;
+        private readonly List<string> _definedFuncs = new List<string>();
 
-        private TypePair<string, LexemeType>[] _rulesets =
+        private readonly TypePair<string, LexemeType>[] _rulesets =
+            new TypePair<string, LexemeType>[]
         {
-            new TypePair<string, LexemeType>(@"\+|\-|\^|\/|\*|circ|text\(P\)|text\(C\)|" + CrossProductOp.IDEN, LexemeType.Operator),
+            new TypePair<string, LexemeType>(@"\+|\-|\^|\/|\*|circ|text\(P\)|text\(C\)|" + CrossProductOp.IDEN,
+                LexemeType.Operator),
             new TypePair<string, LexemeType>(@"\=", LexemeType.EqualsOp),
             new TypePair<string, LexemeType>(@"i", LexemeType.I_Number),
             new TypePair<string, LexemeType>(@"pi|e", LexemeType.Constant),
             new TypePair<string, LexemeType>(@"\(", LexemeType.StartPara),
             new TypePair<string, LexemeType>(@"\)", LexemeType.EndPara),
-            new TypePair<string, LexemeType>("(?<!lo)((" + IDEN_MATCH + ")((_((" + IDEN_MATCH + ")|(" + NUM_MATCH + ")))|((_\\((.+?)\\))))?)", LexemeType.Identifier),
+            new TypePair<string, LexemeType>(
+                "(?<!lo)((" + IDEN_MATCH + ")((_((" + IDEN_MATCH + ")|(" + NUM_MATCH + ")))|)?)", LexemeType.Identifier),
             new TypePair<string, LexemeType>("(" + IDEN_MATCH + @")\((" + IDEN_MATCH + @")\)", LexemeType.FunctionDef),
             new TypePair<string, LexemeType>(NUM_MATCH, LexemeType.Number),
-            new TypePair<string, LexemeType>(@"\!|asin|arcsin|acos|arccos|atan|arctan|acsc|arccsc|asec|arcsec|acot|arccot|sin|cos|tan|csc|sec|cot|log_|log|ln|" + 
-                "sqrt|root|frac|det|div|curl|nabla*|nabla" + CrossProductOp.IDEN + "|nabla|binom|vectora|vectorb|vectorb", LexemeType.Function),
+            new TypePair<string, LexemeType>(
+                @"\!|asin|arcsin|acos|arccos|atan|arctan|acsc|arccsc|asec|arcsec|acot|arccot|sin|cos|tan|csc|sec|cot|log_|log|ln|" +
+                "sqrt|root|frac|det|div|curl|nabla*|nabla" + CrossProductOp.IDEN +
+                "|nabla|binom|vectora|vectorb|vectorb", LexemeType.Function),
             new TypePair<string, LexemeType>(@"\[", LexemeType.StartBracket),
             new TypePair<string, LexemeType>(@"\]", LexemeType.EndBracket),
             new TypePair<string, LexemeType>(@"\|", LexemeType.Bar),
@@ -59,61 +64,47 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             new TypePair<string, LexemeType>(@"<", LexemeType.Less),
             new TypePair<string, LexemeType>(@"<=", LexemeType.LessEqual),
             new TypePair<string, LexemeType>(@",", LexemeType.Comma),
-            new TypePair<string, LexemeType>(MathSolver.PLAIN_TEXT ? 
-                                             @"\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\/\(((partial)|d)(" + IDEN_MATCH + @")(\^(" + NUM_MATCH + @"))?\)" :
-                                             @"frac\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\(((partial)|d)(" + IDEN_MATCH + @")(\^(" + NUM_MATCH + @"))?\)",
-                                             LexemeType.Derivative),
-            new TypePair<string, LexemeType>("(" + IDEN_MATCH + @")(((\')+)|((\^((" + NUM_MATCH + @")|(" + IDEN_MATCH + @")))\((" + IDEN_MATCH + @")\)))", LexemeType.FuncDeriv),
-            new TypePair<string, LexemeType>(@"sum_\((" + IDEN_MATCH + ")=", 
-                                             LexemeType.Summation),
-			new TypePair<string, LexemeType>(@"lim_\((" + IDEN_MATCH + @")to(\-)?((inf)|(" + NUM_MATCH + @")|(" + IDEN_MATCH + @"))\)", 
-                                             LexemeType.Limit),
-            new TypePair<string, LexemeType>(@"(int_\()|(int)", LexemeType.Integral),
+            new TypePair<string, LexemeType>(MathSolver.PLAIN_TEXT
+                ? @"\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\/\(((partial)|d)(" + IDEN_MATCH +
+                  @")(\^(" + NUM_MATCH + @"))?\)"
+                : @"frac\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\(((partial)|d)(" + IDEN_MATCH +
+                  @")(\^(" + NUM_MATCH + @"))?\)",
+                LexemeType.Derivative),
+            new TypePair<string, LexemeType>(
+                "(" + IDEN_MATCH + @")(((\')+)|((\^((" + NUM_MATCH + @")|(" + IDEN_MATCH + @")))\((" + IDEN_MATCH +
+                @")\)))", LexemeType.FuncDeriv),
+            new TypePair<string, LexemeType>(@"sum_\((" + IDEN_MATCH + ")=",
+                LexemeType.Summation),
+            new TypePair<string, LexemeType>(@"lim_\((" + IDEN_MATCH + @")to",
+                LexemeType.Limit),
+            new TypePair<string, LexemeType>(@"(oint_)|(int_)|(int)", LexemeType.Integral),
             new TypePair<string, LexemeType>(@"\$d(" + IDEN_MATCH + @")", LexemeType.Differential),
-            new TypePair<string, LexemeType>(@"inf", LexemeType.Infinity),
-            new TypePair<string, LexemeType>(@"(sum)|(lim)", LexemeType.ErrorType),
+            new TypePair<string, LexemeType>(INF_MATCH, LexemeType.Infinity),
+            new TypePair<string, LexemeType>(@"(sum)|(lim)", LexemeType.ErrorType)
         };
 
-        private class MatchTolken
-        {
-            public int Length;
-            public int Index;
-            public string Value;
+        private bool _fixIntegrals = true;
+        private Dictionary<string, List<List<TypePair<LexemeType,string>>>> _funcStore = new Dictionary<string, List<List<TypePair<LexemeType,string>>>>();
+        private int _vecStoreIndex;
+        private Dictionary<string, List<TypePair<LexemeType,string>>> _vectorStore = new Dictionary<string, List<TypePair<LexemeType,string>>>();
+        private EvalData p_EvalData;
 
-            public MatchTolken(int length, int index, string value)
-            {
-                Length = length;
-                Index = index;
-                Value = value;
-            }
-
-            public MatchTolken(Match match)
-                : this(match.Length, match.Index, match.Value)
-            {
-
-            }
-
-            public override string ToString()
-            {
-                return Value;
-            }
-        }
-
-        public LexicalParser(TermType.EvalData pEvalData)
+        public LexicalParser(EvalData pEvalData)
         {
             p_EvalData = pEvalData;
         }
 
         private void ResetDiffParsing()
         {
-            _rulesets[DIFF_RULE_INDEX] = new TypePair<string, LexemeType>(@"\$d(" + IDEN_MATCH + @")", LexemeType.Differential);
+            _rulesets[DIFF_RULE_INDEX] = new TypePair<string, LexemeType>(@"\$d(" + IDEN_MATCH + @")",
+                LexemeType.Differential);
         }
 
-        public static LexemeTable CompoundLexemeTable(LexemeTable lt0, LexemeTable lt1)
+        public static List<TypePair<LexemeType,string>> CompoundLexemeTable(List<TypePair<LexemeType,string>> lt0, List<TypePair<LexemeType,string>> lt1)
         {
-            LexemeTable finalTable = new LexemeTable();
+            List<TypePair<LexemeType,string>> finalTable = new List<TypePair<LexemeType,string>>();
             finalTable.AddRange(lt0);
-            finalTable.Add(new Lexeme(LexemeType.EqualsOp, "="));
+            finalTable.Add(new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.EqualsOp, "="));
             finalTable.AddRange(lt1);
 
             return finalTable;
@@ -126,30 +117,31 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             List<TypePair<LexemeType, MatchTolken>> tolkenMatches = new List<TypePair<LexemeType, MatchTolken>>();
             foreach (TypePair<string, LexemeType> rulset in _rulesets)
             {
-                MatchCollection matches = Regex.Matches(inputStr, rulset.Data1);
+                MatchCollection matches = TypeHelper.Matches(inputStr, rulset.GetData1());
                 foreach (Match match in matches)
-                    tolkenMatches.Add(new TypePair<LexemeType, MatchTolken>(rulset.Data2, new MatchTolken(match)));
+                    tolkenMatches.Add(new TypePair<LexemeType, MatchTolken>(rulset.GetData2(), new MatchTolken(match)));
             }
 
-            tolkenMatches = (from t in tolkenMatches
-                             orderby t.Data2.Index
-                             select t).ToList();
+            IEnumerable<TypePair<LexemeType, MatchTolken>> tmpTolkenMatches = (from t in tolkenMatches
+                             orderby t.GetData2().Index
+                             select t);
 
+            tolkenMatches = tmpTolkenMatches.ToList();
 
             for (int i = 0; i < tolkenMatches.Count; ++i)
             {
-                var tolkenMatch = tolkenMatches[i];
+                TypePair<LexemeType, MatchTolken> tolkenMatch = tolkenMatches[i];
 
-                if (tolkenMatch.Data1 == LexemeType.Identifier && tolkenMatch.Data2.Value.Contains("=") && tolkenMatch.Data2.Value.Contains("="))
+                if (tolkenMatch.GetData1() == LexemeType.Identifier && tolkenMatch.GetData2().Value.Contains("=") &&
+                    tolkenMatch.GetData2().Value.Contains("="))
                 {
-                    string splitVal = tolkenMatch.Data2.Value.Split('_')[0];
-                    tolkenMatches[i].Data2 = new MatchTolken(splitVal.Length, 
-                        tolkenMatch.Data2.Index, splitVal);
-
+                    string splitVal = tolkenMatch.GetData2().Value.Split('_')[0];
+                    tolkenMatches[i].SetData2(new MatchTolken(splitVal.Length,
+                        tolkenMatch.GetData2().Index, splitVal));
                 }
-                else if (tolkenMatch.Data1 == LexemeType.Integral)
+                else if (tolkenMatch.GetData1() == LexemeType.Integral)
                 {
-                    string tolkenStr = tolkenMatch.Data2.Value;
+                    string tolkenStr = tolkenMatch.GetData2().Value;
 
                     if (tolkenStr.EndsWith("("))
                     {
@@ -157,17 +149,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         int endIndex = -1;
                         int depth = 1;
 
-                        int minIndex = tolkenMatch.Data2.Index + tolkenMatch.Data2.Length;
+                        int minIndex = tolkenMatch.GetData2().Index + tolkenMatch.GetData2().Length;
 
                         for (int j = i + 1; j < tolkenMatches.Count; ++j)
                         {
-                            var compareTolken = tolkenMatches[j];
-                            if (compareTolken.Data2.Index < minIndex)
+                            TypePair<LexemeType, MatchTolken> compareTolken = tolkenMatches[j];
+                            if (compareTolken.GetData2().Index < minIndex)
                             {
-                                tolkenMatches.RemoveAt(j--);
+                                ArrayFunc.RemoveIndex(tolkenMatches, j--);
                                 continue;
                             }
-                            if (compareTolken.Data2.Value == ")")
+                            if (compareTolken.GetData2().Value == ")")
                             {
                                 depth--;
                                 if (depth == 0)
@@ -176,52 +168,56 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                                     break;
                                 }
                             }
-                            else if (compareTolken.Data2.Value == "(")
+                            else if (compareTolken.GetData2().Value == "(")
                                 depth++;
                         }
 
                         if (endIndex == -1)
                             return null;
 
-                        var tolkenRange = tolkenMatches.GetRange(i + 1, endIndex - i);
+                        List<TypePair<LexemeType, MatchTolken>> tolkenRange = tolkenMatches.GetRange(i + 1, endIndex - i);
                         tolkenMatches.RemoveRange(i + 1, endIndex - i);
                         for (int j = 0; j < tolkenRange.Count; ++j)
                         {
-                            var tolken = tolkenRange[j];
+                            TypePair<LexemeType, MatchTolken> tolken = tolkenRange[j];
                             for (int k = 0; k < tolkenRange.Count; ++k)
                             {
                                 if (j == k)
                                     continue;
-                                var compTolken = tolkenRange[k];
-                                if (tolken.Data2.Index <= compTolken.Data2.Index && 
-                                    (tolken.Data2.Length + tolken.Data2.Index) >= (compTolken.Data2.Index + compTolken.Data2.Length))
+                                TypePair<LexemeType, MatchTolken> compTolken = tolkenRange[k];
+                                if (tolken.GetData2().Index <= compTolken.GetData2().Index &&
+                                    (tolken.GetData2().Length + tolken.GetData2().Index) >=
+                                    (compTolken.GetData2().Index + compTolken.GetData2().Length))
                                 {
-                                    tolkenRange.RemoveAt(k--);
+                                    ArrayFunc.RemoveIndex(tolkenRange, k--);
                                     if (k < j)
                                         j--;
-                                    continue;
                                 }
                             }
                         }
 
                         string addStr = "";
-                        foreach (var tolken in tolkenRange)
+                        foreach (TypePair<LexemeType, MatchTolken> tolken in tolkenRange)
                         {
-                            addStr += tolken.Data2.Value;
+                            addStr += tolken.GetData2().Value;
                         }
 
-                        tolkenMatches[i].Data2.Value += addStr;
+                        tolkenMatches[i].GetData2().Value += addStr;
                     }
                 }
             }
 
-
             List<TypePair<LexemeType, MatchTolken>> tolkensToRemove = new List<TypePair<LexemeType, MatchTolken>>();
             for (int i = 0; i < tolkenMatches.Count; ++i)
             {
-                var tolken = tolkenMatches[i];
-                int length = tolken.Data2.Length;
-                int startIndex = tolken.Data2.Index;
+                TypePair<LexemeType, MatchTolken> tolken = tolkenMatches[i];
+                int length = tolken.GetData2().Length;
+                int startIndex = tolken.GetData2().Index;
+
+                // Check if the index checking against is already to be removed.
+                if (tolkensToRemove.Contains(tolkenMatches[i]))
+                    continue;
+
                 if (length > 1)
                 {
                     // This could be a more abstract description.
@@ -234,10 +230,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         {
                             if (k == i)
                                 continue;
-                            var compareTolken = tolkenMatches[k];
-                            if (compareTolken.Data2.Index == index &&
-                                !((compareTolken.Data1 == LexemeType.FunctionDef || compareTolken.Data1 == LexemeType.Derivative) &&
-                                compareTolken.Data2.Value.StartsWith("g(")))
+
+                            TypePair<LexemeType, MatchTolken> compareTolken = tolkenMatches[k];
+
+                            if (tolken.GetData2().Index + tolken.GetData2().Length >= compareTolken.GetData2().Index &&
+                                tolken.GetData1() == LexemeType.Integral && compareTolken.GetData1() == LexemeType.Identifier &&
+                                compareTolken.GetData2().Value.Contains("t_"))
+                            {
+                                // This was a mismatched lexeme.
+                                string idenStr = compareTolken.GetData2().Value.Split('_')[1];
+                                if (!Regex.IsMatch(idenStr, NUM_MATCH) && !Regex.IsMatch(idenStr, INF_MATCH))
+                                {
+                                    tolkenMatches[k] = new TypePair<LexemeType, MatchTolken>(LexemeType.Identifier,
+                                        new MatchTolken(idenStr.Length, tolken.GetData2().Index + 1, idenStr));
+                                    continue;
+                                }
+                            }
+
+                            if (compareTolken.GetData2().Index == index &&
+                                !((compareTolken.GetData1() == LexemeType.FunctionDef ||
+                                   compareTolken.GetData1() == LexemeType.Derivative) &&
+                                  compareTolken.GetData2().Value.StartsWith("g(")))
                             {
                                 tolkensToRemove.Add(compareTolken);
                                 break;
@@ -253,17 +266,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             // Remove any variable 'e' occurances and replace with the constant 'e'.
             for (int i = 0; i < tolkenMatches.Count; ++i)
             {
-                var tolkenMatch = tolkenMatches[i];
-                if (tolkenMatch.Data1 == LexemeType.Constant && tolkenMatch.Data2.Value == "e")
+                TypePair<LexemeType, MatchTolken> tolkenMatch = tolkenMatches[i];
+                if (tolkenMatch.GetData1() == LexemeType.Constant && tolkenMatch.GetData2().Value == "e")
                 {
                     // Is there an identifier with this same index?
                     for (int j = 0; j < tolkenMatches.Count; ++j)
                     {
                         if (j == i)
                             continue;
-                        var compareTolkenMatch = tolkenMatches[j];
-                        if (compareTolkenMatch.Data1 == LexemeType.Identifier && compareTolkenMatch.Data2.Value == "e"
-                            && compareTolkenMatch.Data2.Index == tolkenMatch.Data2.Index)
+                        TypePair<LexemeType, MatchTolken> compareTolkenMatch = tolkenMatches[j];
+                        if (compareTolkenMatch.GetData1() == LexemeType.Identifier && compareTolkenMatch.GetData2().Value == "e"
+                            && compareTolkenMatch.GetData2().Index == tolkenMatch.GetData2().Index)
                         {
                             tolkensToRemove.Add(compareTolkenMatch);
                             break;
@@ -274,18 +287,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
             for (int i = 0; i < tolkenMatches.Count; ++i)
             {
-                var tolkenMatch = tolkenMatches[i];
+                TypePair<LexemeType, MatchTolken> tolkenMatch = tolkenMatches[i];
                 // Is there another token out there which has the same index?
-                if (tolkenMatch.Data1 == LexemeType.I_Number && tolkenMatch.Data2.Value == "i")
+                if (tolkenMatch.GetData1() == LexemeType.I_Number && tolkenMatch.GetData2().Value == "i")
                 {
                     for (int j = 0; j < tolkenMatches.Count; ++j)
                     {
                         if (j == i)
                             continue;
 
-                        var compareTolkenMatch = tolkenMatches[j];
-                        if (compareTolkenMatch.Data1 == LexemeType.Identifier && compareTolkenMatch.Data2.Value == "i"
-                            && compareTolkenMatch.Data2.Index == tolkenMatch.Data2.Index)
+                        TypePair<LexemeType, MatchTolken> compareTolkenMatch = tolkenMatches[j];
+                        if (compareTolkenMatch.GetData1() == LexemeType.Identifier && compareTolkenMatch.GetData2().Value == "i"
+                            && compareTolkenMatch.GetData2().Index == tolkenMatch.GetData2().Index)
                         {
                             tolkensToRemove.Add(compareTolkenMatch);
                             break;
@@ -294,88 +307,94 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 }
             }
 
-            foreach (var tolkenToRemove in tolkensToRemove)
+            foreach (TypePair<LexemeType, MatchTolken> tolkenToRemove in tolkensToRemove)
             {
                 tolkenMatches.Remove(tolkenToRemove);
             }
 
             // Order the tokens in the order they appear in the string.
-            var orderedTolkens = from tolkenMatch in tolkenMatches
-                                 orderby tolkenMatch.Data2.Index
-                                 select new TypePair<LexemeType, string>(tolkenMatch.Data1, tolkenMatch.Data2.Value);
+            tolkenMatches = ArrayFunc.OrderList(tolkenMatches);
 
-            var orderedTolkensList = orderedTolkens.ToList();
+            List<TypePair<LexemeType, string>> orderedTolkensList = new List<TypePair<LexemeType, string>>();
+            for (int i = 0; i < tolkenMatches.Count; ++i)
+                orderedTolkensList.Add(new TypePair<LexemeType, string>(tolkenMatches[i].GetData1(), tolkenMatches[i].GetData2().Value));
+            
             for (int i = 0; i < orderedTolkensList.Count; ++i)
             {
-                if (orderedTolkensList[i].Data1 == LexemeType.FunctionDef && i > 0 &&
-                    (orderedTolkensList[i - 1].Data1 == LexemeType.Function || 
-                    orderedTolkensList[i - 1].Data1 == LexemeType.Derivative || 
-                    orderedTolkensList[i - 1].Data1 == LexemeType.Integral))
+                if (orderedTolkensList[i].GetData1() == LexemeType.FunctionDef && i > 0 &&
+                    (orderedTolkensList[i - 1].GetData1() == LexemeType.Function ||
+                     orderedTolkensList[i - 1].GetData1() == LexemeType.Derivative ||
+                     orderedTolkensList[i - 1].GetData1() == LexemeType.Integral))
                 {
-                    string funcDef = orderedTolkensList[i].Data2;
-                    string func = orderedTolkensList[i - 1].Data2;
+                    string funcDef = orderedTolkensList[i].GetData2();
+                    string func = orderedTolkensList[i - 1].GetData2();
 
                     // Actually get the starting identifier not character.
                     int funcParaStartIndex = funcDef.IndexOf("(");
                     int funcParaEndIndex = funcDef.IndexOf(")");
                     string funcStartStr = funcDef.Substring(0, funcParaStartIndex);
-                    string funcParamStr = funcDef.Substring(funcParaStartIndex + 1, funcParaEndIndex - (funcParaStartIndex + 1));
+                    string funcParamStr = funcDef.Substring(funcParaStartIndex + 1,
+                        funcParaEndIndex - (funcParaStartIndex + 1));
 
                     if (func.EndsWith(funcStartStr))
                     {
-                        orderedTolkensList.RemoveAt(i);
-                        orderedTolkensList.Insert(i, new Lexeme(LexemeType.StartPara, "("));
+                        ArrayFunc.RemoveIndex(orderedTolkensList, i);
+                        orderedTolkensList.Insert(i, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.StartPara, "("));
                         LexemeType lt;
                         if (funcParamStr == "e")
                             lt = LexemeType.Constant;
                         else
                             lt = LexemeType.Identifier;
-                        orderedTolkensList.Insert(i + 1, new Lexeme(lt, funcParamStr));
-                        orderedTolkensList.Insert(i + 2, new Lexeme(LexemeType.EndPara, ")"));
+                        orderedTolkensList.Insert(i + 1, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(lt, funcParamStr));
+                        orderedTolkensList.Insert(i + 2, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.EndPara, ")"));
                         i += 2;
                     }
                     else if (func.EndsWith("_"))
                     {
-                        orderedTolkensList.RemoveAt(i);
-                        orderedTolkensList.Insert(i, new Lexeme(LexemeType.Identifier, funcStartStr));
-                        orderedTolkensList.Insert(i + 1, new Lexeme(LexemeType.StartPara, "("));
-                        orderedTolkensList.Insert(i + 2, new Lexeme(LexemeType.Identifier, funcParamStr));
-                        orderedTolkensList.Insert(i + 3, new Lexeme(LexemeType.EndPara, ")"));
+                        ArrayFunc.RemoveIndex(orderedTolkensList, i);
+                        orderedTolkensList.Insert(i, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Identifier, funcStartStr));
+                        orderedTolkensList.Insert(i + 1, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.StartPara, "("));
+                        orderedTolkensList.Insert(i + 2, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Identifier, funcParamStr));
+                        orderedTolkensList.Insert(i + 3, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.EndPara, ")"));
                     }
                 }
-                else if (orderedTolkensList[i].Data1 == LexemeType.FuncDeriv && i > 0 && (orderedTolkensList[i - 1].Data1 == LexemeType.Function))
+                else if (orderedTolkensList[i].GetData1() == LexemeType.FuncDeriv && i > 0 &&
+                         (orderedTolkensList[i - 1].GetData1() == LexemeType.Function))
                 {
-                    if (orderedTolkensList[i].Data2.Length < 5)
+                    if (orderedTolkensList[i].GetData2().Length < 5)
                         continue;
 
-                    int funcParaStartIndex = orderedTolkensList[i].Data2.IndexOf("(");
+                    int funcParaStartIndex = orderedTolkensList[i].GetData2().IndexOf("(");
                     if (funcParaStartIndex == -1)
                         continue;
-                    int funcParaEndIndex = orderedTolkensList[i].Data2.IndexOf(")");
+                    int funcParaEndIndex = orderedTolkensList[i].GetData2().IndexOf(")");
                     if (funcParaStartIndex == -1)
                         continue;
-                    int raiseIndex = orderedTolkensList[i].Data2.IndexOf("^");
+                    int raiseIndex = orderedTolkensList[i].GetData2().IndexOf("^");
                     if (raiseIndex == -1)
                         continue;
-                    string funcStartStr = orderedTolkensList[i].Data2.Substring(0, raiseIndex);
-                    string raisedStr = orderedTolkensList[i].Data2.Substring(raiseIndex + 1, funcParaStartIndex - (raiseIndex + 1));
-                    string funcParamStr = orderedTolkensList[i].Data2.Substring(funcParaStartIndex + 1, funcParaEndIndex - (funcParaStartIndex + 1));
+                    string funcStartStr = orderedTolkensList[i].GetData2().Substring(0, raiseIndex);
+                    string raisedStr = orderedTolkensList[i].GetData2().Substring(raiseIndex + 1,
+                        funcParaStartIndex - (raiseIndex + 1));
+                    string funcParamStr = orderedTolkensList[i].GetData2().Substring(funcParaStartIndex + 1,
+                        funcParaEndIndex - (funcParaStartIndex + 1));
 
-                    if (!orderedTolkensList[i - 1].Data2.EndsWith(funcStartStr))
+                    if (!orderedTolkensList[i - 1].GetData2().EndsWith(funcStartStr))
                         continue;
 
-                    orderedTolkensList.RemoveAt(i);
-                    orderedTolkensList.Insert(i, new Lexeme(LexemeType.Operator, "^"));
-                    orderedTolkensList.Insert(i + 1, new Lexeme(LexemeType.Number, raisedStr));
-                    orderedTolkensList.Insert(i + 2, new Lexeme(LexemeType.StartPara, "("));
-                    orderedTolkensList.Insert(i + 3, new Lexeme(LexemeType.Identifier, funcParamStr));
-                    orderedTolkensList.Insert(i + 4, new Lexeme(LexemeType.EndPara, ")"));
+                    ArrayFunc.RemoveIndex(orderedTolkensList, i);
+                    orderedTolkensList.Insert(i, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Operator, "^"));
+                    orderedTolkensList.Insert(i + 1, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Number, raisedStr));
+                    orderedTolkensList.Insert(i + 2, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.StartPara, "("));
+                    orderedTolkensList.Insert(i + 3, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Identifier, funcParamStr));
+                    orderedTolkensList.Insert(i + 4, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.EndPara, ")"));
                 }
             }
 
             for (int i = 0; i < orderedTolkensList.Count - 1; ++i)
             {
-                if (orderedTolkensList[i].Data1 == LexemeType.Identifier && orderedTolkensList[i + 1].Data1 == LexemeType.StartPara)
+                if (orderedTolkensList[i].GetData1() == LexemeType.Identifier &&
+                    orderedTolkensList[i + 1].GetData1() == LexemeType.StartPara)
                 {
                     if (true) //p_EvalData.FuncDefs.IsFuncDefined(orderedTolkensList[i].Data2))
                     {
@@ -384,7 +403,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         int depth = 0;
                         for (int j = i + 2; j < orderedTolkensList.Count; ++j)
                         {
-                            if (orderedTolkensList[j].Data1 == LexemeType.EndPara)
+                            if (orderedTolkensList[j].GetData1() == LexemeType.EndPara)
                             {
                                 if (depth == 0)
                                 {
@@ -394,7 +413,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
                                 depth--;
                             }
-                            else if (orderedTolkensList[j].Data1 == LexemeType.StartPara)
+                            else if (orderedTolkensList[j].GetData1() == LexemeType.StartPara)
                             {
                                 depth++;
                             }
@@ -407,67 +426,145 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         int commaCount = 0;
                         for (int j = i + 2; j < endIndex - i; ++j)
                         {
-                            if (orderedTolkensList[j].Data1 == LexemeType.StartPara)
+                            if (orderedTolkensList[j].GetData1() == LexemeType.StartPara)
                                 depthCount++;
-                            else if (orderedTolkensList[j].Data1 == LexemeType.EndPara)
+                            else if (orderedTolkensList[j].GetData1() == LexemeType.EndPara)
                                 depthCount--;
-                            if (orderedTolkensList[j].Data1 == LexemeType.Comma && depthCount == 0)
+                            if (orderedTolkensList[j].GetData1() == LexemeType.Comma && depthCount == 0)
                                 commaCount++;
                         }
 
-                        if (commaCount == 0) //p_EvalData.FuncDefs.IsValidFuncCall(orderedTolkensList[i].Data2, commaCount + 1))
+                        if (commaCount == 0 &&
+                            (p_EvalData.GetFuncDefs().IsValidFuncCall(orderedTolkensList[i].GetData2(), commaCount + 1) ||
+                             _definedFuncs.Contains(orderedTolkensList[i].GetData2())))
                         {
                             // Replace with a function call.
-                            orderedTolkensList[i].Data1 = LexemeType.FuncIden;
-                            orderedTolkensList[i + 1].Data1 = LexemeType.FuncArgStart;
-                            orderedTolkensList[endIndex].Data1 = LexemeType.FuncArgEnd;
+                            orderedTolkensList[i].SetData1(LexemeType.FuncIden);
+                            orderedTolkensList[i + 1].SetData1(LexemeType.FuncArgStart);
+                            orderedTolkensList[endIndex].SetData1(LexemeType.FuncArgEnd);
                         }
+                    }
+                }
+                if (i + 1 < orderedTolkensList.Count && orderedTolkensList[i].GetData1() == LexemeType.FunctionDef &&
+                    orderedTolkensList[i + 1].GetData1() == LexemeType.EqualsOp
+                    && (i == 0 || orderedTolkensList[i - 1].GetData1() == LexemeType.EquationSeperator))
+                {
+                    _definedFuncs.Add(orderedTolkensList[i].GetData2().Split('(')[0]);
+                }
+            }
+
+            for (int i = 0; i < orderedTolkensList.Count; ++i)
+            {
+                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> tolken = orderedTolkensList[i];
+                if (!MathSolver.PLAIN_TEXT)
+                {
+                    if (tolken.GetData1() == LexemeType.Derivative)
+                    {
+                        if (i > 0)
+                        {
+                            ArrayFunc.RemoveIndex(orderedTolkensList, i - 1);
+                        }
+                        if (i < orderedTolkensList.Count && !tolken.GetData2().Contains("^") &&
+                            orderedTolkensList[i].GetData1() == LexemeType.FunctionDef)
+                            ArrayFunc.RemoveIndex(orderedTolkensList, i--);
+                    }
+                }
+
+                if (tolken.GetData1() == LexemeType.Limit && i < orderedTolkensList.Count - 1 &&
+                    orderedTolkensList[i + 1].GetData2() == "lim")
+                    ArrayFunc.RemoveIndex(orderedTolkensList, i + 1);
+
+                if (tolken.GetData1() == LexemeType.Summation && i < orderedTolkensList.Count - 1 &&
+                    orderedTolkensList[i + 1].GetData2() == "sum")
+                    ArrayFunc.RemoveIndex(orderedTolkensList, i + 1);
+                else if (tolken.GetData1() == LexemeType.Derivative && i < orderedTolkensList.Count - 1 &&
+                         orderedTolkensList[i + 1].GetData1() == LexemeType.Differential &&
+                         tolken.GetData2().Contains(orderedTolkensList[i + 1].GetData2()))
+                {
+                    ArrayFunc.RemoveIndex(orderedTolkensList, i + 1);
+                }
+                else if (tolken.GetData1() == LexemeType.FuncDeriv && i < orderedTolkensList.Count - 1 &&
+                         orderedTolkensList[i + 1].GetData1() == LexemeType.FunctionDef &&
+                         tolken.GetData2().EndsWith(orderedTolkensList[i + 1].GetData2()))
+                {
+                    ArrayFunc.RemoveIndex(orderedTolkensList, i + 1);
+                }
+                else if (i >= 2 && tolken.GetData1() == LexemeType.FuncIden && orderedTolkensList[i - 1].GetData2() == "^" &&
+                         orderedTolkensList[i - 2].GetData1() == LexemeType.Identifier)
+                {
+                    string potentialFuncIden = orderedTolkensList[i - 2].GetData2();
+
+                    // If the function is defined or if there is only one lexeme contained in between the parentheses then use.
+                    if ((i < orderedTolkensList.Count - 3 &&
+                         orderedTolkensList[i + 3].GetData1() == LexemeType.FuncArgEnd) ||
+                        (_definedFuncs.Contains(potentialFuncIden) ||
+                         p_EvalData.GetFuncDefs().IsFuncDefined(potentialFuncIden)))
+                    {
+                        orderedTolkensList[i - 2].SetData1(LexemeType.FuncDeriv);
+
+                        // Use the proper parsing notation.
+                        string temp = orderedTolkensList[i - 1].GetData2() + orderedTolkensList[i].GetData2();
+                        orderedTolkensList[i - 1].SetData2(temp);
+                        orderedTolkensList[i - 2].SetData2(orderedTolkensList[i - 2].GetData2() + temp);
+                        ArrayFunc.RemoveIndex(orderedTolkensList, i--);
+                        ArrayFunc.RemoveIndex(orderedTolkensList, i--);
                     }
                 }
             }
 
             for (int i = 0; i < orderedTolkensList.Count; ++i)
             {
-                var tolken = orderedTolkensList[i];
-                if (!MathSolver.PLAIN_TEXT)
+                // Sallow up the next lexemes.
+                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> tolken = orderedTolkensList[i];
+                if (tolken.GetData1() == LexemeType.Limit)
                 {
-                    if (tolken.Data1 == LexemeType.Derivative)
+                    int depth = 1;
+                    int endIndex = -1;
+                    string totalStr = "";
+                    for (int j = i + 1; j < orderedTolkensList.Count; ++j)
                     {
-                        if (i > 0)
+                        totalStr += orderedTolkensList[j].GetData2();
+                        if (orderedTolkensList[j].GetData1() == LexemeType.StartPara)
                         {
-                            orderedTolkensList.RemoveAt(i - 1);
+                            depth++;
                         }
-                        if (i < orderedTolkensList.Count && !tolken.Data2.Contains("^"))
-                            orderedTolkensList.RemoveAt(i);
+                        else if (orderedTolkensList[j].GetData1() == LexemeType.EndPara)
+                        {
+                            depth--;
+                            if (depth == 0)
+                            {
+                                endIndex = j;
+                                break;
+                            }
+                        }
                     }
+
+                    if (endIndex == -1)
+                        return null;
+                    orderedTolkensList[i].SetData2(orderedTolkensList[i].GetData2() + totalStr);
+                    i++;
+                    orderedTolkensList.RemoveRange(i, endIndex + 1 - i);
+                    i = endIndex;
                 }
-
-                if (tolken.Data1 == LexemeType.Limit && i < orderedTolkensList.Count - 1 && orderedTolkensList[i + 1].Data2 == "lim")
-                    orderedTolkensList.RemoveAt(i + 1);
-
-                if (tolken.Data1 == LexemeType.Summation && i < orderedTolkensList.Count - 1 && orderedTolkensList[i + 1].Data2 == "sum")
-                    orderedTolkensList.RemoveAt(i + 1);
-                else if (tolken.Data1 == LexemeType.Limit && i < orderedTolkensList.Count - 1 && orderedTolkensList[i + 1].Data2 == "inf")
-                    orderedTolkensList.RemoveAt(i + 1);
             }
 
             // Make sure there are no lone summations.
-            foreach (var tolken in orderedTolkensList)
+            foreach (TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> tolken in orderedTolkensList)
             {
-                if (tolken.Data1 == LexemeType.ErrorType)
+                if (tolken.GetData1() == LexemeType.ErrorType)
                 {
-                    if (tolken.Data2 == "sum")
+                    if (tolken.GetData2() == "sum")
                         pParseErrors.Add("Incorrectly formatted summation.");
-                    else if (tolken.Data2 == "inf")
+                    else if (tolken.GetData2() == "inf")
                         pParseErrors.Add("Incorrect usage of infinity.");
-                    else if (tolken.Data2 == "lim")
+                    else if (tolken.GetData2() == "lim")
                         pParseErrors.Add("Incorrect usage of limit.");
 
                     return null;
                 }
             }
 
-            _funcStore = new Dictionary<string, List<LexemeTable>>();
+            _funcStore = new Dictionary<string, List<List<TypePair<LexemeType,string>>>>();
             if (!CreateMultiVariableFuncs(ref orderedTolkensList))
                 return null;
 
@@ -475,42 +572,52 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
         }
 
         /// <summary>
-        /// Checks that the coefficients are always at the front of the algebra group.
-        /// 4x^(2)y will pass x^(2)4y will not.
+        ///     Checks that the coefficients are always at the front of the algebra group.
+        ///     4x^(2)y will pass x^(2)4y will not.
         /// </summary>
         /// <returns></returns>
-        private static bool CheckCoeffCorrectness(LexemeTable lexTable)
+        private static bool CheckCoeffCorrectness(List<TypePair<LexemeType,string>> lexTable, ref List<string> pParseErrors)
         {
+            LexemeType lexType = LexemeType.ErrorType;
             for (int i = 0; i < lexTable.Count; ++i)
             {
-                if (lexTable[i].Data1 == LexemeType.Operator && lexTable[i].Data2 == "^" &&
-                    i < lexTable.Count - 1 &&
-                    lexTable[i + 1].Data1 == LexemeType.Number && lexTable[i + 1].Data2.Length > 1)
+                if (lexTable[i].GetData1() == LexemeType.Integral)
+                    lexType = LexemeType.Integral;
+                else if (lexTable[i].GetData1() == LexemeType.Summation)
+                    lexType = LexemeType.Summation;
+                else if (lexTable[i].GetData1() == LexemeType.Operator && lexTable[i].GetData2() == "^" &&
+                         i < lexTable.Count - 1 &&
+                         lexTable[i + 1].GetData1() == LexemeType.Number && lexTable[i + 1].GetData2().Length > 1)
+                {
+                    if (lexType == LexemeType.Summation)
+                        pParseErrors.Add("A number cannot follow a summation, put parentheses.");
+                    else if (lexType == LexemeType.Integral)
+                        pParseErrors.Add("A number cannot follow an integral, put parentheses.");
                     return false;
+                }
             }
 
             return true;
         }
 
-        public List<EqSet> ParseInput(string inputStr, out List<LexemeTable> lexemeTables, ref List<string> pParseErrors)
+        public List<EqSet> ParseInput(string inputStr, out List<List<TypePair<LexemeType,string>>> lexemeTables, ref List<string> pParseErrors)
         {
-            _vectorStore = new Dictionary<string, LexemeTable>();
+            _vectorStore = new Dictionary<string, List<TypePair<LexemeType,string>>>();
             _vecStoreIndex = 0;
             string[] equationSets = inputStr.Split(';');
-            lexemeTables = new List<LexemeTable>();
+            lexemeTables = new List<List<TypePair<LexemeType,string>>>();
 
             List<EqSet> eqSets = new List<EqSet>();
 
             foreach (string equationSet in equationSets)
             {
-                LexemeTable setLexemeTable = CreateLexemeTable(equationSet, ref pParseErrors);
+                List<TypePair<LexemeType,string>> setLexemeTable = CreateLexemeTable(equationSet, ref pParseErrors);
 
                 if (setLexemeTable == null || setLexemeTable.Count == 0)
                     return null;
 
-                if (!MathSolver.PLAIN_TEXT && !CheckCoeffCorrectness(setLexemeTable))
+                if (!MathSolver.PLAIN_TEXT && !CheckCoeffCorrectness(setLexemeTable, ref pParseErrors))
                 {
-                    pParseErrors.Add("Invalid number placement.");
                     return null;
                 }
                 if (setLexemeTable == null)
@@ -523,26 +630,26 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     AlgebraTerm algebraTerm = LexemeTableToAlgebraTerm(setLexemeTable, ref pParseErrors, true);
                     if (algebraTerm == null)
                         return null;
-                    ExComp final = algebraTerm.RemoveRedundancies(true);
-                    if (final is AgOp)
+                    ExComp finalNoRedun = algebraTerm.RemoveRedundancies(true);
+                    if (finalNoRedun is AgOp)
                     {
                         return null;
                     }
-                    Type startingType = final.GetType();
-                    if (final is AlgebraTerm)
+                    Type startingType = finalNoRedun.GetType();
+                    if (finalNoRedun is AlgebraTerm)
                     {
-                        AlgebraTerm finalTerm = final as AlgebraTerm;
-                        final = finalTerm.WeakMakeWorkable(ref pParseErrors);
-                        if (final == null)
+                        AlgebraTerm finalTerm = finalNoRedun as AlgebraTerm;
+                        finalNoRedun = finalTerm.WeakMakeWorkable(ref pParseErrors, ref p_EvalData);
+                        if (finalNoRedun == null)
                             return null;
                     }
-                    EqSet addEqSet = new EqSet(final, equationSet);
-                    addEqSet.StartingType = startingType;
+                    EqSet addEqSet = new EqSet(finalNoRedun, equationSet);
+                    addEqSet.SetStartingType(startingType);
                     eqSets.Add(addEqSet);
                     continue;
                 }
                 List<LexemeType> solveTypes = new List<LexemeType>();
-                LexemeTable[] parsedTables = SplitLexemeTable(setLexemeTable, out solveTypes, ref pParseErrors);
+                List<TypePair<LexemeType,string>>[] parsedTables = SplitLexemeTable(setLexemeTable, out solveTypes, ref pParseErrors);
                 if (parsedTables == null || parsedTables.Length == 0 || solveTypes.Count == 0)
                     return null;
 
@@ -557,7 +664,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     // We have an inequality with multiple sides.
                     // For instance -3 < 2x < 5
                     List<ExComp> parsedTerms = new List<ExComp>();
-                    foreach (LexemeTable lt in parsedTables)
+                    foreach (List<TypePair<LexemeType,string>> lt in parsedTables)
                     {
                         if (lt.Count == 0)
                             return null;
@@ -568,31 +675,29 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         AlgebraTerm algebraTerm = LexemeTableToAlgebraTerm(lt, ref pParseErrors, true);
                         if (algebraTerm == null)
                             return null;
-                        ExComp final = algebraTerm.RemoveRedundancies(true);
-                        if (final is AlgebraTerm)
+                        ExComp finalEx = algebraTerm.RemoveRedundancies(true);
+                        if (finalEx is AlgebraTerm)
                         {
-                            AlgebraTerm finalTerm = final as AlgebraTerm;
-                            final = finalTerm.WeakMakeWorkable(ref pParseErrors);
-                            if (final == null)
+                            AlgebraTerm finalTerm = finalEx as AlgebraTerm;
+                            finalEx = finalTerm.WeakMakeWorkable(ref pParseErrors, ref p_EvalData);
+                            if (finalEx == null)
                                 return null;
                         }
 
-                        parsedTerms.Add(final);
+                        parsedTerms.Add(finalEx);
                     }
 
                     EqSet singleEqSet = new EqSet(parsedTerms, solveTypes);
 
-                    eqSets = new List<EqSet>();
                     eqSets.Add(singleEqSet);
-
-                    return eqSets;
+                    continue;
                 }
 
                 ExComp[] parsedExs = new ExComp[2];
 
                 for (int i = 0; i < parsedTables.Length; ++i)
                 {
-                    LexemeTable lexemeTable = parsedTables[i];
+                    List<TypePair<LexemeType,string>> lexemeTable = parsedTables[i];
                     if (lexemeTable.Count == 0)
                         return null;
                     lexemeTables.Add(lexemeTable);
@@ -602,16 +707,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     AlgebraTerm algebraTerm = LexemeTableToAlgebraTerm(lexemeTable, ref pParseErrors, true);
                     if (algebraTerm == null)
                         return null;
-                    ExComp final = algebraTerm.RemoveRedundancies(true);
-                    if (final is AlgebraTerm)
+                    ExComp finalExNoRedun = algebraTerm.RemoveRedundancies(true);
+                    if (finalExNoRedun is AlgebraTerm)
                     {
-                        AlgebraTerm finalTerm = final as AlgebraTerm;
-                        final = finalTerm.WeakMakeWorkable(ref pParseErrors);
-                        if (final == null)
+                        AlgebraTerm finalTerm = finalExNoRedun as AlgebraTerm;
+                        finalExNoRedun = finalTerm.WeakMakeWorkable(ref pParseErrors, ref p_EvalData);
+                        if (finalExNoRedun == null)
                             return null;
                     }
 
-                    parsedExs[i] = final;
+                    parsedExs[i] = finalExNoRedun;
                 }
 
                 eqSets.Add(new EqSet(parsedExs[0], parsedExs[1], solveType));
@@ -620,7 +725,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return eqSets;
         }
 
-        public static LexemeTable[] SplitLexemeTable(LexemeTable lt, out List<LexemeType> splitLexTypes, ref List<string> pParseErrors)
+        public static List<TypePair<LexemeType,string>>[] SplitLexemeTable(List<TypePair<LexemeType,string>> lt, out List<LexemeType> splitLexTypes,
+            ref List<string> pParseErrors)
         {
             int eCount = GetOccurCount(lt, LexemeType.EqualsOp);
             int gCount = GetOccurCount(lt, LexemeType.Greater);
@@ -639,22 +745,22 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     return null;
                 }
 
-                var inequalityIndexPairs = GetInequalityOpIndices(lt);
+                List<int> inequalityIndexPairs = GetInequalityOpIndices(lt);
 
-                List<LexemeTable> lexemeTables = new List<LexemeTable>();
+                List<List<TypePair<LexemeType,string>>> lexemeTables = new List<List<TypePair<LexemeType,string>>>();
                 int prevEndIndex = 0;
-                foreach (var inequalityIndex in inequalityIndexPairs)
+                foreach (int inequalityIndex in inequalityIndexPairs)
                 {
-                    var inequalityType = lt[inequalityIndex].Data1;
+                    LexemeType inequalityType = lt[inequalityIndex].GetData1();
                     splitLexTypes.Add(inequalityType);
 
-                    LexemeTable lexemeTableRange = lt.GetRange(prevEndIndex, inequalityIndex - prevEndIndex);
+                    List<TypePair<LexemeType,string>> lexemeTableRange = lt.GetRange(prevEndIndex, inequalityIndex - prevEndIndex);
                     lexemeTables.Add(lexemeTableRange);
                     prevEndIndex = inequalityIndex + 1;
                 }
 
                 // Also add the ending part as it doesn't have a inequality after it.
-                LexemeTable finalLtRange = lt.GetRange(prevEndIndex, lt.Count - prevEndIndex);
+                List<TypePair<LexemeType,string>> finalLtRange = lt.GetRange(prevEndIndex, lt.Count - prevEndIndex);
                 lexemeTables.Add(finalLtRange);
 
                 return lexemeTables.ToArray();
@@ -692,38 +798,38 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             if (splitIndex == -1)
                 return null;
 
-            LexemeTable left = lt.GetRange(0, splitIndex);
+            List<TypePair<LexemeType,string>> left = lt.GetRange(0, splitIndex);
             int startIndex = splitIndex + 1;
-            LexemeTable right = lt.GetRange(startIndex, lt.Count - startIndex);
+            List<TypePair<LexemeType,string>> right = lt.GetRange(startIndex, lt.Count - startIndex);
 
-            LexemeTable[] leftRight = { left, right };
+            List<TypePair<LexemeType,string>>[] leftRight = new List<TypePair<LexemeType,string>>[] { left, right };
 
             return leftRight;
         }
 
-        private bool FixIntegralDif(ref LexemeTable lt, ref List<string> pParseErrors)
+        private bool FixIntegralDif(ref List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
             int diffCount = 0;
             int intCount = 0;
             for (int i = 0; i < lt.Count; ++i)
             {
-                if (lt[i].Data1 == LexemeType.Differential)
+                if (lt[i].GetData1() == LexemeType.Differential)
                     diffCount++;
-                else if (lt[i].Data1 == LexemeType.Integral)
+                else if (lt[i].GetData1() == LexemeType.Integral)
                 {
                     intCount++;
-                    if (i > 0 && lt[i - 1].Data1 == LexemeType.StartPara)
+                    if (i > 0 && lt[i - 1].GetData1() == LexemeType.StartPara)
                         continue;
                     // Search for the corresponding differential.
                     int foundIndex = -1;
                     int depth = 0;
                     for (int j = i + 1; j < lt.Count; ++j)
                     {
-                        if (lt[j].Data1 == LexemeType.Integral)
+                        if (lt[j].GetData1() == LexemeType.Integral)
                         {
                             depth++;
                         }
-                        if (lt[j].Data1 == LexemeType.Differential)
+                        if (lt[j].GetData1() == LexemeType.Differential)
                         {
                             if (depth == 0)
                             {
@@ -740,8 +846,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         return false;
                     }
 
-                    lt.Insert(i, new Lexeme(LexemeType.StartPara, "("));
-                    lt.Insert(foundIndex + 2, new Lexeme(LexemeType.EndPara, ")"));
+                    lt.Insert(i, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.StartPara, "("));
+                    lt.Insert(foundIndex + 2, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.EndPara, ")"));
                     ++i;
                 }
             }
@@ -755,159 +861,80 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return true;
         }
 
-        private static bool ApplyOrderingToOp(string opToOrder, string[] breakingOps, LexemeTable lexemeTable)
+        private static bool ApplyOrderingToOp(string opToOrder, string[] breakingOps, List<TypePair<LexemeType,string>> lexemeTable)
         {
-            int numBreakingOps = breakingOps.Count();
-            List<int>[] indicesOfBreakingOps = new List<int>[numBreakingOps];
-            for (int i = 0; i < numBreakingOps; ++i)
-            {
-                indicesOfBreakingOps[i] = GetIndicesOfValueInLexemeTable(lexemeTable, breakingOps[i], false);
-            }
-
-            bool allZero = true;
-            foreach (var indicesOfBreakingOp in indicesOfBreakingOps)
-            {
-                if (indicesOfBreakingOp.Count != 0)
-                {
-                    allZero = false;
-                    break;
-                }
-            }
-
-            if (allZero)
-                return true;
+            List<string> breakingOpsList = ArrayFunc.ToList(breakingOps);
 
             for (int i = 0; i < lexemeTable.Count; ++i)
             {
-                Lexeme lexeme = lexemeTable[i];
+                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lexeme = lexemeTable[i];
 
-                if (lexeme.Data2 == opToOrder)
+                if (lexeme.GetData2() == opToOrder)
                 {
-                    bool after = false;
+                    if (i == 0)
+                        return false;
 
                     if (i > 0)
                     {
-                        Lexeme prevLexeme = lexemeTable[i - 1];
+                        TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> prevLexeme = lexemeTable[i - 1];
                         // To allow for the alternate notation of raising trig functions to powers.
-                        if ((TrigFunction.IsValidType(prevLexeme.Data2) || InverseTrigFunction.IsValidType(prevLexeme.Data2)) && opToOrder == "^")
+                        if ((TrigFunction.IsValidType(prevLexeme.GetData2()) ||
+                             InverseTrigFunction.IsValidType(prevLexeme.GetData2())) && opToOrder == "^")
                             continue;
                     }
 
-                    // Does this instance occur before any of the breaking operators?
-                    foreach (List<int> indicesOfBreakingOp in indicesOfBreakingOps)
+                    bool after = false;
+
+                    int depth = 0;
+
+                    // Does this instance occur after any of the breaking operators?
+                    for (int j = 0; j < i; ++j)
                     {
-                        foreach (int index in indicesOfBreakingOp)
+                        TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lex = lexemeTable[j];
+                        if (lex.GetData1() == LexemeType.StartPara)
+                            depth++;
+                        else if (lex.GetData1() == LexemeType.EndPara)
+                            depth--;
+
+                        if (depth == 0 && breakingOpsList.Contains(lexemeTable[j].GetData2()))
                         {
-                            if (i > index)
-                            {
-                                after = true;
-                                break;
-                            }
+                            after = true;
+                            break;
                         }
                     }
 
                     if (!after)
                         continue;
 
-                    if (i == 0)
-                        return false;
-                    Lexeme beforeLexeme = lexemeTable[i - 1];
+                    TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> beforeLexeme = lexemeTable[i - 1];
                     if (i + 1 > lexemeTable.Count - 1)
                         return false;
-                    Lexeme afterLexeme = lexemeTable[i + 1];
-
-                    if ((beforeLexeme.Data1 == LexemeType.EndPara
-                        && afterLexeme.Data1 == LexemeType.StartPara) ||
-                        (beforeLexeme.Data1 == LexemeType.Bar
-                        && afterLexeme.Data1 == LexemeType.Bar))
-                    {
-                        // This is surrounded by a group on either side.
-                        // find the start of the group on the left and the end of the group on the
-                        // left. Then insert a paranthese on either side.
-                        // This problem with order of operations only seems to happen with multiplication.
-                        if (opToOrder != "*" && (beforeLexeme.Data1 == LexemeType.EndPara))
-                            continue;
-
-                        // Search backwards.
-                        int depth = 0;
-                        int startIndex = -1;
-                        for (int j = i; j >= 0; --j)
-                        {
-                            if (lexemeTable[j].Data1 == LexemeType.EndPara)
-                            {
-                                depth++;
-                            }
-                            else if (lexemeTable[j].Data1 == LexemeType.StartPara)
-                            {
-                                depth--;
-
-                                if (depth == 0)
-                                {
-                                    startIndex = j;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (startIndex == -1)
-                            continue;
-
-                        depth = 0;
-                        int endIndex = -1;
-                        for (int j = i; j < lexemeTable.Count; ++j)
-                        {
-                            if (lexemeTable[j].Data1 == LexemeType.StartPara)
-                                depth++;
-                            else if (lexemeTable[j].Data1 == LexemeType.EndPara)
-                            {
-                                depth--;
-
-                                if (depth == 0)
-                                {
-                                    endIndex = j;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (endIndex == -1)
-                            continue;
-
-                        if (i > 0 && lexemeTable[startIndex - 1].Data2 == "frac")
-                            continue;
-                        lexemeTable.Insert(startIndex, new Lexeme(LexemeType.StartPara, "("));
-                        lexemeTable.Insert(endIndex + 1, new Lexeme(LexemeType.EndPara, ")"));
-
-                        i++;
-
-                        continue;
-                    }
+                    TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> afterLexeme = lexemeTable[i + 1];
 
                     int startPos = -1;
                     // Navigate backwards.
                     for (int j = i; j >= 0; --j)
                     {
-                        Lexeme searchLexeme = lexemeTable[j];
-                        LexemeType type = searchLexeme.Data1;
+                        TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> searchLexeme = lexemeTable[j];
+                        LexemeType type = searchLexeme.GetData1();
 
-                        bool validBreakingOp = false;
-                        foreach (var indicesOfBreakingOp in indicesOfBreakingOps)
-                        {
-                            foreach (var indexOfBreakingOp in indicesOfBreakingOp)
-                            {
-                                if (indexOfBreakingOp == j)
-                                    validBreakingOp = true;
-                            }
-                        }
+                        if (type == LexemeType.StartPara)
+                            depth++;
+                        else if (type == LexemeType.EndPara)
+                            depth--;
 
-                        if (validBreakingOp)
+                        bool validBreakingOp = type == LexemeType.Operator
+                            ? breakingOpsList.Contains(searchLexeme.GetData2())
+                            : false;
+
+                        if ((depth == 0 && validBreakingOp) || depth > 0)
                         {
                             startPos = j + 1;
                             i++;
                             j++;
                             break;
                         }
-                        else if (j == 0)
+                        if (depth == 0 && j == 0)
                         {
                             startPos = j;
                             i++;
@@ -916,29 +943,30 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         }
                     }
 
+                    depth = 0;
+
                     int endPos = -1;
                     // Navigate forward.
                     for (int j = i; j < lexemeTable.Count; ++j)
                     {
-                        Lexeme searchLexeme = lexemeTable[j];
-                        LexemeType type = searchLexeme.Data1;
+                        TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> searchLexeme = lexemeTable[j];
+                        LexemeType type = searchLexeme.GetData1();
 
-                        bool validBreakingOp = false;
-                        foreach (var indicesOfBreakingOp in indicesOfBreakingOps)
-                        {
-                            foreach (var indexOfBreakingOp in indicesOfBreakingOp)
-                            {
-                                if (indexOfBreakingOp == j)
-                                    validBreakingOp = true;
-                            }
-                        }
+                        bool validBreakingOp = type == LexemeType.Operator
+                            ? breakingOpsList.Contains(searchLexeme.GetData2())
+                            : false;
 
-                        if (validBreakingOp)
+                        if (type == LexemeType.StartPara)
+                            depth++;
+                        else if (type == LexemeType.EndPara)
+                            depth--;
+
+                        if ((depth == 0 && validBreakingOp) || depth < 0)
                         {
                             endPos = j + 1;
                             break;
                         }
-                        else if (j == lexemeTable.Count - 1)
+                        if (depth == 0 && j == lexemeTable.Count - 1)
                         {
                             endPos = j + 2;
                             break;
@@ -948,27 +976,21 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     if (endPos == -1 || startPos == -1)
                         continue;
 
-                    if (i > 0 && lexemeTable[startPos].Data2 == "frac")
-                        continue;
-                    lexemeTable.Insert(startPos, new Lexeme(LexemeType.StartPara, "("));
+                    lexemeTable.Insert(startPos, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.StartPara, "("));
 
-                    lexemeTable.Insert(lexemeTable[endPos - 1].Data2 == "|" ? endPos - 1 : endPos, new Lexeme(LexemeType.EndPara, ")"));
+                    if (endPos > 0 && lexemeTable[endPos - 1].GetData1() == LexemeType.Differential)
+                        endPos--;
 
-                    // Recalculate the positions of indices as everything has been shifted.
-                    // this could probably be optimized.
-
-                    indicesOfBreakingOps = new List<int>[numBreakingOps];
-                    for (int j = 0; j < numBreakingOps; ++j)
-                    {
-                        indicesOfBreakingOps[j] = GetIndicesOfValueInLexemeTable(lexemeTable, breakingOps[j], false);
-                    }
+                    lexemeTable.Insert(lexemeTable[endPos - 1].GetData2() == "|" ? endPos - 1 : endPos,
+                        new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.EndPara, ")"));
                 }
             }
 
             return true;
         }
 
-        private bool ApplyOrderOfOperationsToLexemeTable(LexemeTable lexemeTable, ref List<string> pParseErrors, bool fixIntegrals)
+        private bool ApplyOrderOfOperationsToLexemeTable(List<TypePair<LexemeType,string>> lexemeTable, ref List<string> pParseErrors,
+            bool fixIntegrals)
         {
             //if (fixIntegrals)
             //{
@@ -977,11 +999,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             //        return false;
             //}
 
-            string[] pBreakingOps = { "*", "/", "+", "-" };
+            string[] pBreakingOps = new string[] { "*", "/", "+", "-" };
             if (!ApplyOrderingToOp("^", pBreakingOps, lexemeTable))
                 return false;
 
-            string[] mdBreakingOps = { "+", "-" };
+            string[] mdBreakingOps = new string[] { "+", "-" };
 
             if (!ApplyOrderingToOp("*", mdBreakingOps, lexemeTable))
                 return false;
@@ -1007,10 +1029,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             str = str.Replace('}', ')');
             // Remove the empty group identifier.
             if (!MathSolver.PLAIN_TEXT)
-                str = str.Replace(LexicalParser.MATH_EMPTY_GP, "");
-            if (str.Contains("\\int"))
+                str = str.Replace(MATH_EMPTY_GP, "");
+            if (str.Contains("\\int") || str.Contains("\\oint"))
             {
-                _rulesets[DIFF_RULE_INDEX] = new TypePair<string, LexemeType>("d(" + IDEN_MATCH + ")", LexemeType.Differential);
+                _rulesets[DIFF_RULE_INDEX] = new TypePair<string, LexemeType>("d(" + IDEN_MATCH + ")",
+                    LexemeType.Differential);
                 // This is somewhat of a hack together but it should work.
                 str = str.Replace("dA", "dxdy");
                 str = str.Replace("dV", "dxdydz");
@@ -1019,11 +1042,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 ResetDiffParsing();
 
             // Another dirty technique that should probably be changed.
-            str = str.Replace("\\bar(i)", "[1,0,0]");
-            str = str.Replace("\\bar(j)", "[0,1,0]");
-            str = str.Replace("\\bar(k)", "[0,0,1]");
+            str = str.Replace("\\vec(i)", "[1,0,0]");
+            str = str.Replace("\\vec(j)", "[0,1,0]");
+            str = str.Replace("\\vec(k)", "[0,0,1]");
 
             str = str.Replace("\\", "");
+            str = str.Replace(" ", "");
             str = str.Replace("->", "to");
 
             str = str.Replace("sin^(-1)", "asin");
@@ -1039,63 +1063,64 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return str;
         }
 
-        private static void FixLexemeTableUserInput(ref LexemeTable lexemeTable)
+        private static void FixLexemeTableUserInput(ref List<TypePair<LexemeType,string>> lexemeTable)
         {
             // Fixes things like 'xy' to 'x*y'.
             // Also fixes the negation operator versus minus operator problem.
             bool multipliablePreceeding = false;
             for (int i = 0; i < lexemeTable.Count; ++i)
             {
-                Lexeme lexeme = lexemeTable[i];
+                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lexeme = lexemeTable[i];
 
                 // Special case for the absolute value.
-                if (i > 0 && lexemeTable[i].Data1 == LexemeType.Bar && lexemeTable[i - 1].Data1 == LexemeType.Bar)
+                if (i > 0 && lexemeTable[i].GetData1() == LexemeType.Bar && lexemeTable[i - 1].GetData1() == LexemeType.Bar)
                 {
-                    lexemeTable.Insert(i, new Lexeme(LexemeType.Operator, "*"));
+                    lexemeTable.Insert(i, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Operator, "*"));
                 }
 
-                if (i > 0 && lexemeTable[i - 1].Data1 == LexemeType.EndBracket && lexemeTable[i].Data1 == LexemeType.StartBracket)
+                if (i > 0 && lexemeTable[i - 1].GetData1() == LexemeType.EndBracket &&
+                    lexemeTable[i].GetData1() == LexemeType.StartBracket)
                 {
-                    lexemeTable.Insert(i, new Lexeme(LexemeType.Operator, Equation.Operators.CompWiseMul.IDEN));
+                    lexemeTable.Insert(i, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Operator, CompWiseMul.IDEN));
                 }
 
-                if ((lexeme.Data1 == LexemeType.Identifier ||
-                    lexeme.Data1 == LexemeType.VectorStore ||
-                    lexeme.Data1 == LexemeType.I_Number ||
-                    lexeme.Data1 == LexemeType.Number ||
-                    lexeme.Data1 == LexemeType.Constant ||
-                    lexeme.Data1 == LexemeType.StartPara ||
-                    lexeme.Data1 == LexemeType.StartBracket ||
-                    lexeme.Data1 == LexemeType.Function ||
-                    lexeme.Data1 == LexemeType.Derivative ||
-                    lexeme.Data1 == LexemeType.Limit ||
-                    lexeme.Data1 == LexemeType.Integral ||
-                    lexeme.Data1 == LexemeType.FunctionDef ||
-                    lexeme.Data1 == LexemeType.FuncIden)
+                if ((lexeme.GetData1() == LexemeType.Identifier ||
+                     lexeme.GetData1() == LexemeType.VectorStore ||
+                     lexeme.GetData1() == LexemeType.I_Number ||
+                     lexeme.GetData1() == LexemeType.Number ||
+                     lexeme.GetData1() == LexemeType.Constant ||
+                     lexeme.GetData1() == LexemeType.StartPara ||
+                     lexeme.GetData1() == LexemeType.StartBracket ||
+                     lexeme.GetData1() == LexemeType.Function ||
+                     lexeme.GetData1() == LexemeType.Derivative ||
+                     lexeme.GetData1() == LexemeType.Limit ||
+                     lexeme.GetData1() == LexemeType.Integral ||
+                     lexeme.GetData1() == LexemeType.FunctionDef ||
+                     lexeme.GetData1() == LexemeType.FuncIden)
                     && multipliablePreceeding)
                 {
-                    lexemeTable.Insert(i++, new Lexeme(LexemeType.Operator, "*"));
+                    lexemeTable.Insert(i++, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Operator, "*"));
 
-                    if (lexeme.Data1 == LexemeType.StartPara ||
-                        lexeme.Data1 == LexemeType.Function ||
-                        lexeme.Data1 == LexemeType.Derivative ||
-                        lexeme.Data1 == LexemeType.Limit ||
-                        lexeme.Data1 == LexemeType.Integral ||
-                        lexeme.Data1 == LexemeType.FunctionDef ||
-                        lexeme.Data1 == LexemeType.FuncIden ||
-                        lexeme.Data1 == LexemeType.StartBracket)
+                    if (lexeme.GetData1() == LexemeType.StartPara ||
+                        lexeme.GetData1() == LexemeType.Function ||
+                        lexeme.GetData1() == LexemeType.Derivative ||
+                        lexeme.GetData1() == LexemeType.Limit ||
+                        lexeme.GetData1() == LexemeType.Integral ||
+                        lexeme.GetData1() == LexemeType.FunctionDef ||
+                        lexeme.GetData1() == LexemeType.FuncIden ||
+                        lexeme.GetData1() == LexemeType.StartBracket)
                         multipliablePreceeding = false;
                     continue;
                 }
 
-                if (lexeme.Data1 == LexemeType.Identifier ||
-                    lexeme.Data1 == LexemeType.VectorStore ||
-                    lexeme.Data1 == LexemeType.I_Number ||
-                    lexeme.Data1 == LexemeType.Number ||
-                    lexeme.Data1 == LexemeType.Constant ||
-                    lexeme.Data1 == LexemeType.Number ||
-                    lexeme.Data1 == LexemeType.EndPara ||
-                    lexeme.Data1 == LexemeType.EndBracket)
+                if (lexeme.GetData1() == LexemeType.Identifier ||
+                    lexeme.GetData1() == LexemeType.VectorStore ||
+                    lexeme.GetData1() == LexemeType.I_Number ||
+                    lexeme.GetData1() == LexemeType.Number ||
+                    lexeme.GetData1() == LexemeType.Constant ||
+                    lexeme.GetData1() == LexemeType.Number ||
+                    lexeme.GetData1() == LexemeType.EndPara ||
+                    lexeme.GetData1() == LexemeType.EndBracket)
                     multipliablePreceeding = true;
                 else
                     multipliablePreceeding = false;
@@ -1104,115 +1129,114 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             bool operatorPreceeding = true;
             for (int i = 0; i < lexemeTable.Count; ++i)
             {
-                var lexeme = lexemeTable[i];
-                if (operatorPreceeding && lexeme.Data1 == LexemeType.Operator && lexeme.Data2 == "-")
+                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lexeme = lexemeTable[i];
+                if (operatorPreceeding && lexeme.GetData1() == LexemeType.Operator && lexeme.GetData2() == "-")
                 {
                     if (i == lexemeTable.Count - 1)
                     {
                         lexemeTable = null;
                         return;
                     }
-                    Lexeme nextLexeme = lexemeTable[i + 1];
-                    if (nextLexeme.Data1 == LexemeType.Number)
+                    TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> nextLexeme = lexemeTable[i + 1];
+                    if (nextLexeme.GetData1() == LexemeType.Number)
                     {
-                        lexemeTable[i + 1].Data2 = nextLexeme.Data2.Insert(0, "-");
-                        lexemeTable.RemoveAt(i--);
+                        lexemeTable[i + 1].SetData2(nextLexeme.GetData2().Insert(0, "-"));
+                        ArrayFunc.RemoveIndex(lexemeTable, i--);
                     }
                     else
                     {
-                        Lexeme negateNumLexeme = new Lexeme(LexemeType.Number, "-1");
-                        Lexeme multiplyLexeme = new Lexeme(LexemeType.Operator, "*");
-                        lexemeTable.RemoveAt(i);
+                        TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> negateNumLexeme = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Number, "-1");
+                        TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> multiplyLexeme = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Operator, "*");
+                        ArrayFunc.RemoveIndex(lexemeTable, i);
                         lexemeTable.Insert(i, negateNumLexeme);
                         lexemeTable.Insert(i + 1, multiplyLexeme);
                     }
                     continue;
                 }
 
-                if (lexeme.Data1 == LexemeType.Operator || (lexeme.Data1 == LexemeType.StartPara))
+                if (lexeme.GetData1() == LexemeType.Operator || (lexeme.GetData1() == LexemeType.StartPara))
                     operatorPreceeding = true;
                 else
                     operatorPreceeding = false;
             }
         }
 
-        private static int GetFirstIndexOccur(LexemeTable lt, LexemeType lexType)
+        private static int GetFirstIndexOccur(List<TypePair<LexemeType,string>> lt, LexemeType lexType)
         {
             for (int i = 0; i < lt.Count; ++i)
             {
-                if (lt[i].Data1 == lexType)
+                if (lt[i].GetData1() == lexType)
                     return i;
             }
             return -1;
         }
 
         /// <summary>
-        ///
         /// </summary>
         /// <param name="lexemeTable"></param>
         /// <param name="value"></param>
         /// <param name="allowGrouped">If the lexeme must be found when the depth count of the parantheses is zero.</param>
         /// <returns></returns>
-        private static List<int> GetIndicesOfValueInLexemeTable(LexemeTable lexemeTable, string value, bool allowGrouped)
+        private static List<int> GetIndicesOfValueInLexemeTable(List<TypePair<LexemeType,string>> lexemeTable, string value, bool allowGrouped)
         {
             List<int> indices = new List<int>();
             int depth = 0;
             for (int i = 0; i < lexemeTable.Count; ++i)
             {
-                if (lexemeTable[i].Data1 == LexemeType.StartPara)
+                if (lexemeTable[i].GetData1() == LexemeType.StartPara)
                     depth++;
-                else if (lexemeTable[i].Data1 == LexemeType.EndPara)
+                else if (lexemeTable[i].GetData1() == LexemeType.EndPara)
                     depth--;
-                else if (lexemeTable[i].Data2 == value && (depth == 0 || allowGrouped))
+                else if (lexemeTable[i].GetData2() == value && (depth == 0 || allowGrouped))
                     indices.Add(i);
             }
 
             return indices;
         }
 
-        private static List<int> GetInequalityOpIndices(LexemeTable lt)
+        private static List<int> GetInequalityOpIndices(List<TypePair<LexemeType,string>> lt)
         {
             List<int> compTypeIndexPairs = new List<int>();
             for (int i = 0; i < lt.Count; ++i)
             {
-                if (lt[i].Data1 == LexemeType.Greater ||
-                    lt[i].Data1 == LexemeType.GreaterEqual ||
-                    lt[i].Data1 == LexemeType.Less ||
-                    lt[i].Data1 == LexemeType.LessEqual)
+                if (lt[i].GetData1() == LexemeType.Greater ||
+                    lt[i].GetData1() == LexemeType.GreaterEqual ||
+                    lt[i].GetData1() == LexemeType.Less ||
+                    lt[i].GetData1() == LexemeType.LessEqual)
                     compTypeIndexPairs.Add(i);
             }
 
             return compTypeIndexPairs;
         }
 
-        private static int GetOccurCount(LexemeTable lt, LexemeType lexType)
+        private static int GetOccurCount(List<TypePair<LexemeType,string>> lt, LexemeType lexType)
         {
             int count = 0;
-            foreach (Lexeme lex in lt)
+            foreach (TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lex in lt)
             {
-                if (lex.Data1 == lexType)
+                if (lex.GetData1() == lexType)
                     count++;
             }
 
             return count;
         }
 
-        private static bool LexemeTableContains(LexemeTable lexemeTable, LexemeType lexemeType)
+        private static bool LexemeTableContains(List<TypePair<LexemeType,string>> lexemeTable, LexemeType lexemeType)
         {
-            foreach (Lexeme lexeme in lexemeTable)
+            foreach (TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lexeme in lexemeTable)
             {
-                if (lexeme.Data1 == lexemeType)
+                if (lexeme.GetData1() == lexemeType)
                     return true;
             }
 
             return false;
         }
 
-        private static bool LexemeTableContainsComparisonOp(LexemeTable lt)
+        private static bool LexemeTableContainsComparisonOp(List<TypePair<LexemeType,string>> lt)
         {
-            foreach (Lexeme lex in lt)
+            foreach (TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lex in lt)
             {
-                var tp = lex.Data1;
+                LexemeType tp = lex.GetData1();
                 if (tp == LexemeType.EqualsOp || tp == LexemeType.Less || tp == LexemeType.LessEqual ||
                     tp == LexemeType.Greater || tp == LexemeType.GreaterEqual)
                 {
@@ -1223,16 +1247,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return false;
         }
 
-        private AlgebraTerm LexemeTableToAlgebraTerm(LexemeTable lexemeTable, ref List<string> pParseErrors, bool fixIntegrals = false)
+        private AlgebraTerm LexemeTableToAlgebraTerm(List<TypePair<LexemeType,string>> lexemeTable, ref List<string> pParseErrors, bool fixIntegrals)
         {
-            if (lexemeTable.Count > 0 && lexemeTable[0].Data1 == LexemeType.Integral)
+            if (lexemeTable.Count > 0 && lexemeTable[0].GetData1() == LexemeType.Integral)
             {
                 int depth = 0;
                 int endIndex = -1;
 
                 for (int i = 0; i < lexemeTable.Count; ++i)
                 {
-                    if (lexemeTable[i].Data1 == LexemeType.Differential)
+                    if (lexemeTable[i].GetData1() == LexemeType.Differential)
                     {
                         depth--;
 
@@ -1242,12 +1266,23 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                             break;
                         }
                     }
-                    else if (lexemeTable[i].Data1 == LexemeType.Integral)
+                    else if (lexemeTable[i].GetData1() == LexemeType.Integral)
                     {
-                        // Check for that the special surface integral notation is not present.
-                        if (!(lexemeTable[i].Data2.Contains("_") &&
-                            i + 1 < lexemeTable.Count &&
-                            !(lexemeTable[i + 1].Data1 == LexemeType.Operator && lexemeTable[i + 1].Data2 == "^")))
+                        bool nextIden = false;
+                        if (i + 1 < lexemeTable.Count && lexemeTable[i + 1].GetData1() == LexemeType.Identifier)
+                            nextIden = true;
+                        else if (i + 3 < lexemeTable.Count &&
+                                 lexemeTable[i + 1].GetData1() == LexemeType.StartPara &&
+                                 lexemeTable[i + 2].GetData1() == LexemeType.Identifier &&
+                                 lexemeTable[i + 3].GetData1() == LexemeType.EndPara)
+                            nextIden = true;
+
+                        // Check for surface integrals which break the rule of one integral to one differential.
+                        if (
+                            !(i > 0 && i + 2 < lexemeTable.Count && lexemeTable[i - 1].GetData1() == LexemeType.Integral &&
+                              lexemeTable[i].GetData2().Contains("_") &&
+                              !lexemeTable[i - 1].GetData2().Contains("_") && nextIden &&
+                              lexemeTable[i + 2].GetData1() != LexemeType.Operator))
                         {
                             depth++;
                         }
@@ -1290,57 +1325,32 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
             for (int i = 0; i < lexemeTable.Count; ++i)
             {
-                var lexeme = lexemeTable[i];
+                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lexeme = lexemeTable[i];
                 ExComp toAdd = LexemeToExComp(lexemeTable, ref i, ref pParseErrors);
                 if (toAdd == null)
                     return null;
                 algebraTerm.Add(toAdd);
             }
 
+            if (algebraTerm.GetTermCount() == 1 && algebraTerm[0] is AgOp)
+                return null;
+
             return algebraTerm;
         }
 
-        //private bool FixAbsVal(ref LexemeTable lt)
-        //{
-        //    for (int i = 0; i < lt.Count; ++i)
-        //    {
-        //        if (lt[i].Data1 == LexemeType.Bar)
-        //        {
-        //            int lastIndex = -1;
-        //            // Find the furthermost bar.
-        //            for (int j = 0; j < lt.Count; ++j)
-        //            {
-        //                if (lt[j].Data1 == LexemeType.Bar)
-        //                {
-        //                    lastIndex = j;
-        //                }
-        //            }
-        //            if (lastIndex == -1)
-        //                return false;
-
-        //            lt.RemoveAt(i);
-        //            lt.Insert(i, new Lexeme(LexemeType.StartBar, "(|"));
-        //            lt.RemoveAt(lastIndex);
-        //            lt.Insert(lastIndex, new Lexeme(LexemeType.EndBar, "|)"))
-        //        }
-        //    }
-
-        //    return true;
-        //}
-
-        private bool CreateVectorStore(ref LexemeTable lt)
+        private bool CreateVectorStore(ref List<TypePair<LexemeType,string>> lt)
         {
             int depth = 0;
             int prevIndex = -1;
             for (int i = 0; i < lt.Count; ++i)
             {
-                if (lt[i].Data1 == LexemeType.StartBracket)
+                if (lt[i].GetData1() == LexemeType.StartBracket)
                 {
                     if (depth == 0)
                         prevIndex = i;
                     depth++;
                 }
-                else if (lt[i].Data1 == LexemeType.EndBracket)
+                else if (lt[i].GetData1() == LexemeType.EndBracket)
                 {
                     depth--;
                     if (depth == 0)
@@ -1348,15 +1358,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         // Change into a vector store.
                         if (prevIndex == -1)
                             return false;
-                        var vecStoreLt = lt.GetRange(prevIndex + 1, i - (prevIndex + 1));
-                        if (vecStoreLt.Count < 3)
-                            return false;
+                        List<TypePair<LexemeType,string>> vecStoreLt = lt.GetRange(prevIndex + 1, i - (prevIndex + 1));
 
                         _vectorStore.Add(_vecStoreIndex.ToString(), vecStoreLt);
                         // Also remove the brackets.
                         int remCount = i - (prevIndex - 1);
                         lt.RemoveRange(prevIndex, remCount);
-                        lt.Insert(prevIndex, new Lexeme(LexemeType.VectorStore, _vecStoreIndex.ToString()));
+                        lt.Insert(prevIndex, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.VectorStore, _vecStoreIndex.ToString()));
                         _vecStoreIndex++;
                         i -= remCount;
                         // To skip over the vector store itself.
@@ -1368,17 +1376,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return true;
         }
 
-        private int GetGroupRange(int dimen, int i, LexemeTable lt)
+        private int GetGroupRange(int dimen, int i, List<TypePair<LexemeType,string>> lt)
         {
             int depth = 0;
             int endIndex = -1;
             for (int j = i; j < lt.Count; ++j)
             {
-                if (lt[j].Data1 == LexemeType.StartPara)
+                if (lt[j].GetData1() == LexemeType.StartPara)
                 {
                     depth++;
                 }
-                else if (lt[j].Data1 == LexemeType.EndPara)
+                else if (lt[j].GetData1() == LexemeType.EndPara)
                 {
                     depth--;
                     if (depth == 0)
@@ -1396,19 +1404,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return endIndex;
         }
 
-        private bool CorrectFunctions(ref LexemeTable lt)
+        private bool CorrectFunctions(ref List<TypePair<LexemeType,string>> lt)
         {
             for (int i = 0; i < lt.Count; ++i)
             {
-                if (lt[i].Data1 != LexemeType.Function)
+                if (lt[i].GetData1() != LexemeType.Function)
                     continue;
 
                 int depth = -1;
-                if (lt[i].Data2 == "binom" || lt[i].Data2 == "vectora")
+                if (lt[i].GetData2() == "binom" || lt[i].GetData2() == "vectora")
                     depth = 2;
-                else if (lt[i].Data2 == "vectorb")
+                else if (lt[i].GetData2() == "vectorb")
                     depth = 3;
-                else if (lt[i].Data2 == "vectorc")
+                else if (lt[i].GetData2() == "vectorc")
                     depth = 4;
 
                 if (depth == -1)
@@ -1417,48 +1425,49 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 int endIndex = GetGroupRange(depth, i, lt);
                 if (endIndex == -1)
                     return false;
-                LexemeTable funcRange = lt.GetRange(i + 1, endIndex - i);
+                List<TypePair<LexemeType,string>> funcRange = lt.GetRange(i + 1, endIndex - i);
                 lt.RemoveRange(i + 1, endIndex - i);
-                lt[i] = new Lexeme(LexemeType.Function, lt[i].Data2 + "|" + (++_vecStoreIndex).ToString());
+                lt[i] = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Function, lt[i].GetData2() + "|" + (++_vecStoreIndex));
                 _vectorStore[_vecStoreIndex.ToString()] = funcRange;
             }
 
             return true;
         }
 
-        private bool CorrectFactorials(ref LexemeTable lt)
+        private bool CorrectFactorials(ref List<TypePair<LexemeType,string>> lt)
         {
             for (int i = 0; i < lt.Count; ++i)
             {
-                if (lt[i].Data2 != "!" || lt[i].Data1 != LexemeType.Function)
+                if (lt[i].GetData2() != "!" || lt[i].GetData1() != LexemeType.Function)
                     continue;
 
-                Lexeme lex = lt[i];
+                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lex = lt[i];
+                lt[i].SetData2("FACT");
 
                 // Find the end of the group going in the opposite direction.
                 if (i == 0)
                     return false;
 
                 // Remove the operator that is probably preceeding it.
-                if (lt[i - 1].Data1 == LexemeType.Operator)
+                if (lt[i - 1].GetData1() == LexemeType.Operator)
                 {
-                    lt.RemoveAt(i - 1);
+                    ArrayFunc.RemoveIndex(lt, i - 1);
                     i--;
                 }
 
-                if (i != lt.Count - 1 && lt[i + 1].Data1 == LexemeType.Operator)
+                if (i != lt.Count - 1 && lt[i + 1].GetData1() == LexemeType.Operator)
                 {
-                    lt.RemoveAt(i + 1);
+                    ArrayFunc.RemoveIndex(lt, i + 1);
                 }
 
-                if (!(lt[i - 1].Data1 == LexemeType.EndPara ||
-                    lt[i - 1].Data1 == LexemeType.EndBracket ||
-                    lt[i - 1].Data1 == LexemeType.Bar))
+                if (!(lt[i - 1].GetData1() == LexemeType.EndPara ||
+                      lt[i - 1].GetData1() == LexemeType.EndBracket ||
+                      lt[i - 1].GetData1() == LexemeType.Bar))
                 {
                     // Just the single lexeme.
-                    if (lt[i - 1].Data1 == LexemeType.Operator)
+                    if (lt[i - 1].GetData1() == LexemeType.Operator)
                         return false;
-                    lt.RemoveAt(i);
+                    ArrayFunc.RemoveIndex(lt, i);
                     lt.Insert(i - 1, lex);
                     continue;
                 }
@@ -1466,16 +1475,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 if (lt.Count < 4)
                     return false;
 
-                LexemeType search = lt[i - 1].Data1;
+                LexemeType search = lt[i - 1].GetData1();
                 LexemeType endType = LexemeTypeHelper.GetOpposite(search);
 
                 int depth = 1;
                 int endIndex = -1;
                 for (int j = i - 2; j >= 0; --j)
                 {
-                    if (lt[j].Data1 == search)
+                    if (lt[j].GetData1() == search)
                         depth++;
-                    else if (lt[j].Data1 == endType)
+                    else if (lt[j].GetData1() == endType)
                     {
                         depth--;
                         if (depth == 0)
@@ -1488,22 +1497,22 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 if (endIndex == -1)
                     return false;
 
-                lt.RemoveAt(i);
+                ArrayFunc.RemoveIndex(lt, i);
                 lt.Insert(endIndex, lex);
             }
 
             return true;
         }
 
-        private bool CreateMultiVariableFuncs(ref LexemeTable lt)
+        private bool CreateMultiVariableFuncs(ref List<TypePair<LexemeType,string>> lt)
         {
             int totalVectorDepth = 0;
             for (int i = 0; i < lt.Count; ++i)
             {
-                if (lt[i].Data1 == LexemeType.Function && lt[i].Data2.StartsWith("vector"))
+                if (lt[i].GetData1() == LexemeType.Function && lt[i].GetData2().StartsWith("vector"))
                 {
                     // Skip to the end of this vector function.
-                    string removed = lt[i].Data2.Remove(0, "vector".Length);
+                    string removed = StringFunc.Rm(lt[i].GetData2(), 0, "vector".Length);
                     int dimen;
                     if (removed == "a")
                         dimen = 2;
@@ -1515,11 +1524,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     int matDeclDepth = 0;
                     for (int j = i; j < lt.Count; ++j)
                     {
-                        if (lt[j].Data1 == LexemeType.StartPara)
+                        if (lt[j].GetData1() == LexemeType.StartPara)
                         {
                             matDeclDepth++;
                         }
-                        else if (lt[j].Data1 == LexemeType.EndPara)
+                        else if (lt[j].GetData1() == LexemeType.EndPara)
                         {
                             matDeclDepth--;
                             if (matDeclDepth == 0 && (--dimen) == 0)
@@ -1530,14 +1539,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         }
                     }
                 }
-                if (lt[i].Data1 == LexemeType.Identifier)
+                if (lt[i].GetData1() == LexemeType.Identifier)
                 {
-                    if (lt[i].Data2.Contains("_"))
+                    if (lt[i].GetData2().Contains("_"))
                     {
                         // This could be the partial derivative notation of F_x.
-                        string[] split = lt[i].Data2.Split('_');
+                        string[] split = lt[i].GetData2().Split('_');
                         string funcIden = split[0];
-                        var funcDef = p_EvalData.FuncDefs.GetFuncDef(funcIden);
+                        FunctionDefinition funcDef = p_EvalData.GetFuncDefs().GetFuncDef(funcIden);
                         if (funcDef != null)
                         {
                             // The next part should be the variable with respect to.
@@ -1545,20 +1554,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                                 split[1] = split[1].Substring(1, split[1].Length - 2);
                             if (funcDef.IsArg(split[1]))
                             {
-                                Lexeme insertLex = new Lexeme(LexemeType.Derivative, MathSolver.PLAIN_TEXT ?
-                                    "(partial" + funcIden + ")/(partial" + split[1] + ")" :
-                                    "\\frac(partial" + funcIden + ")(partial" + split[1] + ")");
-                                lt.RemoveAt(i);
+                                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> insertLex = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Derivative, MathSolver.PLAIN_TEXT
+                                    ? "(partial" + funcIden + ")/(partial" + split[1] + ")"
+                                    : "frac(partial" + funcIden + ")(partial" + split[1] + ")");
+                                ArrayFunc.RemoveIndex(lt, i);
                                 lt.Insert(i, insertLex);
                             }
                         }
                     }
                 }
-                else if (lt[i].Data1 == LexemeType.StartBracket)
+                else if (lt[i].GetData1() == LexemeType.StartBracket)
                     totalVectorDepth++;
-                else if (lt[i].Data1 == LexemeType.EndBracket)
+                else if (lt[i].GetData1() == LexemeType.EndBracket)
                     totalVectorDepth--;
-                if (lt[i].Data1 != LexemeType.Comma || totalVectorDepth != 0)
+                if (lt[i].GetData1() != LexemeType.Comma || totalVectorDepth != 0)
                     continue;
 
                 if (i < 3)
@@ -1572,7 +1581,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 int vectorDepth = 0;
                 for (int j = i - 1; j >= 0; --j)
                 {
-                    if ((lt[j].Data1 == LexemeType.StartPara || lt[j].Data1 == LexemeType.FuncArgStart) && vectorDepth == 0)
+                    if ((lt[j].GetData1() == LexemeType.StartPara || lt[j].GetData1() == LexemeType.FuncArgStart) &&
+                        vectorDepth == 0)
                     {
                         depth++;
                         if (depth == 0)
@@ -1581,11 +1591,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                             break;
                         }
                     }
-                    else if ((lt[j].Data1 == LexemeType.EndPara || lt[j].Data1 == LexemeType.FuncArgEnd) && vectorDepth == 0)
+                    else if ((lt[j].GetData1() == LexemeType.EndPara || lt[j].GetData1() == LexemeType.FuncArgEnd) &&
+                             vectorDepth == 0)
                         depth--;
-                    else if (lt[j].Data1 == LexemeType.StartBracket)
+                    else if (lt[j].GetData1() == LexemeType.StartBracket)
                         vectorDepth++;
-                    else if (lt[j].Data1 == LexemeType.EndBracket)
+                    else if (lt[j].GetData1() == LexemeType.EndBracket)
                         vectorDepth--;
                 }
 
@@ -1593,18 +1604,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 if (funcStart <= 0)
                     return false;
 
-                Lexeme iden = lt[funcStart - 1];
-                if ((i - 1) > 0 && iden.Data1 == LexemeType.Operator && iden.Data2 == "*")
+                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> iden = lt[funcStart - 1];
+                if ((i - 1) > 0 && iden.GetData1() == LexemeType.Operator && iden.GetData2() == "*")
                     iden = lt[funcStart - 2];
 
-                if (iden.Data1 != LexemeType.Identifier && iden.Data1 != LexemeType.FuncIden)
+                if (iden.GetData1() != LexemeType.Identifier && iden.GetData1() != LexemeType.FuncIden)
                     return false;
 
-                string funcName = iden.Data2;
+                string funcName = iden.GetData2();
 
-                List<LexemeTable> args = new List<LexemeTable>();
+                List<List<TypePair<LexemeType,string>>> args = new List<List<TypePair<LexemeType,string>>>();
 
-                var firstLexRange = lt.GetRange(funcStart + 1, i - (funcStart + 1));
+                List<TypePair<LexemeType,string>> firstLexRange = lt.GetRange(funcStart + 1, i - (funcStart + 1));
                 args.Add(firstLexRange);
 
                 int funcEnd = -1;
@@ -1614,28 +1625,28 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 vectorDepth = 0;
                 for (int j = i + 1; j < lt.Count; ++j)
                 {
-                    if (depth == 1 && lt[j].Data1 == LexemeType.Comma && vectorDepth == 0)
+                    if (depth == 1 && lt[j].GetData1() == LexemeType.Comma && vectorDepth == 0)
                     {
-                        var lexRange = lt.GetRange(prevCommaIndex + 1, j - (prevCommaIndex + 1));
+                        List<TypePair<LexemeType,string>> lexRange = lt.GetRange(prevCommaIndex + 1, j - (prevCommaIndex + 1));
                         args.Add(lexRange);
                         prevCommaIndex = j;
                     }
-                    else if (lt[j].Data1 == LexemeType.StartBracket)
+                    else if (lt[j].GetData1() == LexemeType.StartBracket)
                         vectorDepth++;
-                    else if (lt[j].Data1 == LexemeType.EndBracket)
+                    else if (lt[j].GetData1() == LexemeType.EndBracket)
                         vectorDepth--;
-                    else if ((lt[j].Data1 == LexemeType.StartPara || lt[j].Data1 == LexemeType.FuncArgStart) &&
-                        vectorDepth == 0)
+                    else if ((lt[j].GetData1() == LexemeType.StartPara || lt[j].GetData1() == LexemeType.FuncArgStart) &&
+                             vectorDepth == 0)
                     {
                         depth++;
                     }
-                    else if ((lt[j].Data1 == LexemeType.EndPara || lt[j].Data1 == LexemeType.FuncArgEnd) &&
-                        vectorDepth == 0)
+                    else if ((lt[j].GetData1() == LexemeType.EndPara || lt[j].GetData1() == LexemeType.FuncArgEnd) &&
+                             vectorDepth == 0)
                     {
                         depth--;
                         if (depth == 0)
                         {
-                            var lexRange = lt.GetRange(prevCommaIndex + 1, j - (prevCommaIndex + 1));
+                            List<TypePair<LexemeType,string>> lexRange = lt.GetRange(prevCommaIndex + 1, j - (prevCommaIndex + 1));
                             args.Add(lexRange);
                             funcEnd = j;
                             break;
@@ -1648,7 +1659,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
                 lt.RemoveRange(funcStart - 1, funcEnd - (funcStart - 2));
 
-                lt.Insert(funcStart - 1, new Lexeme(LexemeType.MultiVarFuncStore, funcName));
+                lt.Insert(funcStart - 1, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.MultiVarFuncStore, funcName));
                 _funcStore[funcName] = args;
                 i = funcStart;
             }
@@ -1656,63 +1667,66 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return true;
         }
 
-        private ExComp LexemeToExComp(List<TypePair<LexemeType, string>> lexemeTable, ref int currentIndex, ref List<string> pParseErrors)
+        private ExComp LexemeToExComp(List<TypePair<LexemeType, string>> lexemeTable, ref int currentIndex,
+            ref List<string> pParseErrors)
         {
-            var lexeme = lexemeTable[currentIndex];
+            if (currentIndex >= lexemeTable.Count)
+                return null;
+            TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lexeme = lexemeTable[currentIndex];
             int endIndex = -1;
             int depth = 0;
             int startIndex;
             AlgebraTerm algebraTerm;
-            LexemeTable algebraTermLexemeTable;
-            switch (lexeme.Data1)
+            List<TypePair<LexemeType,string>> algebraTermLexemeTable;
+            switch (lexeme.GetData1())
             {
                 case LexemeType.VectorStore:
-                    return ParseVector(ref currentIndex, lexemeTable, ref pParseErrors);
+                    ExComp parsedVector = ParseVector(ref currentIndex, lexemeTable, ref pParseErrors);
+                    return parsedVector;
+
                 case LexemeType.MultiVarFuncStore:
-                    return ParseMultiVarFunc(ref currentIndex, lexemeTable, ref pParseErrors);
+                    ExComp multiValFunc = ParseMultiVarFunc(ref currentIndex, lexemeTable, ref pParseErrors);
+                    return multiValFunc;
                 case LexemeType.Infinity:
-                    return Number.PosInfinity;
+                    return ExNumber.GetPosInfinity();
 
                 case LexemeType.Function:
                     endIndex = -1;
                     depth = 0;
 
-                    if (lexeme.Data2 == "log_")
-                        return ParseLogBaseInner(ref currentIndex, lexemeTable, ref pParseErrors);
-                    if (lexeme.Data2 == "root")
-                        return ParseRootInner(ref currentIndex, lexemeTable, ref pParseErrors);
-                    else if (lexeme.Data2 == "frac")
-                        return ParseFraction(ref currentIndex, lexemeTable, ref pParseErrors);
-                    else if (lexeme.Data2.StartsWith("vector"))
-                        return ParseVectorNotation(ref currentIndex, lexemeTable, ref pParseErrors);
-                    else if (lexeme.Data2.StartsWith("binom")) 
-                        return ParseBinomNotation(ref currentIndex, lexemeTable, ref pParseErrors);
-                    else if (lexeme.Data2 == "det")
+                    if (lexeme.GetData2() == "log_")
                     {
-                        currentIndex++;
-                        // If the next element is not a matrix then return null.
-                        if (currentIndex < lexemeTable.Count && 
-                            (lexemeTable[currentIndex].Data1 == LexemeType.VectorStore ||
-                            (lexemeTable[currentIndex].Data1 == LexemeType.Function && lexemeTable[currentIndex].Data2.StartsWith("vector"))))
-                        {
-                            ExComp vectorEle = LexemeToExComp(lexemeTable, ref currentIndex, ref pParseErrors);
-                            if (!(vectorEle is ExMatrix))
-                            {
-                                pParseErrors.Add("Matrix must follow determinant");
-                                return null;
-                            }
-
-                            return new Determinant(vectorEle);
-                        }
+                        ExComp parsedLogBaseInner = ParseLogBaseInner(ref currentIndex, lexemeTable, ref pParseErrors);
+                        return parsedLogBaseInner;
+                    }
+                    if (lexeme.GetData2() == "root")
+                    {
+                        ExComp rootParsed = ParseRootInner(ref currentIndex, lexemeTable, ref pParseErrors);
+                        return rootParsed;
+                    }
+                    if (lexeme.GetData2() == "frac")
+                    {
+                        ExComp parsedFraction = ParseFraction(ref currentIndex, lexemeTable, ref pParseErrors);
+                        return parsedFraction;
+                    }
+                    if (lexeme.GetData2().StartsWith("vector"))
+                    {
+                        ExComp parsedVectorEx = ParseVectorNotation(ref currentIndex, lexemeTable, ref pParseErrors);
+                        return parsedVectorEx;
+                    }
+                    if (lexeme.GetData2().StartsWith("binom"))
+                    {
+                        ExComp parsedBinom = ParseBinomNotation(ref currentIndex, lexemeTable, ref pParseErrors);
+                        return parsedBinom;
                     }
 
-                    if (TrigFunction.IsValidType(lexeme.Data2) ||
-                        InverseTrigFunction.IsValidType(lexeme.Data2))
+                    if (TrigFunction.IsValidType(lexeme.GetData2()) ||
+                        InverseTrigFunction.IsValidType(lexeme.GetData2()))
                     {
                         if (currentIndex + 2 > lexemeTable.Count - 1)
                             return null;
 
-                        if (lexemeTable[currentIndex + 1].Data1 == LexemeType.Operator)
+                        if (lexemeTable[currentIndex + 1].GetData1() == LexemeType.Operator)
                         {
                             // The sinusodal function is in the form.
                             currentIndex += 2;
@@ -1727,28 +1741,28 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                             if (inner == null)
                                 return null;
 
-                            var trigFunc = Equation.Functions.BasicAppliedFunc.Parse(lexeme.Data2, inner, ref pParseErrors);
+                            ExComp trigFunc = BasicAppliedFunc.Parse(lexeme.GetData2(), inner, ref pParseErrors);
                             if (trigFunc == null)
                                 return null;
 
                             if (power is AlgebraTerm)
-                                power = (power as AlgebraTerm).RemoveRedundancies();
+                                power = (power as AlgebraTerm).RemoveRedundancies(false);
 
-                            if (Number.NegOne.IsEqualTo(power) && trigFunc is TrigFunction)
+                            if (ExNumber.GetNegOne().IsEqualTo(power) && trigFunc is TrigFunction)
                             {
                                 return (trigFunc as TrigFunction).GetInverseOf();
                             }
 
-                            return new AlgebraTerm(trigFunc, new Equation.Operators.PowOp(), power);
+                            return new AlgebraTerm(trigFunc, new PowOp(), power);
                         }
                     }
 
                     for (int i = currentIndex + 2; i < lexemeTable.Count; ++i)
                     {
-                        var compareLexeme = lexemeTable[i];
-                        if (compareLexeme.Data1 == LexemeType.StartPara)
+                        TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> compareLexeme = lexemeTable[i];
+                        if (compareLexeme.GetData1() == LexemeType.StartPara)
                             depth++;
-                        if (compareLexeme.Data1 == LexemeType.EndPara)
+                        if (compareLexeme.GetData1() == LexemeType.EndPara)
                         {
                             if (depth == 0)
                             {
@@ -1762,38 +1776,46 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
                     if (depth != -1 || endIndex == -1)
                     {
-                        if ((lexeme.Data2 == "!" || lexeme.Data2.StartsWith("nabla")) && currentIndex != lexemeTable.Count - 1)
+                        if ((lexeme.GetData2() == "FACT" || lexeme.GetData2().StartsWith("nabla")) &&
+                            currentIndex != lexemeTable.Count - 1)
                         {
-                            // Just parse the next lexeme.
-                            LexemeTable lt = new LexemeTable();
+                            currentIndex++;
+                            if (lexemeTable[currentIndex].GetData1() == LexemeType.Operator)
+                            {
+                                if (lexemeTable[currentIndex].GetData2() == "*" ||
+                                    lexemeTable[currentIndex].GetData2() == CrossProductOp.IDEN)
+                                {
+                                    lexeme.SetData2(lexeme.GetData2() + lexemeTable[currentIndex].GetData2());
+                                    currentIndex++;
+                                }
+                                else
+                                    return null;
+                            }
 
-                            lt.Add(lexemeTable[currentIndex + 1]);
-                            int tmpCurIndex = 0;
-                            ExComp innerEx = LexemeToExComp(lt, ref tmpCurIndex, ref pParseErrors);
+                            // Just parse the next lexeme.
+                            ExComp innerEx = LexemeToExComp(lexemeTable, ref currentIndex, ref pParseErrors);
 
                             currentIndex = currentIndex + 1;
-                            if (lexeme.Data2 == "!")
+                            if (lexeme.GetData2() == "FACT")
                                 return new FactorialFunction(innerEx);
+                            string parseLexeme;
+                            if (lexeme.GetData2().Contains(CrossProductOp.IDEN))
+                                parseLexeme = "curl";
+                            else if (lexeme.GetData2().Contains("*"))
+                                parseLexeme = "div";
                             else
                             {
-                                string parseLexeme;
-                                if (lexeme.Data2.Contains(Equation.Operators.CrossProductOp.IDEN))
-                                    parseLexeme = "curl";
-                                else if (lexeme.Data2.Contains("*"))
-                                    parseLexeme = "div";
-                                else
+                                // Gradient.
+                                if (innerEx is ExMatrix)
                                 {
-                                    // Gradient.
-                                    if (innerEx is Equation.Structural.LinearAlg.ExMatrix)
-                                    {
-                                        pParseErrors.Add("Cannot take the gradient of a vector.");
-                                        return null;
-                                    }
-                                    return new Equation.Functions.Calculus.Vector.GradientFunc(innerEx);
+                                    pParseErrors.Add("Cannot take the gradient of a vector.");
+                                    return null;
                                 }
-
-                                return Equation.Functions.BasicAppliedFunc.Parse(parseLexeme, innerEx, ref pParseErrors);
+                                return new GradientFunc(innerEx);
                             }
+
+                            ExComp basicAppliedParsed = BasicAppliedFunc.Parse(parseLexeme, innerEx, ref pParseErrors);
+                            return basicAppliedParsed;
                         }
                         return null;
                     }
@@ -1803,30 +1825,30 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     currentIndex = endIndex;
                     if (algebraTermLexemeTable.Count == 0)
                         return null;
-                    algebraTerm = LexemeTableToAlgebraTerm(algebraTermLexemeTable, ref pParseErrors);
+                    algebraTerm = LexemeTableToAlgebraTerm(algebraTermLexemeTable, ref pParseErrors, false);
                     if (algebraTerm == null)
                         return null;
 
-                    var func = Equation.Functions.BasicAppliedFunc.Parse(lexeme.Data2, algebraTerm, ref pParseErrors);
+                    ExComp func = BasicAppliedFunc.Parse(lexeme.GetData2(), algebraTerm, ref pParseErrors);
                     return func;
 
                 case LexemeType.FunctionDef:
                     FunctionDefinition funcDef = new FunctionDefinition();
-                    if (!funcDef.Parse(lexeme.Data2))
+                    if (!funcDef.Parse(lexeme.GetData2()))
                         return null;
+
                     return funcDef;
 
                 case LexemeType.FuncIden:
-                    FunctionDefinition callFunc = new FunctionDefinition();
 
-                    List<LexemeTable> args = new List<LexemeTable>();
+                    List<List<TypePair<LexemeType,string>>> args = new List<List<TypePair<LexemeType,string>>>();
 
                     depth = 0;
                     for (int i = currentIndex + 2; i < lexemeTable.Count; ++i)
                     {
-                        if (lexemeTable[i].Data1 == LexemeType.FuncArgStart)
+                        if (lexemeTable[i].GetData1() == LexemeType.FuncArgStart)
                             depth++;
-                        else if (lexemeTable[i].Data1 == LexemeType.FuncArgEnd)
+                        else if (lexemeTable[i].GetData1() == LexemeType.FuncArgEnd)
                         {
                             if (depth == 0)
                             {
@@ -1844,7 +1866,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         return null;
 
                     startIndex = currentIndex + 2;
-                    LexemeTable funcCallLt = lexemeTable.GetRange(startIndex, endIndex - startIndex);
+                    List<TypePair<LexemeType,string>> funcCallLt = lexemeTable.GetRange(startIndex, endIndex - startIndex);
 
                     currentIndex = endIndex;
 
@@ -1852,7 +1874,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     int argStartIndex = 0;
                     for (int i = 0; i < funcCallLt.Count; ++i)
                     {
-                        if (funcCallLt[i].Data1 == LexemeType.Comma)
+                        if (funcCallLt[i].GetData1() == LexemeType.Comma)
                         {
                             args.Add(funcCallLt.GetRange(argStartIndex, i - argStartIndex));
                             argStartIndex = i;
@@ -1864,21 +1886,37 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     ExComp[] argExs = new ExComp[args.Count];
                     for (int i = 0; i < args.Count; ++i)
                     {
-                        argExs[i] = LexemeTableToAlgebraTerm(args[i], ref pParseErrors);
+                        argExs[i] = LexemeTableToAlgebraTerm(args[i], ref pParseErrors, false);
                         if (argExs[i] == null)
                             return null;
                     }
 
-                    FunctionDefinition tmp = p_EvalData.FuncDefs.GetFuncDef(lexeme.Data2);
+                    FunctionDefinition tmp = p_EvalData.GetFuncDefs().GetFuncDef(lexeme.GetData2());
                     if (tmp == null)
+                    {
+                        if (!_definedFuncs.Contains(lexeme.GetData2()))
+                        {
+                            pParseErrors.Add("Function is not defined.");
+                            return null;
+                        }
+
+                        AlgebraComp[] inputArgs = new AlgebraComp[argExs.Length];
+                        for (int i = 0; i < inputArgs.Length; ++i)
+                        {
+                            inputArgs[i] = new AlgebraComp("$x");
+                        }
+                        return new FunctionDefinition(new AlgebraComp(lexeme.GetData2()), inputArgs, argExs, true);
+                    }
+
+                    FunctionDefinition funcCall = (FunctionDefinition)tmp.CloneEx();
+
+                    if (funcCall.GetInputArgCount() != argExs.Length)
+                    {
+                        pParseErrors.Add("Invalid number of input arguments for defined function.");
                         return null;
+                    }
 
-                    FunctionDefinition funcCall = (FunctionDefinition)tmp.Clone();
-
-                    if (funcCall.InputArgCount != argExs.Length)
-                        return null;
-
-                    funcCall.CallArgs = argExs;
+                    funcCall.SetCallArgs(argExs);
                     return funcCall;
 
                 case LexemeType.Bar:
@@ -1886,8 +1924,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     bool hitBar = false;
                     for (int i = currentIndex + 1; i < lexemeTable.Count; ++i)
                     {
-                        var compareLexeme = lexemeTable[i];
-                        if (compareLexeme.Data1 == LexemeType.Bar)
+                        TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> compareLexeme = lexemeTable[i];
+                        if (compareLexeme.GetData1() == LexemeType.Bar)
                         {
                             endIndex = i;
                             hitBar = true;
@@ -1902,14 +1940,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     currentIndex = endIndex;
                     if (algebraTermLexemeTable.Count == 0)
                         return null;
-                    if (algebraTermLexemeTable.Count == 1 && algebraTermLexemeTable[0].Data1 == LexemeType.Operator &&
-                        algebraTermLexemeTable[0].Data2 == "*")
+                    if (algebraTermLexemeTable.Count == 1 && algebraTermLexemeTable[0].GetData1() == LexemeType.Operator &&
+                        algebraTermLexemeTable[0].GetData2() == "*")
                         return null;
-                    algebraTerm = LexemeTableToAlgebraTerm(algebraTermLexemeTable, ref pParseErrors);
+                    algebraTerm = LexemeTableToAlgebraTerm(algebraTermLexemeTable, ref pParseErrors, false);
                     if (algebraTerm == null)
                         return null;
 
-                    var absVal = new Equation.Functions.AbsValFunction(algebraTerm);
+                    AbsValFunction absVal = new AbsValFunction(algebraTerm);
                     return absVal;
 
                 case LexemeType.StartPara:
@@ -1917,10 +1955,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     depth = 0;
                     for (int i = currentIndex + 1; i < lexemeTable.Count; ++i)
                     {
-                        var compareLexeme = lexemeTable[i];
-                        if (compareLexeme.Data1 == LexemeType.StartPara)
+                        TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> compareLexeme = lexemeTable[i];
+                        if (compareLexeme.GetData1() == LexemeType.StartPara)
                             depth++;
-                        if (compareLexeme.Data1 == LexemeType.EndPara)
+                        if (compareLexeme.GetData1() == LexemeType.EndPara)
                         {
                             if (depth == 0)
                             {
@@ -1943,49 +1981,62 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                         pParseErrors.Add("Empty parentheses.");
                         return null;
                     }
-                    algebraTerm = LexemeTableToAlgebraTerm(algebraTermLexemeTable, ref pParseErrors);
+                    algebraTerm = LexemeTableToAlgebraTerm(algebraTermLexemeTable, ref pParseErrors, false);
                     if (algebraTerm == null)
                         return null;
                     return algebraTerm;
 
                 case LexemeType.Derivative:
-                    return ParseDerivative(ref currentIndex, lexemeTable, ref pParseErrors);
-
+                    ExComp parsedDeriv = ParseDerivative(ref currentIndex, lexemeTable, ref pParseErrors);
+                    return parsedDeriv;
                 case LexemeType.FuncDeriv:
-                    return ParseFuncDerivative(ref currentIndex, lexemeTable, ref pParseErrors);
-
+                    ExComp parsedFuncDeriv = ParseFuncDerivative(ref currentIndex, lexemeTable, ref pParseErrors);
+                    return parsedFuncDeriv;
                 case LexemeType.Summation:
-                    return ParseSummation(ref currentIndex, lexemeTable, ref pParseErrors);
-
+                    ExComp parsedSum = ParseSummation(ref currentIndex, lexemeTable, ref pParseErrors);
+                    return parsedSum;
                 case LexemeType.Limit:
-                    return ParseLimit(ref currentIndex, lexemeTable, ref pParseErrors);
-
+                    ExComp parsedLim = ParseLimit(ref currentIndex, lexemeTable, ref pParseErrors);
+                    return parsedLim;
                 case LexemeType.Integral:
-                    return ParseIntegral(ref currentIndex, lexemeTable, ref pParseErrors);
-
+                    ExComp parsedInt = ParseIntegral(ref currentIndex, lexemeTable, ref pParseErrors);
+                    return parsedInt;
                 case LexemeType.Differential:
-                    pParseErrors.Add("Cannot have lone differential.");
+                    // If the lexeme before is a derivative just ignore this, it is probably an error.
+                    if (currentIndex == 0 || lexemeTable[currentIndex - 1].GetData1() != LexemeType.Derivative ||
+                        !lexemeTable[currentIndex - 1].GetData2().Contains(lexeme.GetData2()))
+                    {
+                        pParseErrors.Add("Cannot have lone differential.");
+                        return null;
+                    }
+
+                    if (currentIndex + 1 < lexemeTable.Count)
+                    {
+                        currentIndex++;
+                        ExComp lexToEx = LexemeToExComp(lexemeTable, ref currentIndex, ref pParseErrors);
+                        return lexToEx;
+                    }
                     return null;
 
                 case LexemeType.I_Number:
                 case LexemeType.Number:
-                    Number number = Number.Parse(lexeme.Data2);
+                    ExNumber number = ExNumber.Parse(lexeme.GetData2());
                     return number;
 
                 case LexemeType.Operator:
-                    AgOp algebraOp = AgOp.ParseOperator(lexeme.Data2);
+                    AgOp algebraOp = AgOp.ParseOperator(lexeme.GetData2());
 
                     // This is due to a function definition also being parsed as part of the combination or permutation.
-                    if (lexeme.Data2.Contains("text") && currentIndex < lexemeTable.Count - 1)
-                        lexemeTable.RemoveAt(currentIndex + 1);
+                    if (lexeme.GetData2().Contains("text") && currentIndex < lexemeTable.Count - 1)
+                        ArrayFunc.RemoveIndex(lexemeTable, currentIndex + 1);
                     return algebraOp;
 
                 case LexemeType.Identifier:
-                    AlgebraComp algebraComp = AlgebraComp.Parse(lexeme.Data2);
+                    AlgebraComp algebraComp = AlgebraComp.Parse(lexeme.GetData2());
                     return algebraComp;
 
                 case LexemeType.Constant:
-                    Constant constant = Constant.ParseConstant(lexeme.Data2);
+                    Constant constant = Constant.ParseConstant(lexeme.GetData2());
                     return constant;
 
                 case LexemeType.FuncArgEnd:
@@ -2084,41 +2135,41 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
         //    return isChooseFunc ? new ChooseFunction(before, after) : new PermutationFunction(before, after);
         //}
 
-        private AlgebraTerm ParseMultiVarFunc(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseMultiVarFunc(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
-            Lexeme lex = lt[currentIndex];
+            TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lex = lt[currentIndex];
 
-            if (!_funcStore.ContainsKey(lex.Data2))
+            if (!_funcStore.ContainsKey(lex.GetData2()))
                 return null;
 
-            List<LexemeTable> argLts = _funcStore[lex.Data2];
+            List<List<TypePair<LexemeType,string>>> argLts = _funcStore[lex.GetData2()];
 
             ExComp[] argExs = new ExComp[argLts.Count];
 
             for (int i = 0; i < argLts.Count; ++i)
             {
-                AlgebraTerm tmp = LexemeTableToAlgebraTerm(argLts[i], ref pParseErrors);
+                AlgebraTerm tmp = LexemeTableToAlgebraTerm(argLts[i], ref pParseErrors, false);
                 if (tmp == null)
                     return null;
 
-                argExs[i] = tmp.RemoveRedundancies();
+                argExs[i] = tmp.RemoveRedundancies(false);
             }
 
             FunctionDefinition funcDef;
-            if (p_EvalData.FuncDefs.IsFuncDefined(lex.Data2))
+            if (p_EvalData.GetFuncDefs().IsFuncDefined(lex.GetData2()))
             {
-                FunctionDefinition tmp = p_EvalData.FuncDefs.GetFuncDef(lex.Data2);
+                FunctionDefinition tmp = p_EvalData.GetFuncDefs().GetFuncDef(lex.GetData2());
                 if (tmp == null)
                     return null;
 
-                funcDef = (FunctionDefinition)tmp.Clone();
+                funcDef = (FunctionDefinition)tmp.CloneEx();
 
-                funcDef.CallArgs = argExs;
+                funcDef.SetCallArgs(argExs);
 
                 return funcDef.ToAlgTerm();
             }
 
-            // There can only be a function definition at this point. 
+            // There can only be a function definition at this point.
             // Supplied input arguments are not allowed.
 
             AlgebraComp[] defInputArgs = new AlgebraComp[argExs.Length];
@@ -2133,87 +2184,100 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 }
             }
 
-            funcDef = new FunctionDefinition(new AlgebraComp(lex.Data2), areCallArgs ? null : defInputArgs, areCallArgs ? argExs : null);
+            funcDef = new FunctionDefinition(new AlgebraComp(lex.GetData2()), areCallArgs ? null : defInputArgs,
+                areCallArgs ? argExs : null, true);
             return funcDef.ToAlgTerm();
         }
 
-        private AlgebraTerm ParseVector(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseVector(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
-            if (lt[currentIndex].Data1 != LexemeType.VectorStore)
+            if (lt[currentIndex].GetData1() != LexemeType.VectorStore)
                 return null;
-            string vecStoreKey = lt[currentIndex].Data2;
+            string vecStoreKey = lt[currentIndex].GetData2();
             if (!_vectorStore.ContainsKey(vecStoreKey))
                 return null;
-            LexemeTable subsetLt = _vectorStore[vecStoreKey];
+            List<TypePair<LexemeType,string>> subsetLt = _vectorStore[vecStoreKey];
 
             // Split by commas.
-            List<LexemeTable> vecCompLts = new List<LexemeTable>();
+            List<List<TypePair<LexemeType,string>>> vecCompLts = new List<List<TypePair<LexemeType,string>>>();
             int prevIndex = 0;
             int depth = 0;
             for (int i = 0; i < subsetLt.Count; ++i)
             {
-                if (subsetLt[i].Data1 == LexemeType.StartBracket)
+                if (subsetLt[i].GetData1() == LexemeType.StartBracket)
                     depth++;
-                else if (subsetLt[i].Data1 == LexemeType.EndBracket)
+                else if (subsetLt[i].GetData1() == LexemeType.EndBracket)
                     depth--;
-                else if (subsetLt[i].Data1 == LexemeType.Comma && depth == 0)
+                else if (subsetLt[i].GetData1() == LexemeType.Comma && depth == 0)
                 {
-                    var compLt = subsetLt.GetRange(prevIndex, i - (prevIndex));
+                    List<TypePair<LexemeType,string>> compLt = subsetLt.GetRange(prevIndex, i - (prevIndex));
                     prevIndex = i + 1;
                     vecCompLts.Add(compLt);
                 }
             }
             vecCompLts.Add(subsetLt.GetRange(prevIndex, subsetLt.Count - prevIndex));
 
-            if (vecCompLts.Count == 0 || vecCompLts.Count == 1)
+            if (vecCompLts.Count == 0)
                 return null;
 
             // Then parse each individual component.
             List<ExComp> vecCompExs = new List<ExComp>();
-            foreach (LexemeTable vecCompLt in vecCompLts)
+            foreach (List<TypePair<LexemeType,string>> vecCompLt in vecCompLts)
             {
                 if (vecCompLt.Count == 0)
                 {
                     pParseErrors.Add("Nothing following comma");
                     return null;
                 }
-                AlgebraTerm term = LexemeTableToAlgebraTerm(vecCompLt,  ref pParseErrors);
+                AlgebraTerm term = LexemeTableToAlgebraTerm(vecCompLt, ref pParseErrors, false);
+
                 if (term == null)
                     return null;
-                vecCompExs.Add(term.RemoveRedundancies());
+                ExComp addEx = term.WeakMakeWorkable(ref pParseErrors, ref p_EvalData);
+                if (addEx == null)
+                    return null;
+                if (addEx is AlgebraTerm)
+                    addEx = (addEx as AlgebraTerm).RemoveRedundancies(true);
+
+                vecCompExs.Add(addEx);
             }
 
-            var mat = Equation.Structural.LinearAlg.MatrixHelper.CreateMatrix(vecCompExs);
-            string str = mat.ToTexString();
+            ExMatrix mat = MatrixHelper.CreateMatrix(vecCompExs);
+            if (mat == null)
+                return null;
 
             return mat;
         }
 
-        private AlgebraTerm ParseDerivative(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseDerivative(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
             if (MathSolver.PLAIN_TEXT)
-                return ParseDerivativePlainText(ref currentIndex, lt, ref pParseErrors);
-            return ParseDerivativeTeX(ref currentIndex, lt, ref pParseErrors);
+            {
+                AlgebraTerm parsedDerivText = ParseDerivativePlainText(ref currentIndex, lt, ref pParseErrors);
+                return parsedDerivText;
+            }
+            AlgebraTerm parsedTeXDeriv = ParseDerivativeTeX(ref currentIndex, lt, ref pParseErrors);
+            return parsedTeXDeriv;
         }
 
-        private AlgebraTerm ParseDerivativePlainText(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseDerivativePlainText(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
             // Should be in the form d/dx(...) or df/dx
-            string derivStr = lt[currentIndex].Data2;
+            string derivStr = lt[currentIndex].GetData2();
 
             string[] topBottom = derivStr.Split('/');
             if (topBottom.Length != 2)
                 return null;
-            string top = topBottom[0].Remove(0, 1);
-            top = top.Remove(top.Length - 1, 1);
-            string bottom = topBottom[1].Remove(0, 1);
-            bottom = bottom.Remove(bottom.Length - 1, 1);
+            string top = StringFunc.Rm(topBottom[0], 0, 1);
+            top = StringFunc.Rm(top, top.Length - 1, 1);
+            string bottom = StringFunc.Rm(topBottom[1], 0, 1);
+            bottom = StringFunc.Rm(bottom, bottom.Length - 1, 1);
 
             bool isPartial = top.Contains("partial");
             if (isPartial != bottom.Contains("partial"))
             {
                 pParseErrors.Add("Incorrect use of the partial derivative.");
-                return null; 
+                return null;
             }
 
             if (isPartial)
@@ -2225,7 +2289,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             int indexOfDeriv = -1;
             if (top.Contains("^"))
             {
-                Match match = Regex.Match(top, NUM_MATCH);
+                Match match = TypeHelper.Match(top, NUM_MATCH);
                 if (!match.Success)
                     return null;
                 string matchStr = match.Value;
@@ -2237,20 +2301,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
                 if (!bottom.Contains("^"))
                     return null;
-                match = Regex.Match(bottom, NUM_MATCH);
+                match = TypeHelper.Match(bottom, NUM_MATCH);
                 if (!match.Success)
                     return null;
                 if (match.Value != matchStr)
                     return null;
             }
 
-            top = top.Remove(0, 1);
-            bottom = bottom.Remove(0, 1);
+            top = StringFunc.Rm(top, 0, 1);
+            bottom = StringFunc.Rm(bottom, 0, 1);
 
             if (indexOfDeriv != -1)
             {
-                Match topSymbMatch = Regex.Match(top, IDEN_MATCH);
-                Match bottomSymbMatch = Regex.Match(bottom, IDEN_MATCH);
+                Match topSymbMatch = TypeHelper.Match(top, IDEN_MATCH);
+                Match bottomSymbMatch = TypeHelper.Match(bottom, IDEN_MATCH);
                 if (!bottomSymbMatch.Success)
                     return null;
 
@@ -2271,9 +2335,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     return null;
                 }
 
-                return Equation.Functions.Calculus.Derivative.Parse(top, bottom, new Number(indexOfDeriv), isPartial, ref p_EvalData);
+                Derivative parsedDeriv = Derivative.Parse(top, bottom, new ExNumber(indexOfDeriv), isPartial, ref p_EvalData);
+                return parsedDeriv;
             }
-
 
             currentIndex++;
             if (currentIndex > lt.Count - 1)
@@ -2283,33 +2347,33 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
             ExComp innerEx;
             // Just takes the derivative of the rest of the expression.
-            var remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
+            List<TypePair<LexemeType,string>> remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
             if (remainingLt.Count == 0)
             {
                 pParseErrors.Add("Nothing following derivative.");
                 return null;
             }
             currentIndex = lt.Count - 1;
-            innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
+            innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors, false);
 
             if (innerEx == null)
             {
                 return null;
             }
 
-            return Equation.Functions.Calculus.Derivative.Parse(bottom, innerEx, new Number(indexOfDeriv), isPartial);
+            return Derivative.Parse(bottom, innerEx, new ExNumber(indexOfDeriv), isPartial);
         }
 
-        private AlgebraTerm ParseDerivativeTeX(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseDerivativeTeX(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
             // Should be in the form d/dx(...) or df/dx
-            string derivStr = lt[currentIndex].Data2;
+            string derivStr = lt[currentIndex].GetData2();
 
             string[] topBottom = derivStr.Split(')');
             if (topBottom.Length != 3)
                 return null;
-            string top = topBottom[0].Remove(0, "frac(".Length);
-            string bottom = topBottom[1].Remove(0, 1);
+            string top = StringFunc.Rm(topBottom[0], 0, "frac(".Length);
+            string bottom = StringFunc.Rm(topBottom[1], 0, 1);
 
             bool isPartial = top.Contains("partial");
             if (isPartial != bottom.Contains("partial"))
@@ -2327,7 +2391,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             int indexOfDeriv = -1;
             if (top.Contains("^"))
             {
-                Match match = Regex.Match(top, NUM_MATCH);
+                Match match = TypeHelper.Match(top, NUM_MATCH);
                 if (!match.Success)
                     return null;
                 string matchStr = match.Value;
@@ -2339,26 +2403,28 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
                 if (!bottom.Contains("^"))
                     return null;
-                match = Regex.Match(bottom, NUM_MATCH);
+                match = TypeHelper.Match(bottom, NUM_MATCH);
                 if (!match.Success)
                     return null;
                 if (match.Value != matchStr)
                     return null;
             }
 
-            top = top.Remove(0, 1);
-            bottom = bottom.Remove(0, 1);
+            top = StringFunc.Rm(top, 0, 1);
+            bottom = StringFunc.Rm(bottom, 0, 1);
 
             if (indexOfDeriv != -1)
             {
-                Match topSymbMatch = Regex.Match(top, IDEN_MATCH);
-                Match bottomSymbMatch = Regex.Match(bottom, IDEN_MATCH);
+                Match topSymbMatch = TypeHelper.Match(top, IDEN_MATCH);
+                Match bottomSymbMatch = TypeHelper.Match(bottom, IDEN_MATCH);
                 if (!bottomSymbMatch.Success)
                     return null;
 
                 top = topSymbMatch.Value;
                 bottom = bottomSymbMatch.Value;
             }
+            else
+                indexOfDeriv = 1;
 
             if (top.Length != 0)
             {
@@ -2373,7 +2439,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     return null;
                 }
 
-                return Equation.Functions.Calculus.Derivative.Parse(top, bottom, new Number(indexOfDeriv), isPartial, ref p_EvalData);
+                Derivative derivParsed = Derivative.Parse(top, bottom, new ExNumber(indexOfDeriv), isPartial, ref p_EvalData);
+                return derivParsed;
             }
 
             currentIndex++;
@@ -2384,79 +2451,82 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
             ExComp innerEx;
             // Just takes the derivative of the rest of the expression.
-            var remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
+            List<TypePair<LexemeType,string>> remainingLt = lt.GetRange(currentIndex, lt.Count - currentIndex);
             if (remainingLt.Count == 0)
             {
                 pParseErrors.Add("Nothing following derivative.");
                 return null;
             }
             currentIndex = lt.Count - 1;
-            innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
+            innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors, false);
 
             if (innerEx == null)
             {
                 return null;
             }
 
-            return Equation.Functions.Calculus.Derivative.Parse(bottom, innerEx, new Number(indexOfDeriv), isPartial);
+            return Derivative.Parse(bottom, innerEx, new ExNumber(indexOfDeriv), isPartial);
         }
 
-        private AlgebraTerm ParseFraction(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseFraction(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
             currentIndex++;
 
             // Should be in the form \frac(num)(den)
 
             ExComp numEx = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
-            if (numEx == null)
+            if (numEx == null || numEx is AgOp)
                 return null;
 
-            currentIndex += 2;
+            currentIndex++;
+
+            if (lt[currentIndex].GetData1() == LexemeType.Operator && lt[currentIndex].GetData2() == "*")
+                currentIndex++;
 
             if (currentIndex > lt.Count - 1)
                 return null;
 
-            if (lt[currentIndex].Data1 != LexemeType.StartPara)
+            if (lt[currentIndex].GetData1() != LexemeType.StartPara)
                 return null;
 
             ExComp denEx = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
-            if (denEx == null)
+            if (denEx == null || denEx is AgOp)
                 return null;
 
-            return new AlgebraTerm(numEx, new Equation.Operators.DivOp(), denEx);
+            return new AlgebraTerm(numEx, new DivOp(), denEx);
         }
 
-        private AlgebraTerm ParseFuncDerivative(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseFuncDerivative(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
-            Lexeme lex = lt[currentIndex];
+            TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> lex = lt[currentIndex];
             string str;
             string withRespectTo = null;
-            if (lex.Data2.Contains("("))
+            if (lex.GetData2().Contains("("))
             {
-                string[] tmps = lex.Data2.Split('(');
+                string[] tmps = lex.GetData2().Split('(');
                 str = tmps[0];
-                withRespectTo = tmps[1].Remove(tmps[1].Length - 1, 1);
+                withRespectTo = StringFunc.Rm(tmps[1], tmps[1].Length - 1, 1);
             }
             else
-                str = lex.Data2;
+                str = lex.GetData2();
 
             // Convert this over to the Leibniz notation.
-            Match funcMatch = Regex.Match(str, IDEN_MATCH);
+            Match funcMatch = TypeHelper.Match(str, IDEN_MATCH);
             if (!funcMatch.Success)
                 return null;
 
-            str = str.Remove(0, funcMatch.Length);
+            str = StringFunc.Rm(str, 0, funcMatch.Length);
             ExComp order = null;
             if (str.Contains("'"))
-                order = new Number(str.Length);        // Just the number of primes we have.
+                order = new ExNumber(str.Length); // Just the number of primes we have.
             else
             {
-                str = str.Remove(0, 1);
+                str = StringFunc.Rm(str, 0, 1);
                 // This is in the notation f^2(x)
 
                 int iTmp;
                 if (int.TryParse(str, out iTmp))
-                    order = new Number(iTmp);
+                    order = new ExNumber(iTmp);
                 else if (Regex.IsMatch(str, IDEN_MATCH))
                     order = new AlgebraComp(str);
                 else
@@ -2465,67 +2535,106 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
             if (withRespectTo == null && currentIndex + 3 < lt.Count)
             {
-                if (lt[currentIndex + 1].Data1 == LexemeType.StartPara)
+                if (lt[currentIndex + 1].GetData1() == LexemeType.StartPara ||
+                    lt[currentIndex + 1].GetData1() == LexemeType.FuncArgStart)
                 {
-                    if (lt[currentIndex + 2].Data1 != LexemeType.Identifier)
-                        return null;
-                    withRespectTo = lt[currentIndex + 2].Data2;
-                    if (lt[currentIndex + 3].Data1 != LexemeType.EndPara)
+                    LexemeType lexType = lt[currentIndex + 1].GetData1();
+                    LexemeType oppositeLt = LexemeTypeHelper.GetOpposite(lexType);
+
+                    if (lt[currentIndex + 2].GetData1() != LexemeType.Identifier)
+                    {
+                        // Trying to evaluate the function at a given value.
+                        int depth = 1;
+                        currentIndex += 2;
+                        int endIndex = -1;
+                        for (int i = currentIndex; i < lt.Count; ++i)
+                        {
+                            if (lt[i].GetData1() == lexType)
+                                depth++;
+                            else if (lt[i].GetData1() == oppositeLt)
+                            {
+                                depth--;
+                                if (depth == 0)
+                                {
+                                    endIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (endIndex == -1)
+                            return null;
+
+                        List<TypePair<LexemeType,string>> inputValLt = lt.GetRange(currentIndex, endIndex - currentIndex);
+                        AlgebraTerm inputTerm = LexemeTableToAlgebraTerm(inputValLt, ref pParseErrors, false);
+                        if (inputTerm == null)
+                            return null;
+
+                        currentIndex = endIndex;
+
+                        inputTerm = inputTerm.ApplyOrderOfOperations();
+                        ExComp inputEx = inputTerm.MakeWorkable();
+
+                        return Derivative.ConstructDeriv(new AlgebraComp(funcMatch.Value), inputEx, order);
+                    }
+                    withRespectTo = lt[currentIndex + 2].GetData2();
+                    if (lt[currentIndex + 3].GetData1() != oppositeLt)
                         return null;
 
                     currentIndex = currentIndex + 4;
+
+                    return Derivative.ConstructDeriv(new AlgebraComp(funcMatch.Value), new AlgebraComp(withRespectTo),
+                        order);
                 }
             }
 
-            var deriv = Equation.Functions.Calculus.Derivative.Parse(funcMatch.Value, withRespectTo, order, false, 
-                ref p_EvalData, true);
+            Derivative deriv = Derivative.ConstructDeriv(new AlgebraComp(funcMatch.Value), new AlgebraComp(withRespectTo),
+                order);
+            //Equation.Functions.Calculus.Derivative deriv = Equation.Functions.Calculus.Derivative.Parse(funcMatch.Value, withRespectTo, order, false, ref p_EvalData);
 
             if (deriv == null)
-                pParseErrors.Add("Incorrect derivative notation for multivaraible functions.");
+                pParseErrors.Add("Incorrect derivative notation for multivariable functions.");
 
             return deriv;
         }
 
-        private AlgebraTerm ParseLimit(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseLimit(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
-            string limitStr = lt[currentIndex].Data2.Remove(0, "lim_(".Length);
-            limitStr = limitStr.Remove(limitStr.Length - 1, 1);
+            string limitStr = StringFunc.Rm(lt[currentIndex].GetData2(), 0, "lim_(".Length);
 
             int index = limitStr.IndexOf("to");
             if (index == -1)
                 return null;
-            string[] limitParts = { limitStr.Substring(0, index), limitStr.Substring(index + 2, limitStr.Length - (index + 2)) };
 
-            AlgebraComp varFor = new AlgebraComp(limitParts[0]);
+            AlgebraComp varFor = new AlgebraComp(limitStr.Substring(0, index));
+            string valToStr = limitStr.Substring(index + 2, limitStr.Length - (index + 2));
 
-            bool negate = limitParts[1].StartsWith("-");
-            if (negate)
-                limitParts[1] = limitParts[1].Remove(0, 1);
-
-            ExComp parsedValTo = null;
-            if (limitParts[1] == "inf")
-                parsedValTo = Number.PosInfinity;
-            else if (Regex.IsMatch(limitParts[1], IDEN_MATCH))
-            {
-                parsedValTo = new AlgebraComp(limitParts[1]);
-            }
-            else if (Regex.IsMatch(limitParts[1], NUM_MATCH))
-            {
-                parsedValTo = Number.Parse(limitParts[1]);
-            }
-
-            if (parsedValTo == null)
-            {
-                pParseErrors.Add("Incorrect limit approach value.");
+            List<TypePair<LexemeType,string>> limToLt = CreateLexemeTable(valToStr, ref pParseErrors);
+            if (limToLt == null || limToLt.Count == 0)
                 return null;
-            }
 
-            if (negate)
-                parsedValTo = Equation.Operators.MulOp.Negate(parsedValTo);
+            limToLt.Insert(0, new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.StartPara, "("));
+            AlgebraTerm limTo = LexemeTableToAlgebraTerm(limToLt, ref pParseErrors, false);
+            if (limTo == null)
+                return null;
+
+            ExComp tmpLimTo = limTo.WeakMakeWorkable(ref pParseErrors, ref p_EvalData);
+            if (tmpLimTo == null)
+                return null;
+            if (tmpLimTo is AlgebraTerm)
+            {
+                limTo = tmpLimTo as AlgebraTerm;
+                limTo = limTo.ApplyOrderOfOperations();
+                limTo = limTo.MakeWorkable().ToAlgTerm();
+            }
+            else
+                limTo = tmpLimTo.ToAlgTerm();
 
             currentIndex++;
-            if (currentIndex > lt.Count - 1)
-                return null;
+
+            if (currentIndex < lt.Count - 1 && lt[currentIndex].GetData1() == LexemeType.Operator &&
+                lt[currentIndex].GetData2() == "*")
+                currentIndex++;
 
             ExComp innerEx;
             int endIndex = lt.Count;
@@ -2533,13 +2642,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             int prevOp = -1;
             for (int i = currentIndex; i < lt.Count; ++i)
             {
-                if (lt[i].Data1 == LexemeType.StartPara)
+                if (lt[i].GetData1() == LexemeType.StartPara)
                     depth++;
-                else if (lt[i].Data1 == LexemeType.EndPara)
+                else if (lt[i].GetData1() == LexemeType.EndPara)
                     depth--;
-                else if (lt[i].Data1 == LexemeType.Operator)
+                else if (lt[i].GetData1() == LexemeType.Operator)
                     prevOp = i;
-                else if (lt[i].Data1 == LexemeType.Limit && depth == 0)
+                else if (lt[i].GetData1() == LexemeType.Limit && depth == 0)
                 {
                     // there will always be an operator before that needs to be parsed
                     endIndex = prevOp != -1 ? prevOp : i;
@@ -2547,50 +2656,94 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 }
             }
 
-
-            var remainingLt = lt.GetRange(currentIndex, endIndex - currentIndex);
+            List<TypePair<LexemeType,string>> remainingLt = lt.GetRange(currentIndex, endIndex - currentIndex);
             if (remainingLt.Count == 0)
                 return null;
-            innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
+            innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors, false);
             if (innerEx == null)
                 return null;
 
             currentIndex = endIndex == lt.Count - 1 ? endIndex : endIndex - 1;
 
-            return Equation.Functions.Calculus.Limit.Create(innerEx, varFor, parsedValTo);
+            return Limit.Create(innerEx, varFor, limTo.RemoveRedundancies(false));
         }
 
-        private AlgebraTerm ParseLogBaseInner(ref int currentIndex, LexemeTable lexemeTable, ref List<string> pParseErrors)
+        private AlgebraTerm ParseLogBaseInner(ref int currentIndex, List<TypePair<LexemeType,string>> lexemeTable,
+            ref List<string> pParseErrors)
         {
             currentIndex++;
             if (currentIndex > lexemeTable.Count - 1)
                 return null;
 
             // This should be in the form log_(base)(inner)
+            if (lexemeTable[currentIndex].GetData1() == LexemeType.FuncIden)
+                lexemeTable[currentIndex].SetData1(LexemeType.Identifier);
+
             ExComp baseEx = LexemeToExComp(lexemeTable, ref currentIndex, ref pParseErrors);
             if (baseEx == null)
                 return null;
 
+            currentIndex++;
+            if (currentIndex > lexemeTable.Count - 1)
+                return null;
+
+            if (lexemeTable[currentIndex].GetData1() == LexemeType.FuncArgStart)
+            {
+                int depth = 0;
+                int endIndex = -1;
+                for (int i = currentIndex; i < lexemeTable.Count; ++i)
+                {
+                    if (lexemeTable[i].GetData1() == LexemeType.FuncArgStart)
+                        depth++;
+                    else if (lexemeTable[i].GetData1() == LexemeType.FuncArgEnd)
+                    {
+                        depth--;
+                        if (depth == 0)
+                        {
+                            endIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (endIndex == -1)
+                    return null;
+
+                currentIndex++;
+                List<TypePair<LexemeType,string>> innerLt = lexemeTable.GetRange(currentIndex, endIndex - currentIndex);
+                if (innerLt.Count == 0)
+                    return null;
+                AlgebraTerm innerTerm = LexemeTableToAlgebraTerm(innerLt, ref pParseErrors, false);
+                if (innerTerm == null)
+                    return null;
+
+                currentIndex = endIndex;
+
+                LogFunction retLog = new LogFunction(innerTerm);
+                retLog.SetBase(baseEx);
+                return retLog;
+            }
+
             // Skip past the multiplication operator which has been placed here on default.
-            currentIndex += 2;
+            currentIndex++;
 
             if (currentIndex > lexemeTable.Count - 1)
                 return null;
 
-            if (lexemeTable[currentIndex].Data1 != LexemeType.StartPara)
+            if (lexemeTable[currentIndex].GetData1() != LexemeType.StartPara)
                 return null;
 
             ExComp innerEx = LexemeToExComp(lexemeTable, ref currentIndex, ref pParseErrors);
             if (innerEx == null)
                 return null;
 
-            Equation.Functions.LogFunction log = new Equation.Functions.LogFunction(innerEx);
-            log.Base = baseEx;
+            LogFunction log = new LogFunction(innerEx);
+            log.SetBase(baseEx);
 
             return log;
         }
 
-        private AlgebraTerm ParseParaGroup(ref int currentIndex, LexemeTable lexemeTable, ref List<string> pParseErrors)
+        private AlgebraTerm ParseParaGroup(ref int currentIndex, List<TypePair<LexemeType,string>> lexemeTable, ref List<string> pParseErrors)
         {
             int endIndex = -1;
             int depth = 0;
@@ -2600,10 +2753,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             depth = 0;
             for (int i = currentIndex + 1; ; ++i)
             {
-                var compareLexeme = lexemeTable[i];
-                if (compareLexeme.Data1 == LexemeType.StartPara)
+                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> compareLexeme = lexemeTable[i];
+                if (compareLexeme.GetData1() == LexemeType.StartPara)
                     depth++;
-                if (compareLexeme.Data1 == LexemeType.EndPara)
+                if (compareLexeme.GetData1() == LexemeType.EndPara)
                 {
                     if (depth == 0)
                     {
@@ -2618,47 +2771,79 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 throw new ArgumentException("Invalid end index!");
 
             startIndex = currentIndex + 1;
-            LexemeTable algebraTermLexemeTable = lexemeTable.GetRange(startIndex, endIndex - startIndex);
+            List<TypePair<LexemeType,string>> algebraTermLexemeTable = lexemeTable.GetRange(startIndex, endIndex - startIndex);
             currentIndex = endIndex;
             if (algebraTermLexemeTable.Count == 0)
                 return null;
-            return LexemeTableToAlgebraTerm(algebraTermLexemeTable, ref pParseErrors);
+            AlgebraTerm lexToAlg = LexemeTableToAlgebraTerm(algebraTermLexemeTable, ref pParseErrors, false);
+            return lexToAlg;
         }
 
-        private AlgebraTerm ParseRootInner(ref int currentIndex, LexemeTable lexemeTable, ref List<string> pParseErrors)
+        private AlgebraTerm ParseRootInner(ref int currentIndex, List<TypePair<LexemeType,string>> lexemeTable, ref List<string> pParseErrors)
         {
             currentIndex++;
 
             if (currentIndex > lexemeTable.Count - 1)
                 return null;
 
-            if (lexemeTable[currentIndex].Data1 != LexemeType.StartPara)
+            if (lexemeTable[currentIndex].GetData1() != LexemeType.StartPara)
                 return null;
 
-            ExComp rootEx = LexemeToExComp(lexemeTable, ref currentIndex, ref pParseErrors);
-            if (rootEx == null)
+            currentIndex++;
+            // For the first starting para.
+            int depth = 1;
+            int endIndex = -1;
+            for (int i = currentIndex; i < lexemeTable.Count; ++i)
+            {
+                if (lexemeTable[i].GetData1() == LexemeType.StartBracket)
+                    depth++;
+                else if (lexemeTable[i].GetData1() == LexemeType.EndBracket)
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        endIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (endIndex == -1)
                 return null;
 
-            currentIndex += 2;
+            List<TypePair<LexemeType,string>> rootIndexLt = lexemeTable.GetRange(currentIndex, endIndex - currentIndex);
+            if (rootIndexLt.Count == 0)
+                return null;
+            AlgebraTerm rootTerm = LexemeTableToAlgebraTerm(rootIndexLt, ref pParseErrors, false);
+            if (rootTerm == null)
+                return null;
+
+            ExComp rootEx = rootTerm.RemoveRedundancies(true);
+            if (rootEx is AgOp)
+                return null;
+
+            currentIndex = endIndex + 2;
 
             if (currentIndex > lexemeTable.Count - 1)
                 return null;
 
-            if (lexemeTable[currentIndex].Data1 != LexemeType.StartPara)
+            if (lexemeTable[currentIndex].GetData1() != LexemeType.StartPara)
                 return null;
 
             ExComp innerEx = LexemeToExComp(lexemeTable, ref currentIndex, ref pParseErrors);
-            if (innerEx == null)
+            if (innerEx == null || innerEx is AgOp)
                 return null;
 
-            return new AlgebraTerm(innerEx, new Equation.Operators.PowOp(), Equation.Operators.DivOp.StaticCombine(Number.One, rootEx));
+            AlgebraTerm retVal = new AlgebraTerm(innerEx, new PowOp(), new AlgebraTerm(ExNumber.GetOne(), new DivOp(), rootEx));
+
+            return retVal;
         }
 
-        private AlgebraTerm ParseSummation(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private AlgebraTerm ParseSummation(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
-            string varStr = lt[currentIndex].Data2.Remove(0, "sum_(".Length);
+            string varStr = StringFunc.Rm(lt[currentIndex].GetData2(), 0, "sum_(".Length);
             // Remove the equals sign.
-            varStr = varStr.Remove(varStr.Length - 1, 1);
+            varStr = StringFunc.Rm(varStr, varStr.Length - 1, 1);
 
             AlgebraComp iterVar = new AlgebraComp(varStr);
 
@@ -2666,11 +2851,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             int depth = 1;
             for (int i = currentIndex; i < lt.Count; ++i)
             {
-                if (lt[i].Data1 == LexemeType.StartPara)
+                if (lt[i].GetData1() == LexemeType.StartPara)
                 {
                     depth++;
                 }
-                if (lt[i].Data1 == LexemeType.EndPara)
+                if (lt[i].GetData1() == LexemeType.EndPara)
                 {
                     depth--;
                     if (depth == 0)
@@ -2684,18 +2869,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             if (endParaIndex == -1)
                 return null;
 
-            LexemeTable startValLt = lt.GetRange(currentIndex + 1, endParaIndex - (currentIndex + 1));
-            AlgebraTerm tmp = LexemeTableToAlgebraTerm(startValLt, ref pParseErrors);
+            List<TypePair<LexemeType,string>> startValLt = lt.GetRange(currentIndex + 1, endParaIndex - (currentIndex + 1));
+            AlgebraTerm tmp = LexemeTableToAlgebraTerm(startValLt, ref pParseErrors, false);
             if (tmp == null)
                 return null;
-            ExComp startVal = tmp.RemoveRedundancies();
+            ExComp startVal = tmp;
 
             currentIndex = endParaIndex + 1;
 
             if (currentIndex + 1 >= lt.Count)
                 return null;
 
-            if (lt[currentIndex].Data1 != LexemeType.Operator || lt[currentIndex].Data2 != "^")
+            if (lt[currentIndex].GetData1() != LexemeType.Operator || lt[currentIndex].GetData2() != "^")
                 return null;
 
             currentIndex++;
@@ -2705,7 +2890,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 return null;
 
             currentIndex++;
-            if (lt[currentIndex].Data1 == LexemeType.Operator && lt[currentIndex].Data2 == "*")
+            if (currentIndex < lt.Count && lt[currentIndex].GetData1() == LexemeType.Operator &&
+                lt[currentIndex].GetData2() == "*")
             {
                 currentIndex++;
             }
@@ -2715,15 +2901,22 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             int endIndex = lt.Count;
             depth = 0;
             int prevOp = -1;
+
+            if (endIndex == currentIndex)
+            {
+                pParseErrors.Add("Nothing following summation");
+                return null;
+            }
+
             for (int i = currentIndex; i < lt.Count; ++i)
             {
-                if (lt[i].Data1 == LexemeType.StartPara)
+                if (lt[i].GetData1() == LexemeType.StartPara)
                     depth++;
-                else if (lt[i].Data1 == LexemeType.EndPara)
+                else if (lt[i].GetData1() == LexemeType.EndPara)
                     depth--;
-                else if (lt[i].Data1 == LexemeType.Operator)
+                else if (lt[i].GetData1() == LexemeType.Operator)
                     prevOp = i;
-                else if (lt[i].Data1 == LexemeType.Summation && depth == 0)
+                else if (lt[i].GetData1() == LexemeType.Summation && depth == 0)
                 {
                     // there will always be an operator before that needs to be parsed
                     endIndex = prevOp != -1 ? prevOp : i;
@@ -2731,53 +2924,51 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 }
             }
 
-            var remainingLt = lt.GetRange(currentIndex, endIndex - currentIndex);
+            List<TypePair<LexemeType,string>> remainingLt = lt.GetRange(currentIndex, endIndex - currentIndex);
             if (remainingLt.Count == 0)
                 return null;
-            AlgebraTerm innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors);
+            AlgebraTerm
+                innerEx = LexemeTableToAlgebraTerm(remainingLt, ref pParseErrors, false);
             if (innerEx == null)
                 return null;
 
             currentIndex = endIndex == lt.Count - 1 ? endIndex : endIndex - 1;
 
-            Equation.Functions.SumFunction sumFunc = new SumFunction(innerEx, iterVar, startVal, endVal);
+            if (startVal is AlgebraTerm)
+            {
+                startVal = (startVal as AlgebraTerm).ApplyOrderOfOperations();
+                startVal = (startVal as AlgebraTerm).MakeWorkable();
+            }
+            if (endVal is AlgebraTerm)
+            {
+                endVal = (endVal as AlgebraTerm).ApplyOrderOfOperations();
+                endVal = (endVal as AlgebraTerm).MakeWorkable();
+            }
+
+            SumFunction sumFunc = new SumFunction(innerEx, iterVar, startVal, endVal);
 
             return sumFunc;
         }
 
-        private ExComp ParseIntegral(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private ExComp ParseIntegral(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
             ExComp lower = null, upper = null;
-            if (lt[currentIndex].Data2.Contains("_"))
+            if (lt[currentIndex].GetData2().Contains("_"))
             {
-                // Parse the lower bound.
-                string[] integralData = lt[currentIndex].Data2.Split('_');
-                if (integralData.Length != 2)
+                currentIndex++;
+                // Get the next lexeme which will be the lower bound.
+                lower = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
+                if (lower == null || lower is AgOp)
                     return null;
+                AlgebraTerm lowerTerm = lower.ToAlgTerm();
 
-                string lowerBound = integralData[1];
-                if (lowerBound.StartsWith("("))
-                {
-                    lowerBound = lowerBound.Remove(0, 1);
-                    lowerBound = lowerBound.Remove(lowerBound.Length - 1, 1);
-                }
-
-                var lowerLexTable = CreateLexemeTable(lowerBound, ref pParseErrors);
-                if (lowerLexTable == null)
+                lower = lowerTerm.WeakMakeWorkable(ref p_EvalData).ToAlgTerm();
+                if (lower == null)
                     return null;
-                var lowerTerm = LexemeTableToAlgebraTerm(lowerLexTable, ref pParseErrors);
-                if (lowerTerm == null)
-                    return null;
+                lower = SimplifyGenTermType.BasicSimplify(lower, ref p_EvalData, true);
 
-                lowerTerm = lowerTerm.WeakMakeWorkable().ToAlgTerm();
-                lowerTerm = lowerTerm.ApplyOrderOfOperations();
-                lowerTerm = lowerTerm.MakeWorkable().ToAlgTerm();
-                lowerTerm = lowerTerm.CompoundFractions();
-
-                lower = lowerTerm.RemoveRedundancies();
-
-
-                if (lt[currentIndex + 1].Data1 != LexemeType.Operator || lt[currentIndex + 1].Data2 != "^")
+                if (currentIndex + 1 < lt.Count &&
+                    (lt[currentIndex + 1].GetData1() != LexemeType.Operator || lt[currentIndex + 1].GetData2() != "^"))
                 {
                     // Don't necessarily return null as the user could be declaring a surface or line integral.
                     if (!(lower is AlgebraComp))
@@ -2788,21 +2979,25 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                     currentIndex += 2;
 
                     upper = LexemeToExComp(lt, ref currentIndex, ref pParseErrors);
-                    if (upper == null)
+                    if (upper == null || upper is AgOp)
                         return null;
 
                     AlgebraTerm upperTerm = upper.ToAlgTerm();
-                    upperTerm = upperTerm.WeakMakeWorkable().ToAlgTerm();
-                    upperTerm = upperTerm.ApplyOrderOfOperations();
-                    upperTerm = upperTerm.MakeWorkable().ToAlgTerm();
-                    upperTerm = upperTerm.CompoundFractions();
 
-                    upper = upperTerm.RemoveRedundancies();
+                    upper = upperTerm.WeakMakeWorkable(ref p_EvalData).ToAlgTerm();
+                    if (upper == null)
+                        return null;
+                    upper = SimplifyGenTermType.BasicSimplify(upper, ref p_EvalData, true);
                 }
             }
 
+            if (currentIndex + 1 < lt.Count && lt[currentIndex + 1].GetData1() == LexemeType.Operator &&
+                lt[currentIndex + 1].GetData2() == "*")
+                currentIndex++;
 
-            int startIndex = currentIndex + 1;
+            currentIndex++;
+
+            int startIndex = currentIndex;
             int endIndex = -1;
 
             // Next should be the expression.
@@ -2810,11 +3005,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             int depth = 1;
             for (; currentIndex < lt.Count; ++currentIndex)
             {
-                if (lt[currentIndex].Data1 == LexemeType.Integral)
+                if (lt[currentIndex].GetData1() == LexemeType.Integral)
                 {
                     depth++;
                 }
-                if (lt[currentIndex].Data1 == LexemeType.Differential) 
+                if (lt[currentIndex].GetData1() == LexemeType.Differential)
                 {
                     depth--;
                     if (depth == 0)
@@ -2825,64 +3020,52 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 }
             }
 
-            if (endIndex == -1 && !(upper == null && lower != null))
+            currentIndex = endIndex == -1 ? lt.Count : endIndex;
+
+            List<TypePair<LexemeType,string>> integralTerm = lt.GetRange(startIndex, currentIndex - startIndex);
+
+            // This could be in the line integral vector path notation.
+            if (integralTerm.Count > 0 && integralTerm[integralTerm.Count - 1].GetData2() == "*")
             {
-                // There is a chance this is a surface integral.
+                ArrayFunc.RemoveIndex(integralTerm, integralTerm.Count - 1);
+            }
+
+            AlgebraTerm innerTerm = LexemeTableToAlgebraTerm(integralTerm, ref pParseErrors, false);
+            if (innerTerm == null)
+                return null;
+            ExComp innerEx = innerTerm.RemoveRedundancies(true);
+
+            if (endIndex == -1)
+            {
+                if (lower == null && upper == null && innerEx is LineIntegral)
+                {
+                    LineIntegral lineIntegral = innerEx as LineIntegral;
+
+                    return SurfaceIntegral.ConstructSurfaceIntegral(lineIntegral.GetInnerEx(), lineIntegral.GetLineIden(),
+                        lineIntegral.GetDVar());
+                }
                 pParseErrors.Add("Couldn't find the variable of integration.");
                 return null;
             }
 
-            currentIndex = endIndex == -1 ? lt.Count - 1 : endIndex;
-
-            LexemeTable integralTerm = lt.GetRange(startIndex, currentIndex - startIndex);
-            AlgebraTerm innerTerm = LexemeTableToAlgebraTerm(integralTerm, ref pParseErrors);
-            if (innerTerm == null)
-                return null;
-            ExComp innerEx = innerTerm.RemoveRedundancies();
-
-            if (endIndex == -1)
-            {
-                if (lower != null && upper == null)
-                {
-                    // 'With respect to' is purposefully left null.
-                    LineIntegral lineIntegral = LineIntegral.ConstructLineIntegral(innerEx, (AlgebraComp)lower, null);
-                    return lineIntegral;
-                }
-                return null;
-            }
-
-            string withRespectVar = lt[endIndex].Data2.Remove(0, lt[endIndex].Data2.Length - 1);
-
+            // Remove the first 'd' character from the differential.
+            string withRespectVar = StringFunc.Rm(lt[endIndex].GetData2(), 0, 1);
             AlgebraComp dVar = new AlgebraComp(withRespectVar);
-
-
-            if (innerEx is LineIntegral)
-            {
-                // This has to be a surface integral.
-                if (lower != null || upper != null)
-                {
-                    pParseErrors.Add("Invalid integral");
-                    return null;
-                }
-                LineIntegral lineIntegral = innerEx as LineIntegral;
-                return SurfaceIntegral.ConstructSurfaceIntegral(lineIntegral.InnerEx, dVar, lineIntegral.DVar);
-            }
 
             if (upper == null && lower != null)
                 return LineIntegral.ConstructLineIntegral(innerTerm, (AlgebraComp)lower, dVar);
 
-
-            return Equation.Functions.Calculus.Integral.ConstructIntegral(innerEx, dVar, lower, upper);
+            return Integral.ConstructIntegral(innerEx, dVar, lower, upper, false, true);
         }
 
-        private ExComp ParseVectorNotation(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private ExComp ParseVectorNotation(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
             // Get the index of the lexeme table to be parsed.
-            string[] tmps = lt[currentIndex].Data2.Split('|');
-            LexemeTable parseLt = _vectorStore[tmps[1]];
+            string[] tmps = lt[currentIndex].GetData2().Split('|');
+            List<TypePair<LexemeType,string>> parseLt = _vectorStore[tmps[1]];
 
             // Get the dimensionality of this vector
-            string endCharacter = tmps[0].Remove(0, "vector".Length);
+            string endCharacter = StringFunc.Rm(tmps[0], 0, "vector".Length);
             int dimen = 0;
             if (endCharacter == "a")
                 dimen = 2;
@@ -2896,21 +3079,21 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             int depth = 0;
             for (int i = 0; i < parseLt.Count; ++i)
             {
-                if (parseLt[i].Data1 == LexemeType.StartPara)
+                if (parseLt[i].GetData1() == LexemeType.StartPara)
                 {
                     if ((depth) == 0)
                     {
-                        parseLt[i] = new Lexeme(LexemeType.StartBracket, "[");
+                        parseLt[i] = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.StartBracket, "[");
                     }
                     depth++;
                 }
-                else if (parseLt[i].Data1 == LexemeType.EndPara)
+                else if (parseLt[i].GetData1() == LexemeType.EndPara)
                 {
                     if ((--depth) == 0)
                     {
-                        parseLt[i] = new Lexeme(LexemeType.EndBracket, "]");
-                        if (i + 1 < parseLt.Count && parseLt[i + 1].Data1 == LexemeType.Operator && dimen > 1)
-                            parseLt[i + 1] = new Lexeme(LexemeType.Comma, ",");
+                        parseLt[i] = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.EndBracket, "]");
+                        if (i + 1 < parseLt.Count && parseLt[i + 1].GetData1() == LexemeType.Operator && dimen > 1)
+                            parseLt[i + 1] = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Comma, ",");
                         if ((--dimen) == 0)
                         {
                             break;
@@ -2919,42 +3102,65 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 }
             }
 
-
-            string storeKey = "tempStore" + (_vecStoreIndex++).ToString();
+            string storeKey = "tempStore" + (_vecStoreIndex++);
             _vectorStore[storeKey] = parseLt;
 
-            lt[currentIndex] = new Lexeme(LexemeType.VectorStore, storeKey);
+            lt[currentIndex] = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.VectorStore, storeKey);
 
-            return ParseVector(ref currentIndex, lt, ref pParseErrors);
+            ExComp parsedVector = ParseVector(ref currentIndex, lt, ref pParseErrors);
+            return parsedVector;
         }
 
-        private ExComp ParseBinomNotation(ref int currentIndex, LexemeTable lt, ref List<string> pParseErrors)
+        private ExComp ParseBinomNotation(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
             // Get the index in the dictionary.
-            string[] tmps = lt[currentIndex].Data2.Split('|');
-            LexemeTable parseLt = _vectorStore[tmps[1]];
-
+            string[] tmps = lt[currentIndex].GetData2().Split('|');
+            List<TypePair<LexemeType,string>> parseLt = _vectorStore[tmps[1]];
 
             // Parse the next two groups.
             int parseCurrentIndex = 0;
-            if (parseLt[parseCurrentIndex].Data1 != LexemeType.StartPara)
+            if (parseLt[parseCurrentIndex].GetData1() != LexemeType.StartPara)
                 return null;
             ExComp top = LexemeToExComp(parseLt, ref parseCurrentIndex, ref pParseErrors);
-            if (top == null)
+            if (top == null || top is AgOp)
                 return null;
             parseCurrentIndex++;
 
             // Skip over the multiplication operator that was automatically inserted into the expression.
-            if (parseLt[parseCurrentIndex].Data1 == LexemeType.Operator)
+            if (parseLt[parseCurrentIndex].GetData1() == LexemeType.Operator)
                 parseCurrentIndex++;
 
-            if (parseLt[parseCurrentIndex].Data1 != LexemeType.StartPara)
+            if (parseLt[parseCurrentIndex].GetData1() != LexemeType.StartPara)
                 return null;
             ExComp bottom = LexemeToExComp(parseLt, ref parseCurrentIndex, ref pParseErrors);
-            if (bottom == null)
+            if (bottom == null || bottom is AgOp)
                 return null;
 
             return new ChooseFunction(top, bottom);
+        }
+
+        public class MatchTolken
+        {
+            public readonly int Index;
+            public readonly int Length;
+            public string Value;
+
+            public MatchTolken(int length, int index, string value)
+            {
+                Length = length;
+                Index = index;
+                Value = value;
+            }
+
+            public MatchTolken(Match match)
+                : this(match.Length, match.Index, match.Value)
+            {
+            }
+
+            public override string ToString()
+            {
+                return Value;
+            }
         }
     }
 }

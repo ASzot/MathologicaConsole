@@ -17,14 +17,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
         {
             AlgebraComp subIn = p_agSolver.NextSubVar();
 
-            pEvalData.WorkMgr.FromSides(left, right, "Make the substitution " + WorkMgr.STM + WorkMgr.ExFinalToAsciiStr(_subOut) + "=" + WorkMgr.ExFinalToAsciiStr(subIn) + WorkMgr.EDM);
+            pEvalData.GetWorkMgr().FromSides(left, right, "Make the substitution " + WorkMgr.STM + WorkMgr.ToDisp(_subOut) + "=" + WorkMgr.ToDisp(subIn) + WorkMgr.EDM);
 
             left = left.Substitute(_subOut, subIn);
             right = right.Substitute(_subOut, subIn);
 
-            pEvalData.WorkMgr.FromSides(left, right, "Substitute in.");
+            pEvalData.GetWorkMgr().FromSides(left, right, "Substitute in.");
 
-            ExComp result = p_agSolver.SolveEq(subIn.Var, left, right, ref pEvalData);
+            ExComp result = p_agSolver.SolveEq(subIn.GetVar(), left, right, ref pEvalData);
             if (result == null)
                 return null;
 
@@ -33,7 +33,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 AlgebraTermArray resultArray = result as AlgebraTermArray;
 
                 bool allSols;
-                result = resultArray.SimulSolve(_subOut.ToAlgTerm(), solveFor, p_agSolver, ref pEvalData, out allSols);
+                result = resultArray.SimulSolve(_subOut.ToAlgTerm(), solveFor, p_agSolver, ref pEvalData, out allSols, false);
                 if (allSols)
                     return new AllSolutions();
                 if (result == null)

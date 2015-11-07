@@ -1,112 +1,11 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
 using MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus;
-using MathSolverWebsite.MathSolverLibrary.Equation.Term;
-using System;
-using System.Collections.Generic;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
 {
-    class DiffAgSolver
+    internal class DiffAgSolver
     {
-        private static ExComp RemoveDiff(AlgebraTerm term)
-        {
-            var gps = term.GetGroupsNoOps();
-            if (gps.Count != 1)
-                return null;
-            ExComp[] removeDiff = RemoveDiff(gps[0]);
-            if (removeDiff == null)
-                return null;
-
-            return removeDiff.ToAlgTerm().RemoveRedundancies();
-        }
-
-        private static ExComp[] RemoveDiff(ExComp[] gp)
-        {
-            bool succ = false;
-            for (int i = 0; i < gp.Length; ++i)
-            {
-                if (gp[i] is Derivative)
-                {
-                    gp = gp.RemoveEx(gp[i]);
-                    succ = true;
-                    break;
-                }
-            }
-
-            if (!succ)
-                return null;
-
-            if (gp.Length == 0)
-                gp = new ExComp[] { Number.One };
-
-            return gp;
-        }
-
-        private static ExComp[] SimpleSeperable(ExComp left, ExComp right, AlgebraComp solveFunc, AlgebraComp withRespect, ref TermType.EvalData pEvalData)
-        {
-            left = RemoveDiff(left.ToAlgTerm());
-            if (left == null)
-                return null;
-
-            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + WorkMgr.ExFinalToAsciiStr(left) + "d" + solveFunc.ToDispString() + "=" +
-                WorkMgr.ExFinalToAsciiStr(right) + "d" + withRespect.ToDispString() + WorkMgr.EDM, "Multiply both sides by " + WorkMgr.STM +
-                "d" + withRespect.ToDispString() + WorkMgr.EDM);
-
-            return new ExComp[] { left, right };
-        }
-
-        private static ExComp[] Seperable(AlgebraTerm left, AlgebraTerm right, AlgebraComp solveFunc, AlgebraComp withRespect, 
-            ref TermType.EvalData pEvalData)
-        {
-            pEvalData.WorkMgr.FromSides(left, right, "Isolate " + WorkMgr.STM + solveFunc.ToDispString() + WorkMgr.STM +  " and " + WorkMgr.STM +
-                "d" + solveFunc.ToDispString() + WorkMgr.EDM + " on the left side but " + WorkMgr.STM + withRespect.ToDispString() + WorkMgr.STM +
-                " and " + WorkMgr.STM + "d" + withRespect.ToDispString() + WorkMgr.EDM + " to the right.");
-
-            var leftGps = left.GetGroups();
-            var rightGps = right.GetGroups();
-
-            if (leftGps.Count != 1 || rightGps.Count != 1)
-                return null;
-
-            ExComp[] leftGp = null;
-            ExComp[] rightGp = null;
-            if (ContainsDerivative(leftGps[0]))
-            {
-                leftGp = leftGps[0];
-                rightGp = rightGps[0];
-            }
-            if (ContainsDerivative(rightGps[0]))
-            {
-                // There cannot  be derivatives on both sides.
-                if (leftGp != null)
-                    return null;
-                leftGp = rightGps[0];
-                rightGp = leftGps[0];
-            }
-
-            if (leftGp == null)
-                return null;
-
-            leftGp = RemoveDiff(leftGp);
-            if (leftGp == null)
-                return null;
-
-            // Make sure all of the x's are in the right and the y's in the left.
-            left = leftGp.ToAlgNoRedunTerm();
-            right = rightGp.ToAlgNoRedunTerm();
-
-            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + left.FinalToDispStr() + "d" + solveFunc.ToDispString() + "=" + right.FinalToDispStr() + "d" +
-                withRespect.ToDispString() + WorkMgr.EDM, "Multiply both sides by " + WorkMgr.STM + "d" + withRespect.ToDispString() + WorkMgr.EDM);
-
-            SolveMethod.DivideByVariableCoeffs(ref left, ref right, solveFunc, ref pEvalData, true);
-            SolveMethod.DivideByVariableCoeffs(ref right, ref left, withRespect, ref pEvalData, true);
-
-            if (left.Contains(withRespect) || right.Contains(solveFunc))
-                return null;
-
-            return new ExComp[] { left, right };
-        }
-
         public static bool ContainsDerivative(ExComp ex)
         {
             if (ex is Derivative)
@@ -114,7 +13,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
             else if (ex is AlgebraTerm)
             {
                 AlgebraTerm term = ex as AlgebraTerm;
-                foreach (ExComp subEx in term.SubComps)
+                foreach (ExComp subEx in term.GetSubComps())
                 {
                     if (ContainsDerivative(subEx))
                         return true;
@@ -138,34 +37,31 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
         private static ExComp[] SolveDiffEq(AlgebraTerm ex0Term, AlgebraTerm ex1Term, AlgebraComp solveForFunc,
             AlgebraComp withRespect, int order, ref TermType.EvalData pEvalData)
         {
-            // Try seperable differential equations.
-            // Get to the form N(y)y'=M(x)
-            // Are we already in that form?
-            ExComp left = null;
-            ExComp right = null;
-            if (!ex0Term.Contains(withRespect) && !ex1Term.Contains(solveForFunc) && ContainsDerivative(ex0Term))
-            {
-                left = ex0Term;
-                right = ex1Term;
-            }
-            else if (!ex1Term.Contains(withRespect) && !ex0Term.Contains(solveForFunc) && ContainsDerivative(ex1Term))
-            {
-                left = ex1Term;
-                right = ex0Term;
-            }
+            ExComp[] atmpt = null;
+            int prevWorkStepCount;
 
-            ExComp[] leftRight = null;
-            if (left != null && right != null)
-                leftRight = SimpleSeperable(left, right, solveForFunc, withRespect, ref pEvalData);
-            else if (leftRight == null)
-                leftRight = Seperable(ex0Term, ex1Term, solveForFunc, withRespect, ref pEvalData);
+            DiffSolve[] diffSolves = new DiffSolve[] { new SeperableSolve(), new HomogeneousSolve(), new IntegratingFactorSolve(), new ExactEqsSolve() };
 
-            if (leftRight != null)
+            for (int i = 0; i < diffSolves.Length; ++i)
             {
-                leftRight[0] = Integral.TakeAntiDeriv(leftRight[0], solveForFunc, ref pEvalData);
-                leftRight[1] = Integral.TakeAntiDeriv(leftRight[1], withRespect, ref pEvalData);
+                // Try separable differential equations.
+                prevWorkStepCount = ArrayFunc.GetCount(pEvalData.GetWorkMgr().GetWorkSteps());
+                atmpt = diffSolves[i].Solve((AlgebraTerm)ex0Term.CloneEx(), (AlgebraTerm)ex1Term.CloneEx(), solveForFunc, withRespect, ref pEvalData);
+                if (atmpt != null)
+                {
+                    if (!(atmpt[0] is Integral || atmpt[1] is Integral))
+                    {
+                        // Add on a constant that will have the properties of a variable.
+                        AlgebraComp varConstant = new AlgebraComp("$C");
+                        atmpt[1] = Equation.Operators.AddOp.StaticCombine(atmpt[1], varConstant);
 
-                return leftRight;
+                        pEvalData.GetWorkMgr().FromSides(atmpt[0], atmpt[1], "Add the constant of integration.");
+                    }
+
+                    return atmpt;
+                }
+                else
+                    pEvalData.GetWorkMgr().PopSteps(prevWorkStepCount);
             }
 
             return null;
@@ -174,18 +70,48 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving.Diff_Eqs
         public static SolveResult Solve(ExComp ex0, ExComp ex1, AlgebraComp solveForFunc, AlgebraComp withRespect, int order, ref TermType.EvalData pEvalData)
         {
             if (order > 1)
-                return SolveResult.Failure("Cannot solve differential equations with an order greater than one", ref pEvalData);
+            {
+                SolveResult failSolved = SolveResult.Failure("Cannot solve differential equations with an order greater than one", ref pEvalData);
+                return failSolved;
+            }
 
             ExComp[] leftRight = SolveDiffEq(ex0.ToAlgTerm(), ex1.ToAlgTerm(), solveForFunc, withRespect, order, ref pEvalData);
             if (leftRight == null)
                 return SolveResult.Failure();
 
-            AlgebraSolver agSolver = new AlgebraSolver();
-            ExComp solved = agSolver.SolveEq(solveForFunc.Var, leftRight[0].Clone().ToAlgTerm(), leftRight[1].Clone().ToAlgTerm(), ref pEvalData);
-            if (solved == null)
-                return SolveResult.Solved(leftRight[0], leftRight[1], ref pEvalData);
+            Solution genSol = new Solution(leftRight[0], leftRight[1]);
+            genSol.IsGeneral = true;
 
-            return SolveResult.Solved(solveForFunc, solved, ref pEvalData);
+            if (leftRight[0] is Integral || leftRight[1] is Integral)
+            {
+                SolveResult resultSolved = SolveResult.Solved(leftRight[0], leftRight[1], ref pEvalData);
+                return resultSolved;
+            }
+
+            AlgebraSolver agSolver = new AlgebraSolver();
+
+            int startStepCount = ArrayFunc.GetCount(pEvalData.GetWorkMgr().GetWorkSteps());
+
+            pEvalData.GetWorkMgr().FromFormatted("", "Solve for " + WorkMgr.STM + solveForFunc.ToDispString() + WorkMgr.EDM);
+            WorkStep lastStep = pEvalData.GetWorkMgr().GetLast();
+
+            lastStep.GoDown(ref pEvalData);
+            ExComp solved = agSolver.SolveEq(solveForFunc.GetVar(), leftRight[0].CloneEx().ToAlgTerm(), leftRight[1].CloneEx().ToAlgTerm(), ref pEvalData);
+            lastStep.GoUp(ref pEvalData);
+
+            if (solved == null)
+            {
+                pEvalData.GetWorkMgr().PopSteps(startStepCount);
+                SolveResult resultSolved = SolveResult.Solved(leftRight[0], leftRight[1], ref pEvalData);
+                return resultSolved;
+            }
+
+            lastStep.SetWorkHtml(WorkMgr.STM + solveForFunc.ToDispString() + " = " + WorkMgr.ToDisp(solved) + WorkMgr.EDM);
+
+            SolveResult solveResult = SolveResult.Solved(solveForFunc, solved, ref pEvalData);
+            solveResult.Solutions.Insert(0, genSol);
+
+            return solveResult;
         }
     }
 }

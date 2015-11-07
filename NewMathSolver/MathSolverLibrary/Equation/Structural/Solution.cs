@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation
 {
@@ -11,22 +12,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         public List<Solution> Solutions;
         public bool Success;
 
-        public bool HasRestrictions
+        public bool GetHasRestrictions()
         {
-            get { return Restrictions != null && Restrictions.Count != 0; }
+            return Restrictions != null && Restrictions.Count != 0;
         }
 
-        public bool HasSolutions
+        public bool GetHasSolutions()
         {
-            get { return Solutions != null && Solutions.Count != 0; }
+            return Solutions != null && Solutions.Count != 0;
         }
 
-        public bool UndefinedSolution
+        public bool GetUndefinedSolution()
         {
-            get
-            {
-                return (Solutions.Count == 1 && Number.IsUndef(Solutions[0].Result));
-            }
+            return (Solutions.Count == 1 && ExNumber.IsUndef(Solutions[0].Result));
         }
 
         public SolveResult(params Solution[] solutions)
@@ -49,7 +47,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static SolveResult Failure(string msg, ref TermType.EvalData pEvalData)
         {
-            pEvalData.AddMsg(msg);
+            pEvalData.AddFailureMsg(msg);
             return Failure();
         }
 
@@ -90,7 +88,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             {
                 AlgebraTermArray resultArray = result as AlgebraTermArray;
 
-                foreach (AlgebraTerm resultTerm in resultArray.Terms)
+                foreach (AlgebraTerm resultTerm in resultArray.GetTerms())
                 {
                     success.Solutions.Add(new Solution(resultTerm));
                 }
@@ -100,7 +98,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 Solution solToAdd = new Solution(result);
                 if (result is AlgebraTerm)
                 {
-                    ExComp harshEval = Simplifier.HarshSimplify(result.Clone() as AlgebraTerm, ref pEvalData);
+                    ExComp harshEval = Simplifier.HarshSimplify(result.CloneEx() as AlgebraTerm, ref pEvalData, true);
                     if (!harshEval.IsEqualTo(result))
                         solToAdd.ApproximateResult = harshEval;
                 }
@@ -121,7 +119,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             {
                 AlgebraTermArray resultArray = result as AlgebraTermArray;
 
-                foreach (AlgebraTerm resultTerm in resultArray.Terms)
+                foreach (AlgebraTerm resultTerm in resultArray.GetTerms())
                 {
                     success.Solutions.Add(new Solution(resultTerm));
                 }
@@ -134,37 +132,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return success;
         }
 
-        public static SolveResult SimplifiedForceFormatting(ExComp result)
-        {
-            SolveResult success;
-            success.Success = true;
-            success.Solutions = new List<Solution>();
-            success.Restrictions = null;
-
-            if (result is AlgebraTermArray)
-            {
-                AlgebraTermArray resultArray = result as AlgebraTermArray;
-
-                foreach (AlgebraTerm resultTerm in resultArray.Terms)
-                {
-                    Solution sol = new Solution(resultTerm);
-                    sol.ForceFormatting = true;
-                    success.Solutions.Add(sol);
-                }
-            }
-            else
-            {
-                Solution sol = new Solution(result);
-                sol.ForceFormatting = true;
-                success.Solutions.Add(sol);
-            }
-
-            return success;
-        }
-
         public static SolveResult Solved(AlgebraVar solveFor, ExComp result, ref TermType.EvalData pEvalData)
         {
-            return Solved(solveFor.ToAlgebraComp(), result, ref pEvalData);
+            SolveResult solved = Solved(solveFor.ToAlgebraComp(), result, ref pEvalData);
+            return solved;
         }
 
         public static SolveResult Solved(ExComp solveFor, ExComp result, ref TermType.EvalData pEvalData)
@@ -178,7 +149,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             {
                 AlgebraTermArray resultArray = result as AlgebraTermArray;
 
-                foreach (AlgebraTerm resultTerm in resultArray.Terms)
+                foreach (AlgebraTerm resultTerm in resultArray.GetTerms())
                 {
                     if (resultTerm is GeneralSolution)
                         success.Solutions.Add(Solution.FromGeneralSol(solveFor, resultTerm as GeneralSolution));
@@ -206,45 +177,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             success.Success = true;
             success.Solutions = null;
             success.Restrictions = null;
-
-            return success;
-        }
-
-        public static SolveResult SolvedForceFormatting(ExComp solveFor, ExComp result)
-        {
-            SolveResult success;
-            success.Success = true;
-            success.Solutions = new List<Solution>();
-            success.Restrictions = null;
-
-            if (result is AlgebraTermArray)
-            {
-                AlgebraTermArray resultArray = result as AlgebraTermArray;
-
-                foreach (AlgebraTerm resultTerm in resultArray.Terms)
-                {
-                    Solution addSol;
-                    if (resultTerm is GeneralSolution)
-                        addSol = Solution.FromGeneralSol(solveFor, resultTerm as GeneralSolution);
-                    else
-                        addSol = new Solution(solveFor, resultTerm);
-                    addSol.ForceFormatting = true;
-                    success.Solutions.Add(addSol);
-                }
-            }
-            else
-            {
-                Solution addSol;
-                if (result is GeneralSolution)
-                    addSol = Solution.FromGeneralSol(solveFor, result as GeneralSolution);
-                else
-                    addSol = new Solution(solveFor, result);
-
-                addSol.ForceFormatting = true;
-                success.Solutions.Add(addSol);
-            }
-
-            success.RemoveDuplicateSols();
 
             return success;
         }
@@ -321,7 +253,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 }
             }
 
-            return allAllSols && !HasRestrictions && !pEvalData.HasPartialSolutions;
+            return allAllSols && !GetHasRestrictions() && !pEvalData.GetHasPartialSolutions();
         }
 
         public bool IsOnlyNoSolutions(ref TermType.EvalData pEvalData)
@@ -336,7 +268,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 }
             }
 
-            return allNoSols && !HasRestrictions && !pEvalData.HasPartialSolutions;
+            return allNoSols && !GetHasRestrictions() && !pEvalData.GetHasPartialSolutions();
         }
 
         public bool RemoveComplexSolutions()
@@ -348,7 +280,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     continue;
                 if (Solutions[i].Result.ToAlgTerm().IsComplex())
                 {
-                    Solutions.RemoveAt(i--);
+                    ArrayFunc.RemoveIndex(Solutions, i--);
                     complexSolsRemoved = true;
                 }
             }
@@ -375,14 +307,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     if (comp0 == null)
                         continue;
                     if (comp0 is AlgebraTerm)
-                        comp0 = (comp0 as AlgebraTerm).RemoveRedundancies();
+                        comp0 = (comp0 as AlgebraTerm).RemoveRedundancies(false);
                     ExComp comp1 = compareSol.Result;
                     if (comp1 is AlgebraTerm)
-                        comp1 = (comp1 as AlgebraTerm).RemoveRedundancies();
+                        comp1 = (comp1 as AlgebraTerm).RemoveRedundancies(false);
 
                     if (comp0.IsEqualTo(comp1))
                     {
-                        Solutions.RemoveAt(j);
+                        ArrayFunc.RemoveIndex(Solutions, j);
                         j--;
                         equalCount++;
                     }
@@ -394,7 +326,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public void RemoveExtraneousSolutions(EqSet eqSet, ref TermType.EvalData pEvalData)
         {
-            if (!Success || !pEvalData.CheckSolutions)
+            if (!Success || !pEvalData.GetCheckSolutions())
                 return;
 
             for (int i = 0; i < Solutions.Count; ++i)
@@ -403,42 +335,42 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 // For instance, with solutions to periodic functions there be only generic solutions.
                 if (Solutions[i].Result == null || Solutions[i].Result is SpecialSolution)
                     continue;
-                ExComp solution = Simplifier.HarshSimplify(Solutions[i].Result.Clone().ToAlgTerm(), ref pEvalData, false);
+                ExComp solution = Simplifier.HarshSimplify(Solutions[i].Result.CloneEx().ToAlgTerm(), ref pEvalData, false);
                 // This should never happen as AlgebraTermArray's cannot be added to an already existing array of solutions.
                 // (There can't be an array of arrays with solutions, that's not how they are added.)
 
-                if (!(solution is Number))
+                if (!(solution is ExNumber))
                     continue;
 
-                for (int j = 0; j < eqSet.Sides.Count; j += 2)
+                for (int j = 0; j < eqSet.GetSides().Count; j += 2)
                 {
-                    ExComp left = eqSet.Sides[j];
-                    ExComp right = eqSet.Sides[j + 1];
+                    ExComp left = eqSet.GetSides()[j];
+                    ExComp right = eqSet.GetSides()[j + 1];
 
-                    var comparison = eqSet.ComparisonOps[j];
+                    LexemeType comparison = eqSet.GetComparisonOps()[j];
 
-                    AlgebraTerm leftSubbed = left.Clone().ToAlgTerm().Substitute(Solutions[i].SolveFor, solution);
-                    AlgebraTerm rightSubbed = right.Clone().ToAlgTerm().Substitute(Solutions[i].SolveFor, solution);
+                    AlgebraTerm leftSubbed = left.CloneEx().ToAlgTerm().Substitute(Solutions[i].SolveFor, solution);
+                    AlgebraTerm rightSubbed = right.CloneEx().ToAlgTerm().Substitute(Solutions[i].SolveFor, solution);
 
-                    ExComp leftEx = TermType.SimplifyTermType.BasicSimplify(leftSubbed, ref pEvalData);
-                    ExComp rightEx = TermType.SimplifyTermType.BasicSimplify(rightSubbed, ref pEvalData);
+                    ExComp leftEx = TermType.SimplifyGenTermType.BasicSimplify(leftSubbed, ref pEvalData, true);
+                    ExComp rightEx = TermType.SimplifyGenTermType.BasicSimplify(rightSubbed, ref pEvalData, true);
 
                     leftEx = Simplifier.HarshSimplify(leftEx.ToAlgTerm(), ref pEvalData, false);
                     rightEx = Simplifier.HarshSimplify(rightEx.ToAlgTerm(), ref pEvalData, false);
 
-                    if (leftEx is Number)
-                        (leftEx as Number).Round(Number.FINAL_ROUND_COUNT);
-                    if (rightEx is Number)
-                        (rightEx as Number).Round(Number.FINAL_ROUND_COUNT);
+                    if (leftEx is ExNumber)
+                        (leftEx as ExNumber).Round(ExNumber.FINAL_ROUND_COUNT);
+                    if (rightEx is ExNumber)
+                        (rightEx as ExNumber).Round(ExNumber.FINAL_ROUND_COUNT);
 
-                    if (!TermType.EqualityCheckTermType.EvalComparison(leftEx, rightEx, comparison))
+                    if (!TermType.EqualityCheckGenTermType.EvalComparison(leftEx, rightEx, comparison))
                     {
-                        string varSolStr = Solutions[i].SolveFor.ToAsciiString() + "=" + WorkMgr.ExFinalToAsciiStr(Solutions[i].Result);
+                        string varSolStr = Solutions[i].SolveFor.ToAsciiString() + "=" + WorkMgr.ToDisp(Solutions[i].Result);
 
-                        pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}\\ne{1}" + WorkMgr.EDM, "Plugging " + WorkMgr.STM + varSolStr + WorkMgr.EDM +
+                        pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "{0}\\ne{1}" + WorkMgr.EDM, "Plugging " + WorkMgr.STM + varSolStr + WorkMgr.EDM +
                             " back into the original equation gives the above. The equation doesn't hold true under this solution therefore " + WorkMgr.STM +
                             varSolStr + WorkMgr.EDM + " is an extraneous solution.", leftEx, rightEx);
-                        Solutions.RemoveAt(i--);
+                        ArrayFunc.RemoveIndex(Solutions, i--);
                     }
                 }
             }
@@ -458,14 +390,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     GeneralSolution genSol = Solutions[i].GeneralResult;
                     if (genSol != null)
                     {
-                        if (Number.IsUndef(genSol))
-                            Solutions.RemoveAt(i--);
+                        if (ExNumber.IsUndef(genSol))
+                            ArrayFunc.RemoveIndex(Solutions, i--);
                     }
                 }
                 else
                 {
-                    if (Number.IsUndef(result))
-                        Solutions.RemoveAt(i--);
+                    if (ExNumber.IsUndef(result))
+                        ArrayFunc.RemoveIndex(Solutions, i--);
                 }
             }
 
@@ -478,8 +410,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             left = left.Substitute(solveFor, sol);
             right = right.Substitute(solveFor, sol);
 
-            leftEx = TermType.SimplifyTermType.BasicSimplify(left, ref pEvalData);
-            rightEx = TermType.SimplifyTermType.BasicSimplify(right, ref pEvalData);
+            leftEx = TermType.SimplifyGenTermType.BasicSimplify(left, ref pEvalData, true);
+            rightEx = TermType.SimplifyGenTermType.BasicSimplify(right, ref pEvalData, true);
 
             return leftEx.IsEqualTo(rightEx);
         }
@@ -495,7 +427,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         private ExComp _harshSimpCompare1;
 
         /// <summary>
-        /// Initializes the AndRestriction class. Will fix all incorrect usages of inequalities and infinity. (Like 2 \lt x \le oo) 
+        /// Initializes the AndRestriction class. Will fix all incorrect usages of inequalities and infinity. (Like 2 \lt x \le oo)
         /// </summary>
         /// <param name="compare0"></param>
         /// <param name="comparison0"></param>
@@ -512,13 +444,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             Compare0 = compare0;
             Compare1 = compare1;
 
-            if (Compare0 is Number && (Compare0 as Number).IsInfinity() && Restriction.IsEqualTo(Comparison0))
+            if (Compare0 is ExNumber && (Compare0 as ExNumber).IsInfinity() && Restriction.IsEqualTo(Comparison0))
                 Comparison0 = Comparison0 == LexemeType.LessEqual ? LexemeType.Less : LexemeType.Greater;
-            if (Compare1 is Number && (Compare1 as Number).IsInfinity() && Restriction.IsEqualTo(Comparison1))
+            if (Compare1 is ExNumber && (Compare1 as ExNumber).IsInfinity() && Restriction.IsEqualTo(Comparison1))
                 Comparison1 = Comparison1 == LexemeType.LessEqual ? LexemeType.Less : LexemeType.Greater;
 
-            _harshSimpCompare0 = Simplifier.HarshSimplify(compare0.Clone().ToAlgTerm(), ref pEvalData, false);
-            _harshSimpCompare1 = Simplifier.HarshSimplify(compare1.Clone().ToAlgTerm(), ref pEvalData, false);
+            _harshSimpCompare0 = Simplifier.HarshSimplify(compare0.CloneEx().ToAlgTerm(), ref pEvalData, false);
+            _harshSimpCompare1 = Simplifier.HarshSimplify(compare1.CloneEx().ToAlgTerm(), ref pEvalData, false);
         }
 
         public override ExComp GetLower()
@@ -555,18 +487,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override bool IsValidValue(ExComp value, ref TermType.EvalData pEvalData)
         {
-            ExComp harshEvalVal = Simplifier.HarshSimplify(value.Clone().ToAlgTerm(), ref pEvalData);
+            ExComp harshEvalVal = Simplifier.HarshSimplify(value.CloneEx().ToAlgTerm(), ref pEvalData, true);
             if (harshEvalVal is AlgebraTerm)
-                harshEvalVal = (harshEvalVal as AlgebraTerm).RemoveRedundancies();
+                harshEvalVal = (harshEvalVal as AlgebraTerm).RemoveRedundancies(false);
 
-            if (harshEvalVal is Number && _harshSimpCompare0 is Number && _harshSimpCompare1 is Number)
+            if (harshEvalVal is ExNumber && _harshSimpCompare0 is ExNumber && _harshSimpCompare1 is ExNumber)
             {
-                Number nVal = harshEvalVal as Number;
-                Number nComp0 = _harshSimpCompare0 as Number;
-                Number nComp1 = _harshSimpCompare1 as Number;
+                ExNumber nVal = harshEvalVal as ExNumber;
+                ExNumber nComp0 = _harshSimpCompare0 as ExNumber;
+                ExNumber nComp1 = _harshSimpCompare1 as ExNumber;
 
-                return TermType.EqualityCheckTermType.EvalComparison(nComp0, nVal, Comparison0) &&
-                    TermType.EqualityCheckTermType.EvalComparison(nVal, nComp1, Comparison1);
+                return TermType.EqualityCheckGenTermType.EvalComparison(nComp0, nVal, Comparison0) &&
+                    TermType.EqualityCheckGenTermType.EvalComparison(nVal, nComp1, Comparison1);
             }
 
             return true;
@@ -574,7 +506,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToMathAsciiStr()
         {
-            if (Number.NegInfinity.IsEqualTo(Compare0) && Number.PosInfinity.IsEqualTo(Compare1))
+            if (ExNumber.GetNegInfinity().IsEqualTo(Compare0) && ExNumber.GetPosInfinity().IsEqualTo(Compare1))
                 return VarComp.ToTexString() + "\\in\\mathbb{R}";
 
             string compare0Str = Compare0 is AlgebraTerm ? (Compare0 as AlgebraTerm).FinalToTexString() : Compare0.ToTexString();
@@ -608,13 +540,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             {
                 AlgebraTermArray resultArray = result as AlgebraTermArray;
 
-                var rests = from term in resultArray.Terms
-                            select new NotRestriction(varFor, term);
+                List<AlgebraTerm> resultArrayTerms = resultArray.GetTerms();
+                NotRestriction[] restsArr = new NotRestriction[resultArrayTerms.Count];
+                for (int i = 0; i < resultArrayTerms.Count; ++i)
+                    restsArr[i] = new NotRestriction(varFor, resultArrayTerms[i]);
 
-                return rests.ToArray();
+                return restsArr;
             }
 
-            NotRestriction[] singleRest = { new NotRestriction(varFor, result) };
+            NotRestriction[] singleRest = new NotRestriction[] { new NotRestriction(varFor, result) };
 
             return singleRest;
         }
@@ -646,7 +580,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToMathAsciiStr()
         {
-            return VarComp.ToAsciiString() + "\\ne" + WorkMgr.ExFinalToAsciiStr(NotVal);
+            return VarComp.ToAsciiString() + "\\ne" + WorkMgr.ToDisp(NotVal);
         }
 
         public override string ToString()
@@ -665,7 +599,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             get
             {
-                return Number.NegInfinity.IsEqualTo(Compare) && Comparison == LexemeType.LessEqual;
+                return ExNumber.GetNegInfinity().IsEqualTo(Compare) && Comparison == LexemeType.LessEqual;
             }
         }
 
@@ -674,7 +608,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             Comparison = comparison;
             Compare = compare;
-            _harshSimpCompare = Simplifier.HarshSimplify(compare.Clone().ToAlgTerm(), ref pEvalData, false);
+            _harshSimpCompare = Simplifier.HarshSimplify(compare.CloneEx().ToAlgTerm(), ref pEvalData, false);
         }
 
         public static AndRestriction AttemptCombine(OrRestriction rest0, OrRestriction rest1, ref TermType.EvalData pEvalData)
@@ -682,19 +616,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (rest0.VarComp != rest1.VarComp)
                 return null;
 
-            ExComp rest0Compare = rest0.Compare is GeneralSolution ? (rest0.Compare as GeneralSolution).Result : rest0.Compare;
-            ExComp rest1Compare = rest1.Compare is GeneralSolution ? (rest1.Compare as GeneralSolution).Result : rest1.Compare;
+            ExComp rest0Compare = rest0.Compare is GeneralSolution ? (rest0.Compare as GeneralSolution).GetResult() : rest0.Compare;
+            ExComp rest1Compare = rest1.Compare is GeneralSolution ? (rest1.Compare as GeneralSolution).GetResult() : rest1.Compare;
 
-            ExComp compareEx0 = rest0Compare is AlgebraTerm ? Simplifier.HarshSimplify(rest0Compare.Clone() as AlgebraTerm, ref pEvalData, false) : rest0Compare;
-            ExComp compareEx1 = rest1Compare is AlgebraTerm ? Simplifier.HarshSimplify(rest1Compare.Clone() as AlgebraTerm, ref pEvalData, false) : rest1Compare;
+            ExComp compareEx0 = rest0Compare is AlgebraTerm ? Simplifier.HarshSimplify(rest0Compare.CloneEx() as AlgebraTerm, ref pEvalData, false) : rest0Compare;
+            ExComp compareEx1 = rest1Compare is AlgebraTerm ? Simplifier.HarshSimplify(rest1Compare.CloneEx() as AlgebraTerm, ref pEvalData, false) : rest1Compare;
 
-            if (compareEx0 is Number && compareEx1 is Number)
+            if (compareEx0 is ExNumber && compareEx1 is ExNumber)
             {
-                Number rest0Num = compareEx0 as Number;
-                Number rest1Num = compareEx1 as Number;
+                ExNumber rest0Num = compareEx0 as ExNumber;
+                ExNumber rest1Num = compareEx1 as ExNumber;
 
                 OrRestriction min, max;
-                if (rest0Num < rest1Num)
+                if (ExNumber.OpLT(rest0Num, rest1Num))
                 {
                     min = rest0;
                     max = rest1;
@@ -718,21 +652,21 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static OrRestriction GetNoRealNumsRestriction(AlgebraComp varFor, ref TermType.EvalData pEvalData)
         {
-            return new OrRestriction(varFor, LexemeType.LessEqual, Number.NegInfinity, ref pEvalData);
+            return new OrRestriction(varFor, LexemeType.LessEqual, ExNumber.GetNegInfinity(), ref pEvalData);
         }
 
         public override ExComp GetLower()
         {
             if (Restriction.IsGreaterThan(Comparison))
                 return Compare;
-            return Number.NegInfinity;
+            return ExNumber.GetNegInfinity();
         }
 
         public override ExComp GetUpper()
         {
             if (!Restriction.IsGreaterThan(Comparison))
                 return Compare;
-            return Number.PosInfinity;
+            return ExNumber.GetPosInfinity();
         }
 
         public override bool IsLowerInclusive()
@@ -751,16 +685,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override bool IsValidValue(ExComp value, ref TermType.EvalData pEvalData)
         {
-            ExComp harshEvalVal = Simplifier.HarshSimplify(value.Clone().ToAlgTerm(), ref pEvalData);
+            ExComp harshEvalVal = Simplifier.HarshSimplify(value.CloneEx().ToAlgTerm(), ref pEvalData, true);
             if (harshEvalVal is AlgebraTerm)
-                harshEvalVal = (harshEvalVal as AlgebraTerm).RemoveRedundancies();
+                harshEvalVal = (harshEvalVal as AlgebraTerm).RemoveRedundancies(false);
 
-            if (harshEvalVal is Number && _harshSimpCompare is Number)
+            if (harshEvalVal is ExNumber && _harshSimpCompare is ExNumber)
             {
-                Number nVal = harshEvalVal as Number;
-                Number nComp = _harshSimpCompare as Number;
+                ExNumber nVal = harshEvalVal as ExNumber;
+                ExNumber nComp = _harshSimpCompare as ExNumber;
 
-                return TermType.EqualityCheckTermType.EvalComparison(nVal, nComp, Comparison);
+                return TermType.EqualityCheckGenTermType.EvalComparison(nVal, nComp, Comparison);
             }
 
             return true;
@@ -773,7 +707,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToMathAsciiStr()
         {
-            if (Number.NegInfinity.IsEqualTo(Compare) && Comparison == LexemeType.LessEqual)
+            if (ExNumber.GetNegInfinity().IsEqualTo(Compare) && Comparison == LexemeType.LessEqual)
                 return VarComp.ToAsciiString() + "\\in\\text{No Real Numbers}";
             string compareStr;
             if (Compare is AlgebraTerm)
@@ -807,7 +741,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static AndRestriction AllNumbers(AlgebraComp varFor, ref TermType.EvalData pEvalData)
         {
-            return new AndRestriction(Number.NegInfinity, LexemeType.Less, varFor, LexemeType.Less, Number.PosInfinity, ref pEvalData);
+            return new AndRestriction(ExNumber.GetNegInfinity(), LexemeType.Less, varFor, LexemeType.Less, ExNumber.GetPosInfinity(), ref pEvalData);
         }
 
         public static bool AreEqualTo(Restriction rest0, Restriction rest1)
@@ -842,12 +776,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static Restriction CompoundDomains(List<Restriction> rests, AlgebraVar varFor, ref TermType.EvalData pEvalData)
         {
-            var regRests = (from rest in rests
-                            where !(rest is NotRestriction)
-                            select rest).ToList();
+            List<Restriction> regRests = new List<Restriction>();
+
+            for (int i = 0; i < rests.Count; ++i)
+            {
+                if (!(rests[i] is NotRestriction))
+                    regRests.Add(rests[i]);
+            }
 
             if (regRests.Count == 0)
-                return OrRestriction.AllNumbers(varFor, ref pEvalData);
+            {
+                Restriction rest = OrRestriction.AllNumbers(varFor, ref pEvalData);
+                return rest;
+            }
 
             if (regRests.Count == 1)
                 return regRests[0];
@@ -870,7 +811,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             combinedRests.AddRange(rests0);
             combinedRests.AddRange(rests1);
 
-            return CompoundRestrictions(combinedRests, ref pEvalData);
+            List<Restriction> compoundedRests = CompoundRestrictions(combinedRests, ref pEvalData);
+            return compoundedRests;
         }
 
         public static List<Restriction> CompoundRestrictions(List<Restriction> rests, ref TermType.EvalData pEvalData)
@@ -895,27 +837,27 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 {
                     if (i == j || rests[j] is NotRestriction)
                         continue;
-                    wasCompared = true;
                     Restriction compareRest = rests[j];
                     Restriction intersection = IntersectRestrictions(rest, compareRest, ref pEvalData);
                     if (intersection != null)
                     {
+                        wasCompared = true;
                         // Ensure final restrictions doesn't already contain the same thing.
                         bool add = true;
-                        foreach (var finalRest in finalRestrictions)
+                        foreach (Restriction finalRest in finalRestrictions)
                         {
                             if (finalRest is OrRestriction && intersection is OrRestriction)
                             {
-                                var finalRestOr = finalRest as OrRestriction;
-                                var intersectionOr = intersection as OrRestriction;
+                                OrRestriction finalRestOr = finalRest as OrRestriction;
+                                OrRestriction intersectionOr = intersection as OrRestriction;
                                 if (finalRestOr.Compare.IsEqualTo(intersectionOr.Compare) && finalRestOr.Comparison == intersectionOr.Comparison
                                     && finalRestOr.VarComp.IsEqualTo(intersectionOr.VarComp))
                                     add = false;
                             }
                             else if (finalRest is AndRestriction && intersection is AndRestriction)
                             {
-                                var finalRestAnd = finalRest as AndRestriction;
-                                var intersectionAnd = intersection as AndRestriction;
+                                AndRestriction finalRestAnd = finalRest as AndRestriction;
+                                AndRestriction intersectionAnd = intersection as AndRestriction;
 
                                 if (finalRestAnd.Compare0.IsEqualTo(intersectionAnd.Compare0) && finalRestAnd.Compare1.IsEqualTo(intersectionAnd.Compare1) &&
                                     finalRestAnd.Comparison0 == intersectionAnd.Comparison0 && finalRestAnd.Comparison1 == intersectionAnd.Comparison1 &&
@@ -926,12 +868,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                         if (!add)
                             continue;
                         finalRestrictions.Add(intersection);
-                        var rem0 = rests[i];
-                        var rem1 = rests[j];
+                        Restriction rem0 = rests[i];
+                        Restriction rem1 = rests[j];
 
-                        //rests.Remove(rem0);
-                        //rests.Remove(rem1);
-                        //intersectionFound = true;
                         break;
                     }
                 }
@@ -952,7 +891,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             int iUpper = (int)upper;
 
             // Are there any integers between the numbers?
-            if (lower.IsInteger() && upper.IsInteger() && iUpper - iLower > 1.0)
+            if (DoubleHelper.IsInteger(lower) && DoubleHelper.IsInteger(upper) && iUpper - iLower > 1.0)
                 return (double)((iLower + iUpper) / 2);
 
             double avg = (lower + upper) / 2;
@@ -967,14 +906,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static double FindLowerTestPoint(double point)
         {
-            if (point.IsInteger())
+            if (DoubleHelper.IsInteger(point))
                 return point - 1.0;
             return Math.Round(point - 1.0);
         }
 
         public static double FindUpperTestPoint(double point)
         {
-            if (point.IsInteger())
+            if (DoubleHelper.IsInteger(point))
                 return point + 1.0;
             return Math.Round(point + 1.0);
         }
@@ -1009,37 +948,37 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             ExComp upper1 = rest1.GetUpper();
 
             if (lower0 is AlgebraTerm)
-                lower0 = (lower0 as AlgebraTerm).RemoveRedundancies();
+                lower0 = (lower0 as AlgebraTerm).RemoveRedundancies(false);
             if (lower1 is AlgebraTerm)
-                lower1 = (lower1 as AlgebraTerm).RemoveRedundancies();
+                lower1 = (lower1 as AlgebraTerm).RemoveRedundancies(false);
             if (upper0 is AlgebraTerm)
-                upper0 = (upper0 as AlgebraTerm).RemoveRedundancies();
+                upper0 = (upper0 as AlgebraTerm).RemoveRedundancies(false);
             if (upper1 is AlgebraTerm)
-                upper1 = (upper1 as AlgebraTerm).RemoveRedundancies();
+                upper1 = (upper1 as AlgebraTerm).RemoveRedundancies(false);
 
             if (lower0 is Constant)
-                lower0 = (lower0 as Constant).Value;
+                lower0 = (lower0 as Constant).GetValue();
             if (upper0 is Constant)
-                upper0 = (upper0 as Constant).Value;
+                upper0 = (upper0 as Constant).GetValue();
             if (lower1 is Constant)
-                lower1 = (lower1 as Constant).Value;
+                lower1 = (lower1 as Constant).GetValue();
             if (upper1 is Constant)
-                upper1 = (upper1 as Constant).Value;
+                upper1 = (upper1 as Constant).GetValue();
 
-            lower0 = Simplifier.HarshSimplify(lower0.Clone().ToAlgTerm(), ref pEvalData, false);
-            lower1 = Simplifier.HarshSimplify(lower1.Clone().ToAlgTerm(), ref pEvalData, false);
-            upper0 = Simplifier.HarshSimplify(upper0.Clone().ToAlgTerm(), ref pEvalData, false);
-            upper1 = Simplifier.HarshSimplify(upper1.Clone().ToAlgTerm(), ref pEvalData, false);
+            lower0 = Simplifier.HarshSimplify(lower0.CloneEx().ToAlgTerm(), ref pEvalData, false);
+            lower1 = Simplifier.HarshSimplify(lower1.CloneEx().ToAlgTerm(), ref pEvalData, false);
+            upper0 = Simplifier.HarshSimplify(upper0.CloneEx().ToAlgTerm(), ref pEvalData, false);
+            upper1 = Simplifier.HarshSimplify(upper1.CloneEx().ToAlgTerm(), ref pEvalData, false);
 
-            if (!(lower0 is Number) || !(lower1 is Number) || !(upper0 is Number) || !(upper1 is Number))
+            if (!(lower0 is ExNumber) || !(lower1 is ExNumber) || !(upper0 is ExNumber) || !(upper1 is ExNumber))
                 return null;
 
-            Number nLower0 = (Number)lower0;
-            Number nUpper0 = (Number)upper0;
-            Number nLower1 = (Number)lower1;
-            Number nUpper1 = (Number)upper1;
+            ExNumber nLower0 = (ExNumber)lower0;
+            ExNumber nUpper0 = (ExNumber)upper0;
+            ExNumber nLower1 = (ExNumber)lower1;
+            ExNumber nUpper1 = (ExNumber)upper1;
 
-            if (nLower1 > nUpper0 || nLower0 > nUpper1 || nUpper0 < nLower0 || nUpper1 < nLower1)
+            if (ExNumber.OpGT(nLower1, nUpper0) || ExNumber.OpGT(nLower0, nUpper1) || ExNumber.OpLT(nUpper0, nLower0) || ExNumber.OpLT(nUpper1, nLower1))
             {
                 return null;
             }
@@ -1047,12 +986,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             ExComp start, end;
             bool lowerInclusive, upperInclusive;
 
-            if (nLower0 < nLower1)
+            if (ExNumber.OpLT(nLower0, nLower1))
             {
                 start = rest1.GetLower();
                 lowerInclusive = rest1.IsLowerInclusive();
 
-                if (!lowerInclusive && nUpper0 == nLower1)
+                if (!lowerInclusive && ExNumber.OpEqual(nUpper0, nLower1))
                     return null;
             }
             else
@@ -1060,16 +999,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 start = rest0.GetLower();
                 lowerInclusive = rest0.IsLowerInclusive();
 
-                if (!lowerInclusive && nLower0 == nUpper1)
+                if (!lowerInclusive && ExNumber.OpEqual(nLower0, nUpper1))
                     return null;
             }
 
-            if (nUpper0 < nUpper1)
+            if (ExNumber.OpLT(nUpper0, nUpper1))
             {
                 end = rest0.GetUpper();
                 upperInclusive = rest0.IsUpperInclusive();
 
-                if (!upperInclusive && nLower0 == nUpper1)
+                if (!upperInclusive && ExNumber.OpEqual(nLower0, nUpper1))
                     return null;
             }
             else
@@ -1077,7 +1016,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 end = rest1.GetUpper();
                 upperInclusive = rest1.IsUpperInclusive();
 
-                if (!upperInclusive && nUpper0 == nLower1)
+                if (!upperInclusive && ExNumber.OpEqual(nUpper0, nLower1))
                     return null;
             }
 
@@ -1091,20 +1030,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             {
                 case LexemeType.Greater:
                     return LexemeType.Less;
-                    break;
-
                 case LexemeType.GreaterEqual:
                     return LexemeType.LessEqual;
-                    break;
-
                 case LexemeType.Less:
                     return LexemeType.Greater;
-                    break;
-
                 case LexemeType.LessEqual:
                     return LexemeType.GreaterEqual;
-                    break;
-
                 default:
                     throw new ArgumentException("Inequality sign not input.");
             }
@@ -1160,10 +1091,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
     internal class Solution
     {
-        public ExComp AlternateResult;
+        public bool IsGeneral = false;
         public ExComp ApproximateResult;
         public Parsing.LexemeType ComparisonOp;
-        public bool ForceFormatting = false;
         public GeneralSolution GeneralResult;
         public int Multiplicity;
         public ExComp Result;
@@ -1174,7 +1104,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             Result = result;
             SolveFor = null;
             ApproximateResult = null;
-            AlternateResult = null;
             ComparisonOp = Parsing.LexemeType.EqualsOp;
             Multiplicity = 1;
             GeneralResult = null;
@@ -1185,7 +1114,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             Result = result;
             SolveFor = null;
             ApproximateResult = null;
-            AlternateResult = null;
             ComparisonOp = comparisonOp;
             Multiplicity = 1;
             GeneralResult = null;
@@ -1196,7 +1124,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             SolveFor = solveFor;
             Result = result;
             ApproximateResult = null;
-            AlternateResult = null;
             ComparisonOp = Parsing.LexemeType.EqualsOp;
             Multiplicity = 1;
             GeneralResult = null;
@@ -1207,7 +1134,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             SolveFor = solveFor;
             Result = result;
             ApproximateResult = approximateResult;
-            AlternateResult = null;
             ComparisonOp = Parsing.LexemeType.EqualsOp;
             Multiplicity = 1;
             GeneralResult = null;
@@ -1222,31 +1148,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return sol;
         }
 
-        public string AlternateToMathAsciiStr()
-        {
-            AlgebraTerm toTerm = AlternateResult.ToAlgTerm();
-            if (toTerm == null)
-                return Result.ToAsciiString();
-            if (ForceFormatting)
-                return toTerm.FinalDispKeepFormatting();
-            return toTerm.FinalToDispStr();
-        }
-
-        public string AlternateToTexStr()
-        {
-            AlgebraTerm toTerm = AlternateResult.ToAlgTerm();
-            if (toTerm == null)
-                return Result.ToTexString();
-            return toTerm.FinalToTexString();
-        }
-
         public string ApproximateToMathAsciiStr()
         {
             AlgebraTerm toTerm = ApproximateResult.ToAlgTerm();
             if (toTerm == null)
                 return Result.ToAsciiString();
-            if (ForceFormatting)
-                return toTerm.FinalDispKeepFormatting();
             return toTerm.FinalToDispStr();
         }
 
@@ -1261,13 +1167,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         public void CalculateApproximate(ref TermType.EvalData pEvalData)
         {
             if (Result is AlgebraTerm)
-                Result = (Result as AlgebraTerm).RemoveRedundancies();
+                Result = (Result as AlgebraTerm).RemoveRedundancies(false);
 
             if (Result != null && !(Result is SpecialSolution) && ApproximateResult == null)
             {
-                ExComp harshSimpResult = Simplifier.HarshSimplify(Result.Clone().ToAlgTerm(), ref pEvalData);
+                ExComp harshSimpResult = Simplifier.HarshSimplify(Result.CloneEx().ToAlgTerm(), ref pEvalData, true);
                 if (harshSimpResult is AlgebraTerm)
-                    harshSimpResult = (harshSimpResult as AlgebraTerm).RemoveRedundancies();
+                    harshSimpResult = (harshSimpResult as AlgebraTerm).RemoveRedundancies(false);
                 if (!harshSimpResult.IsEqualTo(Result))
                     ApproximateResult = harshSimpResult;
             }
@@ -1321,8 +1227,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public string GeneralToMathAsciiStr()
         {
-            if (ForceFormatting)
-                return GeneralResult.FinalDispKeepFormatting();
             return GeneralResult.FinalToDispStr();
         }
 
@@ -1336,8 +1240,6 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             AlgebraTerm toTerm = Result.ToAlgTerm();
             if (toTerm == null)
                 return Result.ToAsciiString();
-            if (ForceFormatting)
-                return toTerm.FinalDispKeepFormatting();
             return toTerm.FinalToDispStr();
         }
 

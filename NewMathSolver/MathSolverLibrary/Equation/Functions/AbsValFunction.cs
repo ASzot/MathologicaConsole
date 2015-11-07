@@ -1,4 +1,6 @@
-﻿namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
+﻿using System.Collections.Generic;
+
+namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 {
     internal class AbsValFunction : AppliedFunction
     {
@@ -9,16 +11,16 @@
 
         public static ExComp MakePositive(ExComp ex)
         {
-            if (ex is Number)
-                return Number.Abs(ex as Number);
+            if (ex is ExNumber)
+                return ExNumber.Abs(ex as ExNumber);
             else if (ex is AlgebraTerm)
             {
                 AlgebraTerm term = ex as AlgebraTerm;
-                for (int i = 0; i < term.TermCount; ++i)
+                for (int i = 0; i < term.GetTermCount(); ++i)
                 {
-                    if (term[i] is Number)
+                    if (term[i] is ExNumber)
                     {
-                        term[i] = Number.Abs(term[i] as Number);
+                        term[i] = ExNumber.Abs(term[i] as ExNumber);
                     }
                     if (term[i] is AlgebraTerm)
                     {
@@ -36,9 +38,9 @@
         {
             for (int i = 0; i < group.Length; ++i)
             {
-                if (group[i] is Number && (group[i] as Number) < 0.0)
+                if (group[i] is ExNumber && ExNumber.OpLT((group[i] as ExNumber), 0.0))
                 {
-                    group[i] = (group[i] as Number) * -1.0;
+                    group[i] = ExNumber.OpMul((group[i] as ExNumber), -1.0);
                 }
             }
 
@@ -47,13 +49,37 @@
 
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
-            ExComp innerEx = InnerTerm.RemoveRedundancies();
-            if (Number.IsUndef(innerEx))
-                return Number.Undefined;
-            if (innerEx is Number)
+            CallChildren(harshEval, ref pEvalData);
+
+            ExComp innerEx = GetInnerEx();
+
+            if (ExNumber.IsUndef(innerEx))
+                return ExNumber.GetUndefined();
+            if (innerEx is ExNumber)
             {
-                Number absInner = Number.Abs(innerEx as Number);
+                ExNumber absInner = ExNumber.Abs(innerEx as ExNumber);
                 return absInner;
+            }
+            else if (innerEx is Equation.Structural.LinearAlg.ExVector)
+            {
+                // Vector magnitude.
+                return (innerEx as Equation.Structural.LinearAlg.ExVector).GetVecLength();
+            }
+            else if (innerEx is AlgebraTerm && !(innerEx is AlgebraFunction))
+            {
+                AlgebraTerm innerTerm = innerEx as AlgebraTerm;
+                List<ExComp[]> groups = innerTerm.GetGroupsNoOps();
+                if (groups.Count == 1)
+                {
+                    ExComp[] gp = groups[0];
+                    ExNumber coeff = GroupHelper.GetCoeff(gp);
+                    if (coeff != null)
+                    {
+                        coeff = ExNumber.Abs(coeff);
+                        GroupHelper.AssignCoeff(gp, coeff);
+                        return new AbsValFunction(GroupHelper.ToAlgTerm(gp));
+                    }
+                }
             }
 
             return this;
@@ -61,12 +87,12 @@
 
         public override string FinalToAsciiString()
         {
-            return "|" + InnerTerm.FinalToAsciiString() + "|";
+            return "|" + GetInnerTerm().FinalToAsciiString() + "|";
         }
 
         public override string ToAsciiString()
         {
-            return "|" + InnerTerm.FinalToAsciiString() + "|";
+            return "|" + GetInnerTerm().FinalToAsciiString() + "|";
         }
 
         public override string ToJavaScriptString(bool useRad)
@@ -80,12 +106,11 @@
         public override string ToString()
         {
             return ToTexString();
-            return "AbVl(" + base.ToString() + ")";
         }
 
         public override string ToTexString()
         {
-            return "|" + InnerTerm.ToTexString() + "|";
+            return "|" + GetInnerTerm().ToTexString() + "|";
         }
     }
 }

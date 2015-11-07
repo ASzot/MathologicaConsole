@@ -13,76 +13,57 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         private string _varStr;
 
-        public static AlgebraVar GarbageVar
+        public static AlgebraVar GetGarbageVar()
         {
-            get { return new AlgebraVar(GARBAGE_VALUE); }
+            return new AlgebraVar(GARBAGE_VALUE);
         }
 
-        public string Var
+        public void SetVar(string value)
         {
-            get { return _varStr; }
-            set
-            {
-                _varStr = value;
-                _useEscape = _varStr == null ? false : Regex.IsMatch(_varStr, SPECIAL_MATCH);
-            }
+            _varStr = value;
+            _useEscape = _varStr == null ? false : Regex.IsMatch(_varStr, SPECIAL_MATCH);
+        }
+
+        public string GetVar()
+        {
+            return _varStr;
         }
 
         public AlgebraVar(string var)
         {
             _useEscape = false;
             _varStr = null;
-            Var = var;
-        }
-
-        public static bool operator !=(AlgebraVar v1, AlgebraVar v2)
-        {
-            return !(v1 == v2);
-        }
-
-        public static bool operator ==(AlgebraVar v1, AlgebraVar v2)
-        {
-            if (((object)v1) == null && ((object)v1) == null)
-                return true;
-            else if (((object)v1) == null || ((object)v1) == null)
-                return false;
-
-            return (v1.Var == v2.Var);
-        }
-
-        public override int GetHashCode()
-        {
-            return Var.GetHashCode();
+            SetVar(var);
         }
 
         public bool IsGarbage()
         {
-            return Var == GARBAGE_VALUE;
+            return GetVar() == GARBAGE_VALUE;
         }
 
         public AlgebraComp ToAlgebraComp()
         {
-            return new AlgebraComp(Var);
+            return new AlgebraComp(GetVar());
         }
 
         public string ToMathAsciiString()
         {
-            return (_useEscape ? "\\" : "") + Var.Replace("$", "");
+            return (_useEscape ? "\\" : "") + GetVar().Replace("$", "");
         }
 
         public override string ToString()
         {
-            return (_useEscape ? "\\" : "") + Var.Replace("$", "");
+            return (_useEscape ? "\\" : "") + GetVar().Replace("$", "");
         }
 
         public string ToJavaScriptString()
         {
-            return Var.Replace("$", "");
+            return GetVar().Replace("$", "");
         }
 
         public string ToTexString()
         {
-            return (_useEscape ? "\\" : "") + Var.Replace("$", "");
+            return (_useEscape ? "\\" : "") + GetVar().Replace("$", "");
         }
     }
 
@@ -90,14 +71,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
     {
         protected AlgebraVar _var;
 
-        public AlgebraVar Var
+        public AlgebraVar GetVar()
         {
-            get { return _var; }
+            return _var;
         }
 
-        public bool IsTrash
+        public bool GetIsTrash()
         {
-            get { return _var.Var == AlgebraVar.GARBAGE_VALUE; }
+            return _var.GetVar() == AlgebraVar.GARBAGE_VALUE;
         }
 
         public AlgebraComp()
@@ -115,29 +96,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             _var = var;
         }
 
-        public static bool operator !=(AlgebraComp ac1, AlgebraComp ac2)
-        {
-            return !(ac1 == ac2);
-        }
-
-        public static bool operator ==(AlgebraComp ac1, AlgebraComp ac2)
-        {
-            if (((object)ac1) == null && ((object)ac2) == null)
-                return true;
-            else if (((object)ac1) == null || ((object)ac2) == null)
-                return false;
-
-            return ac1.IsEqualTo(ac2);
-        }
-
         public static AlgebraComp Parse(string parseStr)
         {
             return new AlgebraComp(parseStr);
         }
 
-        public override ExComp Clone()
+        public override ExComp CloneEx()
         {
-            return new AlgebraComp(_var.Var);
+            return new AlgebraComp(_var.GetVar());
         }
 
         public override double GetCompareVal()
@@ -145,17 +111,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return 1.0;
         }
 
-        public override int GetHashCode()
-        {
-            return Var.GetHashCode();
-        }
-
         public override bool IsEqualTo(ExComp comp)
         {
             if (comp is AlgebraComp)
             {
                 AlgebraComp ac = comp as AlgebraComp;
-                return _var == ac._var;
+                return _var.GetVar() == ac._var.GetVar();
             }
 
             return false;
@@ -168,17 +129,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToAsciiString()
         {
-            return Var.ToMathAsciiString();
+            return GetVar().ToMathAsciiString();
         }
 
         public Functions.PowerFunction ToPow(double realNum)
         {
-            return new Functions.PowerFunction(this, new Number(realNum));
+            return new Functions.PowerFunction(this, new ExNumber(realNum));
         }
 
         public override string ToJavaScriptString(bool useRad)
         {
-            return Var.ToJavaScriptString();
+            return GetVar().ToJavaScriptString();
         }
 
         public override string ToString()
@@ -190,7 +151,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public override string ToTexString()
         {
-            return Var.ToTexString();
+            return GetVar().ToTexString();
         }
     }
 }

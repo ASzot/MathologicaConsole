@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MathSolverWebsite.MathSolverLibrary.Parsing
+﻿namespace MathSolverWebsite.MathSolverLibrary.Parsing
 {
     public enum LexemeType
     {
@@ -51,7 +45,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
         ErrorType,
     };
 
-    static class LexemeTypeHelper
+    internal static class LexemeTypeHelper
     {
         public static LexemeType GetOpposite(LexemeType lt)
         {
@@ -59,14 +53,25 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             {
                 case LexemeType.StartPara:
                     return LexemeType.EndPara;
+
                 case LexemeType.StartBracket:
                     return LexemeType.EndBracket;
+
                 case LexemeType.EndBracket:
                     return LexemeType.StartBracket;
+
                 case LexemeType.EndPara:
                     return LexemeType.StartPara;
+
                 case LexemeType.Bar:
                     return LexemeType.Bar;
+
+                case LexemeType.FuncArgStart:
+                    return LexemeType.FuncArgEnd;
+
+                case LexemeType.FuncArgEnd:
+                    return LexemeType.FuncArgStart;
+
                 default:
                     return LexemeType.ErrorType;
             }

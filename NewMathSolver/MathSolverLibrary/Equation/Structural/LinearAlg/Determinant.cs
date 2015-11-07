@@ -1,26 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
+﻿using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
-    class Determinant : AppliedFunction
+    internal class Determinant : AppliedFunction
     {
         private const int MAX_DET_DIMEN = 4;
 
         public Determinant(ExComp innerMat)
             : base(innerMat, FunctionType.Deteriment, typeof(Determinant))
         {
-
         }
 
         public static ExComp TakeDeteriment(ExMatrix mat)
         {
-            if (mat.Rows == 2)
+            if (mat.GetRows() == 2)
             {
                 ExComp a = mat.Get(0, 0);
                 ExComp b = mat.Get(0, 1);
@@ -30,8 +24,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 return SubOp.StaticCombine(MulOp.StaticCombine(a, d), MulOp.StaticCombine(b, c));
             }
 
-            ExComp total = Number.Zero;
-            for (int i = 0; i < mat.Cols; ++i)
+            ExComp total = ExNumber.GetZero();
+            for (int i = 0; i < mat.GetCols(); ++i)
             {
                 ExComp factor = mat.Get(0, i);
                 ExComp cofactor = mat.GetCofactor(0, i);
@@ -45,54 +39,46 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
-            ExComp innerEx = InnerEx;
+            CallChildren(harshEval, ref pEvalData);
+
+            ExComp innerEx = GetInnerEx();
 
             ExMatrix mat = innerEx as ExMatrix;
-            if (mat == null || !mat.IsSquare)
+            if (mat == null || !mat.GetIsSquare())
             {
                 pEvalData.AddMsg("Only the deteriment of square matrices can be taken");
-                return Number.Undefined;
+                return ExNumber.GetUndefined();
             }
 
-            if (mat.Rows > MAX_DET_DIMEN)
+            if (mat.GetRows() > MAX_DET_DIMEN)
                 return this;
 
             return TakeDeteriment(mat);
         }
 
-        public override string FinalToAsciiKeepFormatting()
-        {
-            return "\\text{det}" + InnerTerm.FinalToAsciiKeepFormatting();
-        }
-
         public override string FinalToAsciiString()
         {
-            return "\\text{det}" + InnerTerm.FinalToAsciiString();
-        }
-
-        public override string FinalToTexKeepFormatting()
-        {
-            return "\\text{det}" + InnerTerm.FinalToTexKeepFormatting();
+            return "\\text{det}" + GetInnerTerm().FinalToAsciiString();
         }
 
         public override string FinalToTexString()
         {
-            return "\\text{det}" + InnerTerm.FinalToTexString();
+            return "\\text{det}" + GetInnerTerm().FinalToTexString();
         }
 
         public override string ToTexString()
         {
-            return "\\text{det}" + InnerEx.ToTexString();
+            return "\\text{det}" + GetInnerEx().ToTexString();
         }
 
         public override string ToAsciiString()
         {
-            return "\\text{det}" + InnerEx.ToAsciiString();
+            return "\\text{det}" + GetInnerEx().ToAsciiString();
         }
 
         public override string ToString()
         {
             return ToTexString();
-        }
+        }
     }
 }

@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
+﻿namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
 {
-    class CalcConstant : AlgebraComp
+    internal class CalcConstant : AlgebraComp
     {
         public CalcConstant()
             : base("C")
         {
-
         }
 
         public override double GetCompareVal()
@@ -21,7 +14,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             return -1.0;
         }
 
-        public override ExComp Clone()
+        public override ExComp CloneEx()
         {
             return new CalcConstant();
         }

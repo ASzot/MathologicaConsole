@@ -1,18 +1,19 @@
-﻿using MathSolverWebsite.MathSolverLibrary.Equation;
+﻿using System.Collections;
+using MathSolverWebsite.MathSolverLibrary.Equation;
 using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
 using MathSolverWebsite.MathSolverLibrary.Parsing;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
-      ///////////////////////////////
-     // This class is never used.
+    ///////////////////////////////
+    // This class is never used.
     /// //////////////////////////
 
-
-    internal class LogTermType : TermType
+    internal class LogGenTermType : GenTermType
     {
         private ExComp _coeff;
         private ExComp _funcIden;
@@ -20,10 +21,10 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private LogFunction _log;
         private AlgebraVar _solveFor;
         private ExComp _verticalShift = null;
-        private FunctionTermType tt_func = null;
-        private SolveTermType tt_solve = null;
+        private FunctionGenTermType tt_func = null;
+        private SolveGenTermType _ttSolveGen = null;
 
-        public LogTermType()
+        public LogGenTermType()
         {
         }
 
@@ -37,11 +38,18 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             }
 
             if (tt_func != null && tt_func.IsValidCommand(command))
-                return tt_func.ExecuteCommand(command, ref pEvalData);
-            else if (tt_solve != null && tt_solve.IsValidCommand(command))
-                return tt_solve.ExecuteCommand(command, ref pEvalData);
+            {
+                SolveResult solveFuncResult = tt_func.ExecuteCommand(command, ref pEvalData);
+                return solveFuncResult;
+            }
+            else if (_ttSolveGen != null && _ttSolveGen.IsValidCommand(command))
+            {
+                SolveResult solveSolveResult = _ttSolveGen.ExecuteCommand(command, ref pEvalData);
+                return solveSolveResult;
+            }
 
-            return SolveResult.InvalidCmd(ref pEvalData);
+            SolveResult solveResult = SolveResult.InvalidCmd(ref pEvalData);
+            return solveResult;
         }
 
         public bool Init(EquationInformation eqInfo, ExComp left, ExComp right, List<TypePair<LexemeType, string>> lexemeTable,
@@ -72,7 +80,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
             if (_funcIden is FunctionDefinition)
             {
-                tt_func = new FunctionTermType();
+                tt_func = new FunctionGenTermType();
                 if (!tt_func.Init(new EqSet(_funcIden, left == null ? right : left, LexemeType.EqualsOp), lexemeTable, solveVars, probSolveVar))
                     tt_func = null;
             }
@@ -89,10 +97,10 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (promptStr == null)
                 return false;
 
-            tt_solve = new SolveTermType(new EqSet(overall, Number.Zero, LexemeType.EqualsOp), lexemeTable, solveVars,
+            _ttSolveGen = new SolveGenTermType(new EqSet(overall, ExNumber.GetZero(), LexemeType.EqualsOp), lexemeTable, solveVars,
                 probSolveVar, promptStr);
 
-            int groupCount = overall.GroupCount;
+            int groupCount = overall.GetGroupCount();
 
             List<AlgebraGroup> variableGroups = overall.GetGroupsVariableTo(solveForComp);
 
@@ -100,16 +108,16 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (variableGroups.Count != 1)
                 return false;
 
-            ExComp[] variableGroup = variableGroups[0].Group;
-            ExComp[] variableCoeffs = variableGroup.GetUnrelatableTermsOfGroup(solveForComp);
+            ExComp[] variableGroup = variableGroups[0].GetGroup();
+            ExComp[] variableCoeffs = GroupHelper.GetUnrelatableTermsOfGroup(variableGroup, solveForComp);
 
-            _coeff = variableCoeffs.ToAlgTerm();
+            _coeff = GroupHelper.ToAlgTerm(variableCoeffs);
 
-            List<ExComp> varGroupList = variableGroup.ToList();
+            List<ExComp> varGroupList = ArrayFunc.ToList(variableGroup);
 
             foreach (ExComp varCoeff in variableCoeffs)
             {
-                if (!varGroupList.Remove(varCoeff) && !Number.One.IsEqualTo(varCoeff))
+                if (!varGroupList.Remove(varCoeff) && !ExNumber.GetOne().IsEqualTo(varCoeff))
                     return false;
             }
 
@@ -118,33 +126,33 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
             ExComp singleGpCmp = varGroupList[0];
             if (singleGpCmp is AlgebraTerm)
-                singleGpCmp = (singleGpCmp as AlgebraTerm).RemoveRedundancies();
+                singleGpCmp = (singleGpCmp as AlgebraTerm).RemoveRedundancies(false);
 
             if (!(singleGpCmp is LogFunction))
                 return false;
 
             _log = singleGpCmp as LogFunction;
 
-            List<AlgebraGroup> innerConstantTerms = _log.InnerTerm.GetGroupsConstantTo(solveForComp);
-            _horizontalShift = Number.Zero;
+            List<AlgebraGroup> innerConstantTerms = _log.GetInnerTerm().GetGroupsConstantTo(solveForComp);
+            _horizontalShift = ExNumber.GetZero();
             foreach (AlgebraGroup innerConstantTerm in innerConstantTerms)
                 _horizontalShift = AddOp.StaticCombine(_horizontalShift, innerConstantTerm.ToTerm()).ToAlgTerm();
 
             List<string> tmpCmds = new List<string>();
             tmpCmds.Add("Find vertical asymptote");
 
-            if (tt_func != null && tt_solve != null)
+            if (tt_func != null && _ttSolveGen != null)
             {
                 tmpCmds.AddRange(tt_func.GetCommands());
-                tmpCmds.AddRange(tt_func.GetCommands().ToList().GetRange(0, 2));
+                tmpCmds.AddRange(ArrayFunc.ToList(tt_func.GetCommands()).GetRange(0, 2));
             }
             else if (tt_func != null)
             {
                 tmpCmds.AddRange(tt_func.GetCommands());
             }
-            else if (tt_solve != null)
+            else if (_ttSolveGen != null)
             {
-                tmpCmds.AddRange(tt_solve.GetCommands());
+                tmpCmds.AddRange(_ttSolveGen.GetCommands());
             }
 
             _cmds = tmpCmds.ToArray();

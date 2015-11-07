@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
+﻿using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
 {
-    class CompWiseMul : AgOp
+    internal class CompWiseMul : AgOp
     {
         public const string IDEN = "CompWiseMul";
 
-        public override ExComp Clone()
+        public override ExComp CloneEx()
         {
             return new CompWiseMul();
         }
@@ -24,12 +19,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Operators
             ExVector vec0 = ex1 as ExVector;
             ExVector vec1 = ex2 as ExVector;
 
-            if (vec0.Length != vec1.Length)
-                return Number.Undefined;
+            if (vec0.GetLength() != vec1.GetLength())
+                return ExNumber.GetUndefined();
 
-            ExVector vec = new ExVector(vec0.Length);
+            ExVector vec = vec0.CreateEmptyBody();
 
-            for (int i = 0; i < vec0.Length; ++i)
+            for (int i = 0; i < vec0.GetLength(); ++i)
             {
                 vec.Set(i, MulOp.StaticCombine(vec0.Get(i), vec1.Get(i)));
             }

@@ -2,6 +2,7 @@
 using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
 using MathSolverWebsite.MathSolverLibrary.Equation.Term;
+using System.Collections.Generic;
 
 namespace MathSolverWebsite.MathSolverLibrary.Solving
 {
@@ -23,8 +24,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 left = right;
                 right = leftTmp;
 
-                if (pEvalData.NegDivCount != -1)
-                    pEvalData.NegDivCount++;
+                if (pEvalData.GetNegDivCount() != -1)
+                    pEvalData.SetNegDivCount(pEvalData.GetNegDivCount() + 1);
             }
 
             ExComp leftEx;
@@ -32,25 +33,23 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
             pEvalData.AttemptSetInputType(TermType.InputType.ExponentSolve);
 
-            var leftGroups = left.GetGroups();
-            var rightGroups = right.GetGroups();
+            List<ExComp[]> leftGroups = left.GetGroups();
+            List<ExComp[]> rightGroups = right.GetGroups();
             if (leftGroups.Count == 1 && rightGroups.Count == 1 && left.Contains(solveForComp) && right.Contains(solveForComp))
             {
-                var leftGroup = leftGroups[0];
-                var rightGroup = rightGroups[0];
                 ExComp gcf = DivOp.GetCommonFactor(left, right);
 
                 // Took out because logs are used to solve some of these equations so there is no base converting.
                 //WorkMgr.FromSides(left, right, "Both sides must be converted to a like base.");
 
-                if (gcf != null && !Number.One.IsEqualTo(gcf) && !Number.Zero.IsEqualTo(gcf))
+                if (gcf != null && !ExNumber.GetOne().IsEqualTo(gcf) && !ExNumber.GetZero().IsEqualTo(gcf))
                 {
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "({0})/({1})=({2})/({1})" + WorkMgr.EDM, "Divide by the greatest common factor.", left, gcf, right);
+                    pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "({0})/({1})=({2})/({1})" + WorkMgr.EDM, "Divide by the greatest common factor.", left, gcf, right);
 
                     leftEx = DivOp.StaticCombine(left, gcf).ToAlgTerm();
                     rightEx = DivOp.StaticCombine(right, gcf).ToAlgTerm();
 
-                    pEvalData.WorkMgr.FromSides(left, right, "Simplify");
+                    pEvalData.GetWorkMgr().FromSides(left, right, "Simplify");
                 }
                 else
                 {
@@ -59,9 +58,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 }
 
                 if (leftEx is AlgebraTerm)
-                    leftEx = (leftEx as AlgebraTerm).RemoveRedundancies();
+                    leftEx = (leftEx as AlgebraTerm).RemoveRedundancies(false);
                 if (rightEx is AlgebraTerm)
-                    rightEx = (rightEx as AlgebraTerm).RemoveRedundancies();
+                    rightEx = (rightEx as AlgebraTerm).RemoveRedundancies(false);
 
                 if (leftEx is PowerFunction && rightEx is PowerFunction)
                 {
@@ -69,7 +68,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                     PowerFunction pfRight = rightEx as PowerFunction;
                     if (pfLeft.HasVariablePowers(solveForComp) && pfRight.HasVariablePowers(solveForComp))
                     {
-                        return DualVarPowSolve(pfLeft, pfRight, solveFor, ref pEvalData);
+                        ExComp dualPowResult = DualVarPowSolve(pfLeft, pfRight, solveFor, ref pEvalData);
+                        return dualPowResult;
                     }
                 }
             }
@@ -94,18 +94,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                     ExComp[] gp0 = leftGroups[0];
                     ExComp[] gp1 = leftGroups[1];
 
-                    ExComp[] gpConst0 = gp0.GetUnrelatableTermsOfGroup(solveForComp);
-                    ExComp[] gpConst1 = gp1.GetUnrelatableTermsOfGroup(solveForComp);
+                    ExComp[] gpConst0 = GroupHelper.GetUnrelatableTermsOfGroup(gp0, solveForComp);
+                    ExComp[] gpConst1 = GroupHelper.GetUnrelatableTermsOfGroup(gp1, solveForComp);
 
-                    ExComp exConst0 = gpConst0.ToAlgTerm().RemoveRedundancies();
-                    ExComp exConst1 = gpConst1.ToAlgTerm().RemoveRedundancies();
+                    ExComp exConst0 = GroupHelper.ToAlgTerm(gpConst0).RemoveRedundancies(false);
+                    ExComp exConst1 = GroupHelper.ToAlgTerm(gpConst1).RemoveRedundancies(false);
 
                     ExComp negExConst0 = MulOp.Negate(exConst0);
 
                     if (negExConst0.IsEqualTo(exConst1))
                     {
-                        ExComp exVar0 = gp0.RemoveExTerms(gpConst0).ToAlgTerm().RemoveRedundancies();
-                        ExComp exVar1 = gp1.RemoveExTerms(gpConst1).ToAlgTerm().RemoveRedundancies();
+                        ExComp exVar0 = GroupHelper.ToAlgTerm(GroupHelper.RemoveExTerms(gp0, gpConst0)).RemoveRedundancies(false);
+                        ExComp exVar1 = GroupHelper.ToAlgTerm(GroupHelper.RemoveExTerms(gp1, gpConst1)).RemoveRedundancies(false);
 
                         if (exVar0 is PowerFunction && exVar1 is PowerFunction)
                         {
@@ -114,7 +114,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
 
                             if (pfGp0.HasVariablePowers(solveForComp) && pfGp1.HasVariablePowers(solveForComp))
                             {
-                                return DualVarPowSolve(pfGp0, pfGp1, solveFor, ref pEvalData);
+                                ExComp dualPowSolve = DualVarPowSolve(pfGp0, pfGp1, solveFor, ref pEvalData);
+                                return dualPowSolve;
                             }
                         }
                     }
@@ -123,52 +124,53 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
                 pEvalData.AddFailureMsg("Too many exponents are present");
                 return null;
             }
-            DivideByVariableCoeffs(ref left, ref right, solveForComp, ref pEvalData);
+            DivideByVariableCoeffs(ref left, ref right, solveForComp, ref pEvalData, false);
 
             // We should now have an isolated exponent term. (base)^(term containing our solve variable).
-            leftEx = left.RemoveRedundancies();
+            leftEx = left.RemoveRedundancies(false);
             if (!(leftEx is PowerFunction))
                 return null;
 
             PowerFunction powFunc = leftEx as PowerFunction;
 
-            rightEx = right.RemoveRedundancies();
-            if (powFunc.Base is Number && rightEx is Number)
+            rightEx = right.RemoveRedundancies(false);
+            if (powFunc.GetBase() is ExNumber && rightEx is ExNumber)
             {
                 // We might be able to find a common base.
-                Number nLeftPow;
-                Number nRightPow;
-                Number nBase;
-                Number.GCF_Base(powFunc.Base as Number, rightEx as Number, out nLeftPow, out nRightPow, out nBase);
+                ExNumber nLeftPow;
+                ExNumber nRightPow;
+                ExNumber nBase;
+                ExNumber.GCF_Base(powFunc.GetBase() as ExNumber, rightEx as ExNumber, out nLeftPow, out nRightPow, out nBase);
 
                 if (nLeftPow != null && nRightPow != null && nBase != null)
                 {
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "({0})^({1}*({2}))=({0})^({3})" + WorkMgr.EDM, "Convert both sides to have equal bases.", nBase, nLeftPow, powFunc.Power, nRightPow);
+                    pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "({0})^({1}*({2}))=({0})^({3})" + WorkMgr.EDM, "Convert both sides to have equal bases.", nBase, nLeftPow, powFunc.GetPower(), nRightPow);
                     // We found a like base between our left and right sides.
-                    ExComp leftPow = MulOp.StaticCombine(nLeftPow, powFunc.Power);
+                    ExComp leftPow = MulOp.StaticCombine(nLeftPow, powFunc.GetPower());
 
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "({0})^({1})=({0})^({2})" + WorkMgr.EDM, "The powers can be set equal because they have equal bases. This is due to " + WorkMgr.STM +
+                    pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "({0})^({1})=({0})^({2})" + WorkMgr.EDM, "The powers can be set equal because they have equal bases. This is due to " + WorkMgr.STM +
                         "a^x=a^y" + WorkMgr.EDM + " then " + WorkMgr.STM + "x=y" + WorkMgr.EDM, nBase, leftPow, nRightPow);
-                    pEvalData.WorkMgr.FromSides(leftPow, nRightPow);
-                    return p_agSolver.SolveEq(solveFor, leftPow.ToAlgTerm(), nRightPow.ToAlgTerm(), ref pEvalData);
+                    pEvalData.GetWorkMgr().FromSides(leftPow, nRightPow);
+                    ExComp solveResult = p_agSolver.SolveEq(solveFor, leftPow.ToAlgTerm(), nRightPow.ToAlgTerm(), ref pEvalData);
+                    return solveResult;
                 }
             }
 
-            ExComp baseEx = powFunc.Base;
-            ExComp pow = powFunc.Power;
+            ExComp baseEx = powFunc.GetBase();
+            ExComp pow = powFunc.GetPower();
 
             LogFunction logRight = LogFunction.Ln(right);
             LogFunction logLeft = LogFunction.Ln(baseEx);
 
-            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "ln({0})=ln({1})" + WorkMgr.EDM, "Take the natural log of both sides.", left, right);
+            pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "ln({0})=ln({1})" + WorkMgr.EDM, "Take the natural log of both sides.", left, right);
 
-            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM, "Using the logarithm power property convert the power to a coefficient. This comes from the definition " + WorkMgr.STM +
+            pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM, "Using the logarithm power property convert the power to a coefficient. This comes from the definition " + WorkMgr.STM +
                 "log(x^a)=alog(x)" + WorkMgr.EDM, MulOp.StaticWeakCombine(logLeft, pow), logRight);
 
             // If we expand the logs we have a chance of evaluating them.
             // Example: log(1/25) -> log(1) - log(25) -> 0 - log(25) -> -log(25)
-            AlgebraTerm expandedRightLog = logRight.ExpandLogs();
-            AlgebraTerm expandedLeftLog = logLeft.ExpandLogs();
+            AlgebraTerm expandedRightLog = AdvAlgebraTerm.ExpandLogs(logRight);
+            AlgebraTerm expandedLeftLog = AdvAlgebraTerm.ExpandLogs(logLeft);
 
             expandedRightLog.EvaluateFunctions(FunctionType.Logarithm, false, ref pEvalData);
             expandedLeftLog.EvaluateFunctions(FunctionType.Logarithm, false, ref pEvalData);
@@ -179,79 +181,83 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             expandedLeftLog = expandedLeftLog.ApplyOrderOfOperations();
             ExComp leftLogEx = expandedLeftLog.MakeWorkable();
 
-            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM, "Simplify", MulOp.StaticWeakCombine(leftLogEx, pow), rightLogEx);
-            pEvalData.WorkMgr.FromDivision(leftLogEx.ToAlgTerm(), MulOp.StaticWeakCombine(leftLogEx, pow), rightLogEx);
+            pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM, "Simplify", MulOp.StaticWeakCombine(leftLogEx, pow), rightLogEx);
+            pEvalData.GetWorkMgr().FromDivision(leftLogEx.ToAlgTerm(), MulOp.StaticWeakCombine(leftLogEx, pow), rightLogEx);
 
             left = pow.ToAlgTerm();
             right = DivOp.StaticCombine(rightLogEx, leftLogEx).ToAlgTerm();
 
-            pEvalData.WorkMgr.FromSides(left, right, "Simplify");
+            pEvalData.GetWorkMgr().FromSides(left, right, "Simplify");
 
-            return p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+            ExComp agSolved = p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+            return agSolved;
         }
 
         private ExComp DualVarPowSolve(PowerFunction pfLeft, PowerFunction pfRight, AlgebraVar solveFor, ref TermType.EvalData pEvalData)
         {
-            AlgebraComp solveForComp = solveFor.ToAlgebraComp();
-
             AlgebraTerm left, right;
 
-            ExComp leftBaseEx = pfLeft.Base;
-            ExComp rightBaseEx = pfRight.Base;
+            ExComp leftBaseEx = pfLeft.GetBase();
+            ExComp rightBaseEx = pfRight.GetBase();
             if (leftBaseEx.IsEqualTo(rightBaseEx))
             {
-                pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM, "Since the bases are equal set the powers equal to each other. " + WorkMgr.STM + "{2}={3}" + WorkMgr.EDM,
-                    pfLeft, pfRight, pfLeft.Power, pfRight.Power);
-                return p_agSolver.SolveEq(solveFor, pfLeft.Power.ToAlgTerm(), pfRight.ToAlgTerm(), ref pEvalData);
+                pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "{0}={1}" + WorkMgr.EDM, "Since the bases are equal set the powers equal to each other. " + WorkMgr.STM + "{2}={3}" + WorkMgr.EDM,
+                    pfLeft, pfRight, pfLeft.GetPower(), pfRight.GetPower());
+                ExComp agSolved = p_agSolver.SolveEq(solveFor, pfLeft.GetPower().ToAlgTerm(), pfRight.ToAlgTerm(), ref pEvalData);
+                return agSolved;
             }
 
-            if (leftBaseEx is Number && rightBaseEx is Number && !(leftBaseEx as Number).HasImaginaryComp() &&
-                !(rightBaseEx as Number).HasImaginaryComp())
+            if (leftBaseEx is ExNumber && rightBaseEx is ExNumber && !(leftBaseEx as ExNumber).HasImaginaryComp() &&
+                !(rightBaseEx as ExNumber).HasImaginaryComp())
             {
-                Number nLeftBase = leftBaseEx as Number;
-                Number nRightBase = rightBaseEx as Number;
-                Number nLeftPow, nRightPow, nBase;
+                ExNumber nLeftBase = leftBaseEx as ExNumber;
+                ExNumber nRightBase = rightBaseEx as ExNumber;
+                ExNumber nLeftPow, nRightPow, nBase;
 
-                Number.GCF_Base(nLeftBase, nRightBase, out nLeftPow, out nRightPow, out nBase);
+                ExNumber.GCF_Base(nLeftBase, nRightBase, out nLeftPow, out nRightPow, out nBase);
 
                 if (nLeftPow != null && nRightPow != null && nBase != null)
                 {
-                    string coeff0Str = nLeftPow != 1.0 ? "{1}*" : "";
-                    string coeff1Str = nRightPow != 1.0 ? "{3}*" : "";
+                    string coeff0Str = ExNumber.OpNotEquals(nLeftPow, 1.0) ? "{1}*" : "";
+                    string coeff1Str = ExNumber.OpNotEquals(nRightPow, 1.0) ? "{3}*" : "";
 
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "({0})^(" + coeff0Str + "({2}))=({0})^(" + coeff1Str + "({4}))" + WorkMgr.EDM, "Convert both sides to have like bases.",
-                        nBase, nLeftPow, pfLeft.Power, nRightPow, pfRight.Power);
+                    pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "({0})^(" + coeff0Str + "({2}))=({0})^(" + coeff1Str + "({4}))" + WorkMgr.EDM, "Convert both sides to have like bases.",
+                        nBase, nLeftPow, pfLeft.GetPower(), nRightPow, pfRight.GetPower());
                     // nBase will be used in displaying work.
-                    left = MulOp.StaticCombine(nLeftPow, pfLeft.Power).ToAlgTerm();
-                    right = MulOp.StaticCombine(nRightPow, pfRight.Power).ToAlgTerm();
+                    left = MulOp.StaticCombine(nLeftPow, pfLeft.GetPower()).ToAlgTerm();
+                    right = MulOp.StaticCombine(nRightPow, pfRight.GetPower()).ToAlgTerm();
 
-                    pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "({0})^({1})=({0})^({2})" + WorkMgr.EDM, "With like bases the powers can be set equal to each other. This is due to " +
+                    pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "({0})^({1})=({0})^({2})" + WorkMgr.EDM, "With like bases the powers can be set equal to each other. This is due to " +
                         WorkMgr.STM + "a^x=a^y" + WorkMgr.EDM + " then " + WorkMgr.STM + "x=y" + WorkMgr.EDM, nBase, left, right);
 
-                    return p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+                    ExComp agSolved = p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+                    return agSolved;
                 }
             }
 
-            LogFunction leftLog = new LogFunction(pfLeft.Base);
-            LogFunction rightLog = new LogFunction(pfRight.Base);
-            leftLog.Base = rightLog.Base = Constant.ParseConstant("e");
+            LogFunction leftLog = new LogFunction(pfLeft.GetBase());
+            LogFunction rightLog = new LogFunction(pfRight.GetBase());
+            ExComp temp = Constant.ParseConstant("e");
+            rightLog.SetBase(temp);
+            leftLog.SetBase(temp);
 
-            pEvalData.WorkMgr.FromFormatted(WorkMgr.STM + "ln({0})=ln({1})" + WorkMgr.EDM, "Take the natural log of both sides.", pfLeft, pfRight);
+            pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "ln({0})=ln({1})" + WorkMgr.EDM, "Take the natural log of both sides.", pfLeft, pfRight);
 
             ExComp baseLeftEx = leftLog.Evaluate(false, ref pEvalData);
             ExComp baseRightEx = rightLog.Evaluate(false, ref pEvalData);
 
             if (baseLeftEx is LogFunction)
-                baseLeftEx = (baseLeftEx as LogFunction).ForceLogPowToCoeff();
+                baseLeftEx = AdvAlgebraTerm.ForceLogPowToCoeff((baseLeftEx as LogFunction));
             if (baseRightEx is LogFunction)
-                baseRightEx = (baseRightEx as LogFunction).ForceLogPowToCoeff();
+                baseRightEx = AdvAlgebraTerm.ForceLogPowToCoeff((baseRightEx as LogFunction));
 
-            left = MulOp.StaticCombine(pfLeft.Power, baseLeftEx).ToAlgTerm();
-            right = MulOp.StaticCombine(pfRight.Power, baseRightEx).ToAlgTerm();
+            left = MulOp.StaticCombine(pfLeft.GetPower(), baseLeftEx).ToAlgTerm();
+            right = MulOp.StaticCombine(pfRight.GetPower(), baseRightEx).ToAlgTerm();
 
-            pEvalData.WorkMgr.FromSides(left, right, "Make any exponents in the log become coefficients.");
+            pEvalData.GetWorkMgr().FromSides(left, right, "Make any exponents in the log become coefficients.");
 
-            return p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+            ExComp finalAgSolved = p_agSolver.SolveEq(solveFor, left, right, ref pEvalData);
+            return finalAgSolved;
         }
     }
 }

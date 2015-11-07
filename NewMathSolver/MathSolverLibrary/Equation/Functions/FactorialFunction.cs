@@ -9,28 +9,30 @@
 
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
-            ExComp innerEx = InnerEx;
+            CallChildren(harshEval, ref pEvalData);
 
-            if (innerEx is Number && (innerEx as Number).IsRealInteger())
+            ExComp innerEx = GetInnerEx();
+
+            if (innerEx is ExNumber && (innerEx as ExNumber).IsRealInteger())
             {
-                int num = (int)(innerEx as Number).RealComp;
+                int num = (int)(innerEx as ExNumber).GetRealComp();
 
                 long factorialResult = 1;
 
                 if (num < 0)
                 {
-                    return Number.Undefined;
+                    return ExNumber.GetUndefined();
                 }
 
                 if (num == 0)
-                    return Number.One;
+                    return ExNumber.GetOne();
 
                 for (int i = 1; i <= num; ++i)
                 {
                     factorialResult *= i;
                 }
 
-                return new Number(factorialResult);
+                return new ExNumber(factorialResult);
             }
 
             return this;
@@ -38,7 +40,7 @@
 
         public override string ToAsciiString()
         {
-            return InnerEx.ToAsciiString() + "!";
+            return GetInnerEx().ToAsciiString() + "! ";
         }
 
         public override string ToJavaScriptString(bool useRad)
@@ -50,22 +52,12 @@
         {
             if (MathSolver.USE_TEX_DEBUG)
                 return ToTexString();
-            return InnerEx.ToString() + "!";
-        }
-
-        public override string FinalToAsciiKeepFormatting()
-        {
-            return ToAsciiString();
+            return GetInnerEx().ToString() + "! ";
         }
 
         public override string FinalToAsciiString()
         {
             return ToAsciiString();
-        }
-
-        public override string FinalToTexKeepFormatting()
-        {
-            return ToTexString();
         }
 
         public override string FinalToTexString()
@@ -75,7 +67,7 @@
 
         public override string ToTexString()
         {
-            return InnerEx.ToTexString() + "!";
+            return GetInnerEx().ToTexString() + "! ";
         }
     }
 }

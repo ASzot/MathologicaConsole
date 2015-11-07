@@ -1,8 +1,5 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
 using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
-using MathSolverWebsite.MathSolverLibrary.Parsing;
-using MathSolverWebsite.MathSolverLibrary.Solving;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,33 +10,27 @@ namespace MathSolverWebsite.MathSolverLibrary
         public List<FunctionType> AppliedFunctions;
         public bool HasVariableDens;
         public bool HasVariablePowers;
-        public Number MaxPower;
+        public ExNumber MaxPower;
         public int NumberOfAppliedFuncs;
         public bool OnlyFactors;
         public bool OnlyFractions;
         public List<ExComp> Powers;
 
-        public bool IsLinear
+        public bool GetIsLinear()
         {
-            get
-            {
-                return HasOnlyPowers(Number.One);
-            }
+            return HasOnlyPowers(ExNumber.GetOne());
         }
 
-        public int NumberOfPowers
+        public int GetNumberOfPowers()
         {
-            get { return Powers.Count; }
+            return Powers.Count;
         }
 
-        public bool OnlyIntPows
+        public bool GetOnlyIntPows()
         {
-            get
-            {
-                if (Powers.Count == 0)
-                    return false;
-                return GetIntegerPowCount() == Powers.Count;
-            }
+            if (Powers.Count == 0)
+                return false;
+            return GetIntegerPowCount() == Powers.Count;
         }
 
         public EquationInformation(AlgebraTerm singular, AlgebraComp varFor)
@@ -63,17 +54,17 @@ namespace MathSolverWebsite.MathSolverLibrary
             MaxPower = null;
             foreach (ExComp pow in Powers)
             {
-                if (pow is Number)
+                if (pow is ExNumber)
                 {
-                    Number powNum = pow as Number;
-                    if (MaxPower == null || powNum > MaxPower)
+                    ExNumber powNum = pow as ExNumber;
+                    if (MaxPower == null || ExNumber.OpGT(powNum, MaxPower))
                         MaxPower = powNum;
                 }
             }
 
             OnlyFactors = false;
 
-            if (singular.GroupCount == 1)
+            if (singular.GetGroupCount() == 1)
             {
                 ExComp[] onlyGroup = singular.GetGroupsNoOps()[0];
                 if (onlyGroup.Length > 1)
@@ -83,7 +74,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                     {
                         // There should only be factors which are the terms.
                         if (!(onlyGroupComp is AlgebraTerm) && !onlyGroupComp.IsEqualTo(varFor) &&
-                            !(onlyGroupComp is Number))
+                            !(onlyGroupComp is ExNumber))
                             OnlyFactors = false;
                     }
                 }
@@ -105,7 +96,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             Powers = new List<ExComp>();
             Powers.AddRange(powersLeft);
             Powers.AddRange(powersRight);
-            Powers = Powers.RemoveDuplicates();
+            Powers = GroupHelper.RemoveDuplicates(Powers);
 
             AppliedFunctions = new List<FunctionType>();
             AppliedFunctions.AddRange(funcsLeft);
@@ -122,10 +113,10 @@ namespace MathSolverWebsite.MathSolverLibrary
             MaxPower = null;
             foreach (ExComp pow in Powers)
             {
-                if (pow is Number)
+                if (pow is ExNumber)
                 {
-                    Number powNum = pow as Number;
-                    if (MaxPower == null || powNum > MaxPower)
+                    ExNumber powNum = pow as ExNumber;
+                    if (MaxPower == null || ExNumber.OpGT(powNum, MaxPower))
                         MaxPower = powNum;
                 }
             }
@@ -135,7 +126,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             {
                 AlgebraTerm nonZeroTerm = left.IsZero() ? right : left;
 
-                if (nonZeroTerm.GroupCount == 1)
+                if (nonZeroTerm.GetGroupCount() == 1)
                 {
                     ExComp[] onlyGroup = nonZeroTerm.GetGroupsNoOps()[0];
                     if (onlyGroup.Length > 1)
@@ -145,7 +136,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                         {
                             // There should only be factors which are the terms.
                             if (!(onlyGroupComp is AlgebraTerm) && !onlyGroupComp.IsEqualTo(varFor) &&
-                                !(onlyGroupComp is Number))
+                                !(onlyGroupComp is ExNumber))
                                 OnlyFactors = false;
                         }
                     }
@@ -164,7 +155,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                 {
                     if (simpFrac.Init(power as AlgebraTerm))
                     {
-                        if (simpFrac.NumEx is Number && simpFrac.DenEx is Number)
+                        if (simpFrac.GetNumEx() is ExNumber && simpFrac.GetDenEx() is ExNumber)
                             fracPowCount++;
                     }
                 }
@@ -178,7 +169,7 @@ namespace MathSolverWebsite.MathSolverLibrary
             int integerPowCount = 0;
             foreach (ExComp power in Powers)
             {
-                if (power is Number && (power as Number).IsRealInteger())
+                if (power is ExNumber && (power as ExNumber).IsRealInteger())
                     integerPowCount++;
             }
 
@@ -188,24 +179,24 @@ namespace MathSolverWebsite.MathSolverLibrary
         public ExComp GetSubOutRecom(AlgebraTerm left, AlgebraTerm right, AlgebraComp varFor, out AlgebraTerm totalTerm, out bool factor)
         {
             factor = false;
-            AlgebraTerm clonedLeft = (AlgebraTerm)left.Clone();
-            AlgebraTerm clonedRight = (AlgebraTerm)right.Clone();
+            AlgebraTerm clonedLeft = (AlgebraTerm)left.CloneEx();
+            AlgebraTerm clonedRight = (AlgebraTerm)right.CloneEx();
 
             totalTerm = Equation.Operators.SubOp.StaticCombine(clonedLeft, clonedRight).ToAlgTerm();
 
-            var totalGroups = totalTerm.GetGroups();
+            List<ExComp[]> totalGroups = totalTerm.GetGroups();
             int totalGpCnt = totalGroups.Count;
 
-            var groupsVarTo = totalTerm.GetGroupsVariableTo(varFor);
+            List<AlgebraGroup> groupsVarTo = totalTerm.GetGroupsVariableTo(varFor);
 
             // Check for a quadratic substitution.
             if (totalGpCnt == 3)
             {
-                var groupsConstTo = totalTerm.GetGroupsConstantTo(varFor);
+                List<AlgebraGroup> groupsConstTo = totalTerm.GetGroupsConstantTo(varFor);
                 if (groupsVarTo.Count == 2 && groupsConstTo.Count == 1)
                 {
-                    ExComp variableTerm0 = groupsVarTo[0].GetVariableGroupComps(varFor).ToTerm().RemoveRedundancies();
-                    ExComp variableTerm1 = groupsVarTo[1].GetVariableGroupComps(varFor).ToTerm().RemoveRedundancies();
+                    ExComp variableTerm0 = groupsVarTo[0].GetVariableGroupComps(varFor).ToTerm().RemoveRedundancies(false);
+                    ExComp variableTerm1 = groupsVarTo[1].GetVariableGroupComps(varFor).ToTerm().RemoveRedundancies(false);
 
                     ExComp pow0;
                     ExComp pow1;
@@ -215,24 +206,24 @@ namespace MathSolverWebsite.MathSolverLibrary
                     if (variableTerm0 is Equation.Functions.PowerFunction)
                     {
                         Equation.Functions.PowerFunction fnVariableTerm0 = variableTerm0 as Equation.Functions.PowerFunction;
-                        pow0 = fnVariableTerm0.Power;
-                        base0 = fnVariableTerm0.Base;
+                        pow0 = fnVariableTerm0.GetPower();
+                        base0 = fnVariableTerm0.GetBase();
                     }
                     else
                     {
-                        pow0 = Number.One;
+                        pow0 = ExNumber.GetOne();
                         base0 = variableTerm0;
                     }
 
                     if (variableTerm1 is Equation.Functions.PowerFunction)
                     {
                         Equation.Functions.PowerFunction fnVariableTerm1 = variableTerm1 as Equation.Functions.PowerFunction;
-                        pow1 = fnVariableTerm1.Power;
-                        base1 = fnVariableTerm1.Base;
+                        pow1 = fnVariableTerm1.GetPower();
+                        base1 = fnVariableTerm1.GetBase();
                     }
                     else
                     {
-                        pow1 = Number.One;
+                        pow1 = ExNumber.GetOne();
                         base1 = variableTerm1;
                     }
 
@@ -240,8 +231,8 @@ namespace MathSolverWebsite.MathSolverLibrary
                     if (base1.IsEqualTo(base0) && !(pow0 is AlgebraTerm && (pow0 as AlgebraTerm).GetNumDenFrac() != null) &&
                         !(pow1 is AlgebraTerm && (pow1 as AlgebraTerm).GetNumDenFrac() != null))
                     {
-                        ExComp pow0Double = Equation.Operators.MulOp.StaticCombine(new Number(2.0), pow0);
-                        ExComp pow1Double = Equation.Operators.MulOp.StaticCombine(new Number(2.0), pow1);
+                        ExComp pow0Double = Equation.Operators.MulOp.StaticCombine(new ExNumber(2.0), pow0);
+                        ExComp pow1Double = Equation.Operators.MulOp.StaticCombine(new ExNumber(2.0), pow1);
 
                         if (pow0Double.IsEqualTo(pow1) && !variableTerm0.IsEqualTo(varFor))
                             return variableTerm0;
@@ -251,32 +242,27 @@ namespace MathSolverWebsite.MathSolverLibrary
                 }
             }
 
-            if (HasOnlyOrFunctionsBasicOnly(FunctionType.Logarithm, FunctionType.Sinusodal, FunctionType.AbsoluteValue) && NumberOfPowers > 1)
+            if (HasOnlyOrFunctionsBasicOnly(FunctionType.Logarithm, FunctionType.Sinusodal, FunctionType.AbsoluteValue) && GetNumberOfPowers() > 1)
             {
-                var variableTermsPows = from varGp in groupsVarTo
-                                        select varGp.GetVariableGroupComps(varFor).ToTerm().RemoveRedundancies();
+                ExComp[] variableTermsPowsArr = new ExComp[groupsVarTo.Count];
+                for (int i = 0; i < groupsVarTo.Count; ++i)
+                {
+                    variableTermsPowsArr[i] =
+                        groupsVarTo[i].GetVariableGroupComps(varFor).ToTerm().RemoveRedundancies(false);
+                }
 
                 List<AlgebraTerm> variableTerms = new List<AlgebraTerm>();
-                foreach (ExComp varTermPow in variableTermsPows)
+                foreach (ExComp varTermPow in variableTermsPowsArr)
                 {
                     if (varTermPow.IsEqualTo(varFor))
                         return null;
 
                     if (varTermPow is Equation.Functions.PowerFunction)
                     {
-                        var baseTerm = (varTermPow as PowerFunction).Base.ToAlgTerm();
+                        AlgebraTerm baseTerm = (varTermPow as PowerFunction).GetBase().ToAlgTerm();
                         variableTerms.Add(baseTerm);
                         continue;
                     }
-                    //else if (varTermPow is AlgebraTerm)
-                    //{
-                    //    AlgebraTerm varTerm = varTermPow as AlgebraTerm;
-                    //    bool allPows = true;
-                    //    foreach (ExComp subComp in varTerm)
-                    //    {
-                    //        if (!(subComp is PowerFunction))
-                    //    }
-                    //}
                     variableTerms.Add(varTermPow.ToAlgTerm());
                 }
 
@@ -286,7 +272,7 @@ namespace MathSolverWebsite.MathSolverLibrary
                 {
                     factor = true;
 
-                    foreach (var variableTerm in variableTerms)
+                    foreach (AlgebraTerm variableTerm in variableTerms)
                     {
                         if (variableTerm is AlgebraFunction)
                         {

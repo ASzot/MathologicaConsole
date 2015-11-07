@@ -1,4 +1,5 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation.Term;
+using MathSolverWebsite.MathSolverLibrary.TermType;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation
 {
@@ -6,7 +7,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
     {
         public static bool AreEqual(AlgebraTerm term0, AlgebraTerm term1, ref TermType.EvalData pEvalData)
         {
-            return (Simplify(term0, ref pEvalData).IsEqualTo(Simplify(term1, ref pEvalData)));
+            bool areEqual = (Simplify(term0, ref pEvalData).IsEqualTo(Simplify(term1, ref pEvalData)));
+            return areEqual;
         }
 
         public static ExComp AttemptCancelations(AlgebraTerm term, ref TermType.EvalData pEvalData)
@@ -20,17 +22,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (simpFrac.IsDenOne())
                 return term;
 
-            ExComp num = simpFrac.NumEx;
-            ExComp den = simpFrac.DenEx;
+            ExComp num = simpFrac.GetNumEx();
+            ExComp den = simpFrac.GetDenEx();
 
             ExComp divided = Operators.DivOp.StaticCombine(num, den);
 
             if (divided.IsEqualTo(term))
             {
                 if (num is AlgebraTerm)
-                    num = (num as AlgebraTerm).FactorizeTerm(ref pEvalData);
+                    num = AdvAlgebraTerm.FactorizeTerm((num as AlgebraTerm), ref pEvalData, false);
                 if (den is AlgebraTerm)
-                    den = (den as AlgebraTerm).FactorizeTerm(ref pEvalData);
+                    den = AdvAlgebraTerm.FactorizeTerm((den as AlgebraTerm), ref pEvalData, false);
 
                 divided = Operators.DivOp.StaticCombine(num, den);
             }
@@ -46,10 +48,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         /// <param name="pEvalData"></param>
         /// <param name="order"></param>
         /// <returns></returns>
-        public static ExComp HarshSimplify(AlgebraTerm term, ref TermType.EvalData pEvalData, bool order = true)
+        public static ExComp HarshSimplify(AlgebraTerm term, ref EvalData pEvalData, bool order)
         {
             // Harsh simplify per component.
-            for (int i = 0; i < term.TermCount; ++i)
+            for (int i = 0; i < term.GetTermCount(); ++i)
             {
                 if (term[i] is AlgebraTerm)
                     term[i] = HarshSimplify(term[i] as AlgebraTerm, ref pEvalData, order);
@@ -65,7 +67,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
             term.EvaluateFunctions(true, ref pEvalData);
 
-            term = term.RemoveRedundancies().ToAlgTerm();
+            term = term.RemoveRedundancies(false).ToAlgTerm();
 
             term = term.ApplyOrderOfOperations();
 
@@ -74,9 +76,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             term = term.HarshEvaluation();
 
             if (!order)
-                return term.RemoveRedundancies();
+                return term.RemoveRedundancies(false);
 
-            term = term.RemoveRedundancies().ToAlgTerm();
+            term = term.RemoveRedundancies(false).ToAlgTerm();
 
             term = term.Order();
 
@@ -85,12 +87,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public static ExComp Simplify(AlgebraTerm term, ref TermType.EvalData pEvalData)
         {
-            bool noPowEval = term.ContainsOneOfFuncs(typeof(Functions.Calculus.Derivative), typeof(Functions.Calculus.Integral));
+            bool noPowEval = AdvAlgebraTerm.ContainsOneOfFuncs(term, typeof(Functions.Calculus.Derivative), typeof(Functions.Calculus.Integral));
 
             term.EvaluateFunctions(false, ref pEvalData);
 
             if (!noPowEval)
-                term = term.EvaluatePowers(ref pEvalData);
+                term = AdvAlgebraTerm.EvaluatePowers(term, ref pEvalData);
 
             term = term.ApplyOrderOfOperations();
             term = term.MakeWorkable().ToAlgTerm();
@@ -98,7 +100,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             if (term.HasTrigFunctions())
             {
                 // There are trig functions in this expression.
-                term = term.TrigSimplify();
+                term = AdvAlgebraTerm.TrigSimplify(term, ref pEvalData);
             }
 
             term = term.Order();

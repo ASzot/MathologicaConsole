@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace MathSolverWebsite.MathSolverLibrary.TermType
+﻿namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
-    enum InputType
+    internal enum InputType
     {
         Linear = 0,
         Cubic = 1,
@@ -54,19 +49,19 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         IntUSub = 40,
 
         PartialDerivative,
-        LeHopital, 
+        LeHopital,
 
         Invalid,
     };
 
-    enum InputAddType
+    internal enum InputAddType
     {
         DerivCR,
         IntDef,
         Invalid,
     };
 
-    static class InputTypeHelper
+    internal static class InputTypeHelper
     {
         public static InputType ToInequalityType(InputType inputType)
         {

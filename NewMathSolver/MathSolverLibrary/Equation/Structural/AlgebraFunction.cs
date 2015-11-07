@@ -1,6 +1,7 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
 using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation
 {
@@ -11,15 +12,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         Exponential,
         AbsoluteValue,
         Logarithm,
-        LogarithmBase,      // This is only used in detecting the solve method.
+        LogarithmBase,
         Summation,
         ChooseFunction,
+        Permutation,
         Factorial,
         Derivative,
         AntiDerivative,
         Limit,
-        Deteriment, 
+        Deteriment,
         Transpose,
+        MatInverse,
         Gradient,
         Curl,
         Divergence,
@@ -27,15 +30,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
     internal abstract class AlgebraFunction : AlgebraTerm
     {
-        public static ExComp operator *(AlgebraFunction a1, AlgebraFunction a2)
+        public static ExComp OpMul(AlgebraFunction a1, AlgebraFunction a2)
         {
             if (a1 is PowerFunction && a2 is PowerFunction)
             {
-                return (a1 as PowerFunction) * (a2 as PowerFunction);
+                return PowerFunction.OpMul((a1 as PowerFunction), (a2 as PowerFunction));
             }
             else if (a1.IsEqualTo(a2))
             {
-                PowerFunction powFunc = new PowerFunction(a1, new Number(2.0));
+                PowerFunction powFunc = new PowerFunction(a1, new ExNumber(2.0));
                 return powFunc;
             }
             else
@@ -46,11 +49,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             }
         }
 
-        public static ExComp operator *(AlgebraFunction af, AlgebraComp comp)
+        public static ExComp OpMul(AlgebraFunction af, AlgebraComp comp)
         {
             if (af is Functions.PowerFunction)
             {
-                return (af as PowerFunction) * comp;
+                return PowerFunction.OpMul((af as PowerFunction), comp);
             }
 
             AlgebraTerm term = new AlgebraTerm();
@@ -58,10 +61,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return term;
         }
 
-        public static ExComp operator *(AlgebraFunction af, AlgebraTerm term)
+        public static ExComp OpMul(AlgebraFunction af, AlgebraTerm term)
         {
             if (af is PowerFunction)
-                return (af as PowerFunction) * term;
+                return PowerFunction.OpMul((af as PowerFunction), term);
 
             //throw new ArgumentException();
 
@@ -78,37 +81,37 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                     if (groupComp.IsEqualTo(af))
                     {
                         combined = true;
-                        group[j] = new PowerFunction(group[j], new Number(2.0));
+                        group[j] = new PowerFunction(group[j], new ExNumber(2.0));
                         break;
                     }
-                    else if (groupComp is PowerFunction && (groupComp as PowerFunction).Base.IsEqualTo(af))
+                    else if (groupComp is PowerFunction && (groupComp as PowerFunction).GetBase().IsEqualTo(af))
                     {
                         combined = true;
                         group[j] = new PowerFunction(af,
-                            Operators.AddOp.StaticCombine((groupComp as PowerFunction).Power, Number.One));
+                            Operators.AddOp.StaticCombine((groupComp as PowerFunction).GetPower(), ExNumber.GetOne()));
                         break;
                     }
                 }
 
                 if (!combined)
                 {
-                    List<ExComp> groupList = group.ToList();
+                    List<ExComp> groupList = ArrayFunc.ToList(group);
                     groupList.Add(af);
-                    groups[i] = groupList.ToArray().RemoveOneCoeffs();
+                    groups[i] = GroupHelper.RemoveOneCoeffs(groupList.ToArray());
                 }
             }
 
             return new AlgebraTerm(groups.ToArray());
         }
 
-        public static ExComp operator +(AlgebraFunction a1, AlgebraFunction a2)
+        public static ExComp OpAdd(AlgebraFunction a1, AlgebraFunction a2)
         {
             AlgebraTerm term = new AlgebraTerm();
             term.Add(a1, new Operators.AddOp(), a2);
             return term;
         }
 
-        protected virtual ExComp CancelWith(ExComp innerEx, ref TermType.EvalData evalData)
+        public virtual ExComp CancelWith(ExComp innerEx, ref TermType.EvalData evalData)
         {
             return null;
         }

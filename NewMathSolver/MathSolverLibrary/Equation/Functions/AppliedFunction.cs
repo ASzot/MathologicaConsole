@@ -1,9 +1,8 @@
-﻿using System;
+﻿using MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-
-using MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg;
-using MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus.Vector;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 {
@@ -12,19 +11,19 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         protected FunctionType _functionType;
         protected Type _type;
 
-        public FunctionType FunctionType
+        public FunctionType GetFunctionType()
         {
-            get { return _functionType; }
+            return _functionType;
         }
 
-        public ExComp InnerEx
+        public ExComp GetInnerEx()
         {
-            get { return InnerTerm.RemoveRedundancies(); }
+            return GetInnerTerm().RemoveRedundancies(false);
         }
 
-        public AlgebraTerm InnerTerm
+        public AlgebraTerm GetInnerTerm()
         {
-            get { return new AlgebraTerm(_subComps.ToArray()); }
+            return new AlgebraTerm(_subComps.ToArray());
         }
 
         public AppliedFunction(ExComp ex, FunctionType functionType, Type type)
@@ -40,11 +39,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override AlgebraTerm ApplyOrderOfOperations()
         {
-            AlgebraTerm innerTerm = InnerTerm;
+            AlgebraTerm innerTerm = GetInnerTerm();
             innerTerm = innerTerm.ApplyOrderOfOperations();
 
             _subComps = new List<ExComp>();
-            _subComps = innerTerm.SubComps;
+            _subComps = innerTerm.GetSubComps();
 
             return this;
         }
@@ -64,28 +63,41 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return base.MakeWorkable();
         }
 
-        public override ExComp Clone()
+        public override ExComp CloneEx()
         {
-            return CreateInstance(InnerTerm.Clone());
+            return CreateInstance(GetInnerTerm().CloneEx());
+        }
+
+        protected void CallChildren(bool harshEval, ref TermType.EvalData pEvalData)
+        {
+            for (int i = 0; i < ArrayFunc.GetCount(_subComps); ++i)
+            {
+                if (ArrayFunc.GetAt(_subComps, i) is AlgebraFunction)
+                {
+                    ExComp evaluated = ((AlgebraFunction) ArrayFunc.GetAt(_subComps, i)).Evaluate(harshEval,
+                        ref pEvalData);
+                    ArrayFunc.SetAt(_subComps, i, evaluated);
+                }
+            }
         }
 
         public override AlgebraTerm CompoundFractions()
         {
-            AlgebraTerm compoundedFracs = InnerTerm.CompoundFractions();
+            AlgebraTerm compoundedFracs = GetInnerTerm().CompoundFractions();
 
             return CreateInstance(compoundedFracs);
         }
 
         public override AlgebraTerm CompoundFractions(out bool valid)
         {
-            AlgebraTerm compoundedFractions = InnerTerm.CompoundFractions(out valid);
+            AlgebraTerm compoundedFractions = GetInnerTerm().CompoundFractions(out valid);
 
             return CreateInstance(compoundedFractions);
         }
 
         public override AlgebraTerm ConvertImaginaryToVar()
         {
-            AlgebraTerm converted = InnerTerm.ConvertImaginaryToVar();
+            AlgebraTerm converted = GetInnerTerm().ConvertImaginaryToVar();
             base.AssignTo(converted);
             return this;
         }
@@ -112,14 +124,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         public override List<ExComp[]> GetGroups()
         {
             List<ExComp[]> groups = new List<ExComp[]>();
-            ExComp[] onlyGroup = { this.Clone() };
+            ExComp[] onlyGroup = new ExComp[] { this.CloneEx() };
             groups.Add(onlyGroup);
             return groups;
         }
 
         public override AlgebraTerm HarshEvaluation()
         {
-            AlgebraTerm harshEval = InnerTerm.HarshEvaluation();
+            AlgebraTerm harshEval = GetInnerTerm().HarshEvaluation();
 
             AlgebraTerm created = CreateInstance(harshEval);
             return created;
@@ -129,7 +141,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         {
             if (ex.GetType() == this.GetType())
             {
-                return this.InnerTerm.IsEqualTo((ex as AppliedFunction).InnerTerm);
+                return this.GetInnerTerm().IsEqualTo((ex as AppliedFunction).GetInnerTerm());
             }
             else
                 return false;
@@ -137,32 +149,32 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         public override AlgebraTerm Order()
         {
-            return CreateInstance(InnerTerm.Order());
+            return CreateInstance(GetInnerTerm().Order());
         }
 
         public override AlgebraTerm RemoveOneCoeffs()
         {
-            ExComp innerEx = InnerEx;
+            ExComp innerEx = GetInnerEx();
             if (innerEx is AlgebraTerm)
                 innerEx = (innerEx as AlgebraTerm).RemoveOneCoeffs();
             return CreateInstance(innerEx);
         }
 
-        public override ExComp RemoveRedundancies(bool postWorkable = false)
+        public override ExComp RemoveRedundancies(bool postWorkable)
         {
-            ExComp nonRedundantInner = InnerTerm.RemoveRedundancies(postWorkable);
+            ExComp nonRedundantInner = GetInnerTerm().RemoveRedundancies(postWorkable);
             return CreateInstance(nonRedundantInner);
         }
 
         public override AlgebraTerm Substitute(ExComp subOut, ExComp subIn)
         {
-            AlgebraTerm term = InnerTerm.Substitute(subOut, subIn);
+            AlgebraTerm term = GetInnerTerm().Substitute(subOut, subIn);
             return CreateInstance(term);
         }
 
         public override AlgebraTerm Substitute(ExComp subOut, ExComp subIn, ref bool success)
         {
-            AlgebraTerm term = InnerTerm.Substitute(subOut, subIn, ref success);
+            AlgebraTerm term = GetInnerTerm().Substitute(subOut, subIn, ref success);
             return CreateInstance(term);
         }
 
@@ -178,187 +190,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 
         protected virtual AlgebraTerm CreateInstance(params ExComp[] args)
         {
-            return (AlgebraTerm)Activator.CreateInstance(_type, args[0]);
-        }
-
-
-    }
-
-    internal abstract class AppliedFunction_NArgs : AppliedFunction
-    {
-        protected ExComp[] _args;
-
-        public AppliedFunction_NArgs(FunctionType functionType, Type type, params ExComp[] args)
-            : base(args[0], functionType, type)
-        {
-            _args = args;
-        }
-
-        public override ExComp Clone()
-        {
-            IEnumerable<ExComp> cloned = from arg in _args
-										 select arg.Clone();
-            return CreateInstance(cloned.ToArray());
-        }
-
-        public override AlgebraTerm CompoundFractions()
-        {
-            return this;
-        }
-
-        public override AlgebraTerm CompoundFractions(out bool valid)
-        {
-            valid = false;
-
-            return this;
-        }
-
-        public override AlgebraTerm HarshEvaluation()
-        {
-            IEnumerable<ExComp> harshEval = from arg in _args
-											select arg.ToAlgTerm().HarshEvaluation();
-            AlgebraTerm created = CreateInstance(harshEval.ToArray());
-            return created;
-        }
-
-        public override AlgebraTerm Order()
-        {
-            IEnumerable<ExComp> ordered = from arg in _args
-										  select arg.ToAlgTerm().Order();
-            return CreateInstance(ordered.ToArray());
-        }
-
-        public override AlgebraTerm RemoveOneCoeffs()
-        {
-            IEnumerable<ExComp> noOneCoeffs = from arg in _args
-											  select (arg is AlgebraTerm ? (arg as AlgebraTerm).RemoveOneCoeffs() : arg);
-            return CreateInstance(noOneCoeffs.ToArray());
-        }
-
-        public override ExComp RemoveRedundancies(bool postWorkable = false)
-        {
-            IEnumerable<ExComp> noRedun = from arg in _args
-                                          select arg.ToAlgTerm().RemoveRedundancies(postWorkable);
-            return CreateInstance(noRedun.ToArray());
-        }
-
-        public override AlgebraTerm Substitute(ExComp subOut, ExComp subIn)
-        {
-            IEnumerable<ExComp> substituted = from arg in _args
-											  select arg.ToAlgTerm().Substitute(subOut, subIn);
-            return CreateInstance(substituted.ToArray());
-        }
-
-        public override AlgebraTerm Substitute(ExComp subOut, ExComp subIn, ref bool success)
-        {
-            ExComp[] substituted = new ExComp[_args.Length];
-            for (int i = 0; i < _args.Length; ++i)
-            {
-                substituted[i] = _args[i].ToAlgTerm().Substitute(subOut, subIn, ref success);
-            }
-
-            return CreateInstance(substituted);
-        }
-
-        protected override AlgebraTerm CreateInstance(params ExComp[] args)
-        {
-            return (AlgebraTerm)Activator.CreateInstance(_type, args);
+            return (AlgebraTerm)TypeHelper.CreateInstance(_type, args[0]);
         }
     }
 
-    internal abstract class BasicAppliedFunc : AppliedFunction
-    {
-        protected string _useEnd = ")";
-        protected string _useStart = "(";
-        protected string s_name;
-
-        public virtual string FuncName
-        {
-            get { return s_name; }
-        }
-
-        public BasicAppliedFunc(ExComp innerEx, string name, FunctionType ft, Type type)
-            : base(innerEx, ft, type)
-        {
-            s_name = name;
-        }
-
-        public static ExComp Parse(string parseStr, ExComp innerEx, ref List<string> pParseErrors)
-        {
-            if (parseStr == "sin")
-                return new SinFunction(innerEx);
-            else if (parseStr == "cos")
-                return new CosFunction(innerEx);
-            else if (parseStr == "tan")
-                return new TanFunction(innerEx);
-            else if (parseStr == "log")
-                return new LogFunction(innerEx);   // By default we are log base 10.
-            else if (parseStr == "ln")
-            {
-                LogFunction log = new LogFunction(innerEx);
-                log.Base = Constant.ParseConstant("e");
-                return log;
-            }
-            else if (parseStr == "sec")
-                return new SecFunction(innerEx);
-            else if (parseStr == "csc")
-                return new CscFunction(innerEx);
-            else if (parseStr == "cot")
-                return new CotFunction(innerEx);
-            else if (parseStr == "asin" || parseStr == "arcsin")
-                return new ASinFunction(innerEx);
-            else if (parseStr == "acos" || parseStr == "arccos")
-                return new ACosFunction(innerEx);
-            else if (parseStr == "atan" || parseStr == "arctan")
-                return new ATanFunction(innerEx);
-            else if (parseStr == "acsc" || parseStr == "arccsc")
-                return new ACscFunction(innerEx);
-            else if (parseStr == "asec" || parseStr == "arcsec")
-                return new ASecFunction(innerEx);
-            else if (parseStr == "acot" || parseStr == "arccot")
-                return new ACotFunction(innerEx);
-            else if (parseStr == "sqrt")
-                return new AlgebraTerm(innerEx, new Operators.PowOp(), new AlgebraTerm(Number.One, new Operators.DivOp(), new Number(2.0)));
-            else if (parseStr == "det")
-                return new Structural.LinearAlg.Determinant(innerEx);
-            else if (parseStr == "curl")
-                return new CurlFunc(innerEx);
-            else if (parseStr == "div")
-                return new DivergenceFunc(innerEx);
-            else if (parseStr == "!")
-                return new FactorialFunction(innerEx);
-
-            return null;
-        }
-
-        public override string FinalToDispStr()
-        {
-            return s_name + _useStart + InnerTerm.FinalToDispStr() + _useEnd;
-        }
-
-        public override string ToAsciiString()
-        {
-            return s_name + _useStart + InnerTerm.ToAsciiString() + _useEnd;
-        }
-
-        public override string ToJavaScriptString(bool useRad)
-        {
-            string innerStr = InnerTerm.ToJavaScriptString(useRad);
-            if (InnerTerm == null)
-                return null;
-            return "Math." + s_name + "(" + innerStr + ")";
-        }
-
-        public override string ToString()
-        {
-            if (MathSolver.USE_TEX_DEBUG)
-                return ToTexString();
-            return s_name + _useStart + InnerTerm.ToString() + _useEnd;
-        }
-
-        public override string ToTexString()
-        {
-            return s_name + _useStart + InnerTerm.ToTexString() + _useEnd;
-        }
-    }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MathSolverWebsite.MathSolverLibrary.Equation.Functions;
+using System;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
 {
@@ -7,29 +8,29 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
         private AlgebraTerm _den;
         private AlgebraTerm _num;
 
-        public AlgebraTerm Den
+        public AlgebraTerm GetDen()
         {
-            get { return _den; }
+            return _den;
         }
 
-        public ExComp DenEx
+        public ExComp GetDenEx()
         {
-            get { return _den.RemoveRedundancies(); }
+            return _den.RemoveRedundancies(false);
         }
 
-        public AlgebraTerm Num
+        public AlgebraTerm GetNum()
         {
-            get { return _num; }
+            return _num;
         }
 
-        public ExComp NumEx
+        public ExComp GetNumEx()
         {
-            get { return _num.RemoveRedundancies(); }
+            return _num.RemoveRedundancies(false);
         }
 
         public ExComp GetReciprocal()
         {
-            return Operators.DivOp.StaticCombine(Den, Num);
+            return Operators.DivOp.StaticCombine(GetDen(), GetNum());
         }
 
         /// <summary>
@@ -39,7 +40,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
         /// <returns></returns>
         public bool HarshInit(AlgebraTerm term)
         {
-            if (!term.ContainsOnlyFractions() || term.GroupCount != 1)
+            if (!term.ContainsOnlyFractions() || term.GetGroupCount() != 1)
                 return false;
             return Init(term);
         }
@@ -50,17 +51,25 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 throw new ArgumentException();
             if (term.IsZero())
             {
-                _num = Number.Zero.ToAlgTerm();
-                _den = Number.Zero.ToAlgTerm();
+                _num = ExNumber.GetZero().ToAlgTerm();
+                _den = ExNumber.GetZero().ToAlgTerm();
 
                 return true;
             }
-            term = term.RemoveRedundancies().ToAlgTerm();
+            term = term.RemoveRedundancies(false).ToAlgTerm();
 
-            if (term.TermCount == 1)
+            if (term.GetTermCount() == 1)
             {
-                _num = term.ToAlgTerm();
-                _den = Number.One.ToAlgTerm();
+                if (term is PowerFunction && (term as PowerFunction).GetPower().IsEqualTo(ExNumber.GetNegOne()))
+                {
+                    _num = ExNumber.GetOne().ToAlgTerm();
+                    _den = (term as PowerFunction).GetBase().ToAlgTerm();
+                }
+                else
+                {
+                    _num = term.ToAlgTerm();
+                    _den = ExNumber.GetOne().ToAlgTerm();
+                }
 
                 return true;
             }
@@ -68,7 +77,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
             if (!term.ContainsOnlyFractions())
                 return false;
 
-            if (term.GroupCount != 1)
+            if (term.GetGroupCount() != 1)
                 return false;
 
             AlgebraTerm[] numDen = term.GetNumDenFrac();
@@ -83,31 +92,31 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
 
         public bool IsDenOne()
         {
-            return Number.One.IsEqualTo(DenEx);
+            return ExNumber.GetOne().IsEqualTo(GetDenEx());
         }
 
-        public bool IsSimpleUnitCircleAngle(out Number num, out Number den, bool handleNegs = true)
+        public bool IsSimpleUnitCircleAngle(out ExNumber num, out ExNumber den, bool handleNegs)
         {
             num = null;
             den = null;
 
-            if (NumEx is Number && (NumEx as Number) == 0.0)
+            if (GetNumEx() is ExNumber && ExNumber.OpEqual((GetNumEx() as ExNumber), 0.0))
             {
-                num = Number.Zero;
-                den = Number.Zero;
+                num = ExNumber.GetZero();
+                den = ExNumber.GetZero();
                 return true;
             }
 
-            if (!(DenEx is Number))
+            if (!(GetDenEx() is ExNumber))
                 return false;
 
-            if (!Num.Contains(Constant.ParseConstant(@"pi")))
+            if (!GetNum().Contains(Constant.ParseConstant(@"pi")))
                 return false;
 
-            var numGroups = Num.GetGroupsNoOps();
+            System.Collections.Generic.List<ExComp[]> numGroups = GetNum().GetGroupsNoOps();
             if (numGroups.Count != 1)
                 return false;
-            var numGroup = numGroups[0];
+            ExComp[] numGroup = numGroups[0];
 
             if (numGroup.Length == 2)
             {
@@ -117,39 +126,39 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 ExComp piConstant = first is Constant ? first : second;
                 ExComp otherEx = first is Constant ? second : first;
 
-                if (!(otherEx is Number))
+                if (!(otherEx is ExNumber))
                     return false;
 
-                num = otherEx as Number;
+                num = otherEx as ExNumber;
             }
             else if (numGroup.Length == 1)
-                num = Number.One;
+                num = ExNumber.GetOne();
             else
                 return false;
 
-            den = DenEx as Number;
+            den = GetDenEx() as ExNumber;
 
             if (!num.IsRealInteger() || !den.IsRealInteger())
                 return false;
 
-            Number doubleDen = den * 2.0;
+            ExNumber doubleDen = ExNumber.OpMul(den, 2.0);
             bool isNeg = false;
-            if (num < 0.0)
+            if (ExNumber.OpLT(num, 0.0))
             {
-                num *= -1;
+                num = ExNumber.OpMul(num, -1.0);
                 isNeg = true;
             }
-            if (doubleDen <= num)
+            if (ExNumber.OpLE(doubleDen, num))
             {
-                num = num % doubleDen;
-                if (num == 0.0)
-                    den = new Number(0.0);
+                num = ExNumber.OpMod(num, doubleDen);
+                if (ExNumber.OpEqual(num, 0.0))
+                    den = new ExNumber(0.0);
             }
 
             if (isNeg && handleNegs)
             {
-                Number numSub = den * 2.0;
-                num = numSub - num;
+                ExNumber numSub = ExNumber.OpMul(den, 2.0);
+                num = ExNumber.OpSub(numSub, num);
             }
 
             return true;
@@ -161,15 +170,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 return false;
             if (term.IsZero())
             {
-                _num = Number.Zero.ToAlgTerm();
-                _den = Number.Zero.ToAlgTerm();
+                _num = ExNumber.GetZero().ToAlgTerm();
+                _den = ExNumber.GetZero().ToAlgTerm();
 
                 return true;
             }
 
             if (term.ContainsOnlyFractions())
             {
-                if (term.GroupCount == 1)
+                if (term.GetGroupCount() == 1)
                 {
                     AlgebraTerm[] numDen = term.GetNumDenFrac();
                     if (numDen != null)
@@ -181,10 +190,10 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Term
                 }
             }
 
-            if (term.GroupCount == 1)
+            if (term.GetGroupCount() == 1)
             {
                 _num = term.ToAlgTerm();
-                _den = Number.One.ToAlgTerm();
+                _den = ExNumber.GetOne().ToAlgTerm();
 
                 return true;
             }

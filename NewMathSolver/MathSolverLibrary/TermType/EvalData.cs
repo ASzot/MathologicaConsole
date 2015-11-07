@@ -1,7 +1,7 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation;
 using System.Collections.Generic;
-using System.Linq;
-using System;
+using MathSolverWebsite.MathSolverLibrary.Information_Helpers;
+using MathSolverWebsite.MathSolverLibrary.Solving;
 
 namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
@@ -21,89 +21,108 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private string[] _graphEqStrs = null;
         private InputType _inputType = InputType.Invalid;
         private InputAddType _inputAddType = InputAddType.Invalid;
-        private List<AndRestriction> _variableRestrictions = null; 
+        private List<AndRestriction> _variableRestrictions = null;
 
         /// <summary>
         /// Can return null if the input type is invalid.
         /// </summary>
-        public string InputTypeStr
+        public string GetInputTypeStr()
         {
-            get
+            return InputTypeHelper.ToDescStr(_inputType, _inputAddType);
+        }
+
+        public void SetQuadSolveMethod(QuadraticSolveMethod value)
+        {
+            _quadSolveMethod = value;
+        }
+
+        public QuadraticSolveMethod GetQuadSolveMethod()
+        {
+            return _quadSolveMethod;
+        }
+
+        public string GetGraphVar()
+        {
+            return _graphVar;
+        }
+
+        internal void SetGraphEqStrs(string[] value)
+        {
+            _graphEqStrs = new string[value.Length];
+            for (int i = 0; i < value.Length; ++i)
             {
-                return InputTypeHelper.ToDescStr(_inputType, _inputAddType);
-            }
-        }
-
-        public Solving.QuadraticSolveMethod QuadSolveMethod
-        {
-            get { return _quadSolveMethod; }
-            set { _quadSolveMethod = value; }
-        }
-
-        public string GraphVar
-        {
-            get { return _graphVar; }
-        }
-
-        public string[] GraphEqStrs
-        {
-            get { return _graphEqStrs; }
-            internal set
-            {
-                _graphEqStrs = new string[value.Length];
-                for (int i = 0; i < value.Length; ++i)
+                if (value[i] == null)
                 {
-                    _graphEqStrs[i] = value[i].Replace("+-", "-");
+                    _graphEqStrs = null;
+                    break;
                 }
+                _graphEqStrs[i] = value[i].Replace("+-", "-");
             }
         }
 
-        public Information_Helpers.FuncDefHelper FuncDefs
+        public string[] GetGraphEqStrs()
         {
-            get { return _funcDefs; }
+            return _graphEqStrs;
         }
 
-        public bool CheckSolutions
+        public FuncDefHelper GetFuncDefs()
         {
-            get { return _checkSolutions; }
-            set { _checkSolutions = value; }
+            return _funcDefs;
         }
 
-        public bool IsWorkable
+        public void SetCheckSolutions(bool value)
         {
-            get { return _isWorkable; }
-            set { _isWorkable = value; }
+            _checkSolutions = value;
         }
 
-        public int NegDivCount
+        public bool GetCheckSolutions()
         {
-            get { return _negDivCount; }
-            set { _negDivCount = value; }
+            return _checkSolutions;
         }
 
-        public List<string> FailureMsgs
+        public void SetIsWorkable(bool value)
         {
-            get { return _failureMsgs; }
+            _isWorkable = value;
         }
 
-        public bool HasPartialSolutions
+        public bool GetIsWorkable()
         {
-            get { return _partialSols != null && _partialSols.Count != 0; }
+            return _isWorkable;
         }
 
-        public List<string> Msgs
+        public void SetNegDivCount(int value)
         {
-            get { return _msgs; }
+            _negDivCount = value;
         }
 
-        public List<ExComp> PartialSolutions
+        public int GetNegDivCount()
         {
-            get { return _partialSols; }
+            return _negDivCount;
         }
 
-        public virtual bool UseRad
+        public List<string> GetFailureMsgs()
         {
-            get { return _useRad; }
+            return _failureMsgs;
+        }
+
+        public bool GetHasPartialSolutions()
+        {
+            return _partialSols != null && _partialSols.Count != 0;
+        }
+
+        public List<string> GetMsgs()
+        {
+            return _msgs;
+        }
+
+        public List<ExComp> GetPartialSolutions()
+        {
+            return _partialSols;
+        }
+
+        public virtual bool GetUseRad()
+        {
+            return _useRad;
         }
 
         /// <summary>
@@ -115,9 +134,14 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             _useRad = useRad;
         }
 
-        public virtual WorkMgr WorkMgr
+        public virtual void SetWorkMgr(WorkMgr value)
         {
-            get { return _workMgr; }
+            _workMgr = value;
+        }
+
+        public virtual WorkMgr GetWorkMgr()
+        {
+            return _workMgr;
         }
 
         public EvalData(bool useRad, WorkMgr workMgr, Information_Helpers.FuncDefHelper pFuncDefHelper)
@@ -170,14 +194,14 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             {
                 _graphVar = graphVar;
                 AlgebraTerm term = graphEx.ToAlgTerm();
-                var vars = term.GetAllAlgebraCompsStr();
+                List<string> vars = term.GetAllAlgebraCompsStr();
                 if (vars.Count != 1)
                     return false;
 
                 string graphStr = term.ToJavaScriptString(_useRad);
                 if (graphStr != null)
                 {
-                    GraphEqStrs = new string[1] { graphStr };
+                    SetGraphEqStrs(new string[1] { graphStr });
                     return true;
                 }
             }
@@ -190,7 +214,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (_graphEqStrs == null)
             {
                 _graphVar = graphVar;
-                GraphEqStrs = new string[1] { str };
+                SetGraphEqStrs(new string[1] { str });
                 return true;
             }
 
@@ -204,7 +228,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (_graphEqStrs == null)
             {
                 _graphVar = graphVar;
-                GraphEqStrs = strs;
+                SetGraphEqStrs(strs);
                 return true;
             }
             return false;
@@ -220,8 +244,11 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         {
             if (_msgs == null)
                 _msgs = new List<string>();
+            msg = MathSolver.FinalizeOutput(msg);
             if (!_msgs.Contains(msg))
+            {
                 _msgs.Add(msg);
+            }
         }
 
         public void AddPartialSol(ExComp ex)

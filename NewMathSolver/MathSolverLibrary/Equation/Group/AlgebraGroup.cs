@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation
 {
@@ -8,20 +7,24 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
     {
         private ExComp[] _group;
 
-        public ExComp[] Group
+        public ExComp[] GetGroup()
         {
-            get { return _group; }
+            return _group;
         }
 
-        public int GroupCount
+        public int GetGroupCount()
         {
-            get { return _group.Count(); }
+            return _group.Length;
         }
 
-        public ExComp this[int i]
+        public void SetItem(int i, ExComp value)
         {
-            get { return _group[i]; }
-            set { _group[i] = value; }
+            _group[i] = value;
+        }
+
+        public ExComp GetItem(int i)
+        {
+            return _group[i];
         }
 
         public AlgebraGroup(ExComp[] group)
@@ -44,15 +47,55 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
         public bool IsZero()
         {
-            return _group.Length == 1 && Number.Zero.IsEqualTo(_group[0]);
+            return _group.Length == 1 && ExNumber.GetZero().IsEqualTo(_group[0]);
         }
 
         public override string ToString()
         {
             string finalStr = "";
-            for (int i = 0; i < _group.Count(); ++i)
+            for (int i = 0; i < _group.Length; ++i)
                 finalStr += _group[i].ToString();
             return finalStr;
+        }
+
+        public static AlgebraTerm ToTerm(List<AlgebraGroup> gps)
+        {
+            AlgebraTerm term = new AlgebraTerm();
+            foreach (AlgebraGroup gp in gps)
+                term = AlgebraTerm.OpAdd(term, gp);
+
+            return term;
+        }
+
+        public static AlgebraTerm GetConstantTo(List<AlgebraGroup> gps, AlgebraComp cmp)
+        {
+            AlgebraTerm[] termsArr = new AlgebraTerm[gps.Count];
+            for (int i = 0; i < gps.Count; ++i)
+                termsArr[i] = GroupHelper.ToAlgTerm(GroupHelper.GetUnrelatableTermsOfGroup(gps[i].GetGroup(), cmp));
+
+            AlgebraTerm totalTerm = new AlgebraTerm();
+            foreach (AlgebraTerm term in termsArr)
+            {
+                totalTerm = AlgebraTerm.OpAdd(totalTerm, term);
+            }
+
+            if (totalTerm.GetSubComps().Count == 0)
+                return ExNumber.GetOne().ToAlgTerm();
+
+            return totalTerm;
+        }
+
+        public bool IsEqualTo(AlgebraGroup ag)
+        {
+            if (this.GetGroupCount() != ag.GetGroupCount())
+                return false;
+            for (int i = 0; i < ag.GetGroupCount(); ++i)
+            {
+                if (!GetItem(i).IsEqualTo(ag.GetItem(i)))
+                    return false;
+            }
+
+            return true;
         }
 
         public AlgebraTerm ToTerm()

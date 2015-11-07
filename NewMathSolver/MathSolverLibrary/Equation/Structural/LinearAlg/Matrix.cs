@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
 using System;
-using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
+using System.Collections.Generic;
 using System.Linq;
+using MathSolverWebsite.MathSolverLibrary.LangCompat;
+using MathSolverWebsite.MathSolverLibrary.TermType;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
@@ -9,7 +11,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
     {
         public class ExTrash : ExComp
         {
-            public override ExComp Clone()
+            public override ExComp CloneEx()
             {
                 return this;
             }
@@ -54,12 +56,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         /// <summary>
         /// The 'first' dimension of the array.
-        /// If 'i' is the ith row it can be 
+        /// If 'i' is the ith row it can be
         /// accessed through _exData[i][0]
         /// </summary>
-        public int Rows
+        public int GetRows()
         {
-            get { return _exData.Length; }
+            return _exData.Length;
         }
 
         /// <summary>
@@ -67,14 +69,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         /// If 'i' s the ith row it can be accessed
         /// through _exData[0][i].
         /// </summary>
-        public int Cols
+        public int GetCols()
         {
-            get { return _exData.Length > 0 ? _exData[0].Length : 0; }
+            return _exData.Length > 0 ? _exData[0].Length : 0;
         }
 
-        public bool IsSquare
+        public bool GetIsSquare()
         {
-            get { return Cols == Rows; }
+            return GetCols() == GetRows();
         }
 
         public ExMatrix(int rows, int cols)
@@ -113,26 +115,26 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public ExVector GetColVec(int col)
         {
-            ExComp[] data = new ExComp[Rows];
-            for (int i = 0; i < Rows; ++i)
+            ExComp[] data = new ExComp[GetRows()];
+            for (int i = 0; i < GetRows(); ++i)
             {
                 data[i] = _exData[i][col];
             }
 
-            return new ExVector(data);
+            return new ExColVec(data);
         }
 
         public ExMatrix GetMatrixMinor(int cancelRow, int cancelCol)
         {
-            ExComp[][] comps = new ExComp[Rows - 1][];
-            for (int i = 0; i < Rows - 1; ++i)
-                comps[i] = new ExComp[Cols - 1];
+            ExComp[][] comps = new ExComp[GetRows() - 1][];
+            for (int i = 0; i < GetRows() - 1; ++i)
+                comps[i] = new ExComp[GetCols() - 1];
 
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
                 if (i == cancelRow)
                     continue;
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (j == cancelCol)
                         continue;
@@ -145,11 +147,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public ExMatrix Transpose()
         {
-            ExComp[][] transposedData = new ExComp[Cols][];
-            for (int i = 0; i < Cols; ++i)
+            ExComp[][] transposedData = new ExComp[GetCols()][];
+            for (int i = 0; i < GetCols(); ++i)
             {
-                transposedData[i] = new ExComp[Rows];
-                for (int j = 0; j < Rows; ++j)
+                transposedData[i] = new ExComp[GetRows()];
+                for (int j = 0; j < GetRows(); ++j)
                 {
                     transposedData[i][j] = _exData[j][i];
                 }
@@ -159,18 +161,18 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         }
 
         public ExComp GetCofactor(int row, int col)
-       { 
+        {
             ExMatrix minor = GetMatrixMinor(row, col);
             ExComp minorDet = Determinant.TakeDeteriment(minor);
 
-            ExComp signedVal = Operators.PowOp.StaticCombine(Number.NegOne, Operators.AddOp.StaticCombine(new Number(row), new Number(col)));
+            ExComp signedVal = Operators.PowOp.StaticCombine(ExNumber.GetNegOne(), Operators.AddOp.StaticCombine(new ExNumber(row), new ExNumber(col)));
 
             return Operators.MulOp.StaticCombine(signedVal, minorDet);
         }
 
         public ExMatrix GetAdjointMatrix()
         {
-            if (Rows == 2 && Cols == 2)
+            if (GetRows() == 2 && GetCols() == 2)
             {
                 ExComp a = Get(0, 0);
                 ExComp b = Get(0, 1);
@@ -180,12 +182,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 return new ExMatrix(new ExComp[][] { new ExComp[] { d, MulOp.Negate(b) }, new ExComp[] { MulOp.Negate(c), a } });
             }
 
-            ExComp[][] matrixEles = new ExComp[Rows][];
+            ExComp[][] matrixEles = new ExComp[GetRows()][];
 
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                matrixEles[i] = new ExComp[Cols];
-                for (int j = 0; j < Cols; ++j)
+                matrixEles[i] = new ExComp[GetCols()];
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     matrixEles[i][j] = GetCofactor(i, j);
                 }
@@ -198,12 +200,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         public List<string> GetAllVariables()
         {
             List<string> overallList = new List<string>();
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     List<string> allVars = _exData[i][j].ToAlgTerm().GetAllAlgebraCompsStr();
-                    overallList.Intersect(allVars);
+                    ArrayFunc.IntersectLists(overallList, allVars);
                 }
             }
 
@@ -216,14 +218,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         /// <returns></returns>
         public ExMatrix GetInverse()
         {
-            if (!IsSquare)
+            if (!GetIsSquare())
                 return null;
 
-            ExComp det = Determinant.TakeDeteriment((ExMatrix)this.Clone());
-            if (det.IsEqualTo(Number.Zero))
+            ExComp det = Determinant.TakeDeteriment((ExMatrix)this.CloneEx());
+            if (det.IsEqualTo(ExNumber.GetZero()))
                 return null;
 
-            ExComp recipDet = Operators.DivOp.StaticCombine(Number.One, det);
+            ExComp recipDet = Operators.DivOp.StaticCombine(ExNumber.GetOne(), det);
 
             ExMatrix adjoint = this.GetAdjointMatrix();
             ExComp inverse = Operators.MulOp.StaticCombine(recipDet, adjoint);
@@ -234,9 +236,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public void ModifyEach(Func<ExComp, ExComp> func)
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     _exData[i][j] = func(_exData[i][j]);
                 }
@@ -273,7 +275,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override AlgebraTerm CompoundFractions(out bool valid)
         {
-            if (Cols == 0 && Rows == 0)
+            if (GetCols() == 0 && GetRows() == 0)
             {
                 valid = false;
                 return this;
@@ -297,9 +299,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override bool Contains(AlgebraComp varFor)
         {
-            for (int i = 0; i < _exData.Length; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < _exData.Length; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm && (_exData[i][j] as AlgebraTerm).Contains(varFor))
                         return true;
@@ -323,67 +325,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             return this;
         }
 
-        public override string FinalToAsciiKeepFormatting()
-        {
-            string totalStr = "[";
-            for (int i = 0; i < _exData.Length; ++i)
-            {
-                if (Rows != 1)
-                    totalStr += "[";
-                for (int j = 0; j < _exData[i].Length; ++j)
-                {
-                    if (_exData[i][j] is AlgebraTerm)
-                        totalStr += (_exData[i][j] as AlgebraTerm).FinalToAsciiKeepFormatting();
-                    else
-                        totalStr += _exData[i][j].ToAsciiString();
-
-                    if (j != _exData[i].Length - 1)
-                        totalStr += ",";
-                }
-
-                if (Rows != 1)
-                    totalStr += "]";
-                if (i != _exData.Length - 1)
-                    totalStr += ",";
-            }
-            totalStr += "]";
-
-            return totalStr;
-        }
-
-        public override string FinalToTexKeepFormatting()
-        {
-            string totalStr = "[";
-            for (int i = 0; i < _exData.Length; ++i)
-            {
-                if (Rows != 1)
-                    totalStr += "[";
-                for (int j = 0; j < _exData[i].Length; ++j)
-                {
-                    if (_exData[i][j] is AlgebraTerm)
-                        totalStr += (_exData[i][j] as AlgebraTerm).FinalToTexKeepFormatting();
-                    else
-                        totalStr += _exData[i][j].ToTexString();
-
-                    if (j != _exData[i].Length - 1)
-                        totalStr += ",";
-                }
-
-                if (Rows != 1)
-                    totalStr += "]";
-                if (i != _exData.Length - 1)
-                    totalStr += ",";
-            }
-            totalStr += "]";
-
-            return totalStr;
-        }
-
         public override AlgebraTerm ForceCombineExponents()
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
                         _exData[i][j] = (_exData[i][j] as AlgebraTerm).ForceCombineExponents();
@@ -396,14 +342,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         public override List<FunctionType> GetAppliedFunctionsNoPow(AlgebraComp varFor)
         {
             List<FunctionType> totalFuncs = new List<FunctionType>();
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
                     {
                         List<FunctionType>
-							tmp = (_exData[i][j] as AlgebraTerm).GetAppliedFunctionsNoPow(varFor);
+                            tmp = (_exData[i][j] as AlgebraTerm).GetAppliedFunctionsNoPow(varFor);
                         totalFuncs.AddRange(tmp);
                     }
                 }
@@ -423,9 +369,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         public override List<ExComp> GetPowersOfVar(AlgebraComp varFor)
         {
             List<ExComp> totalFuncs = new List<ExComp>();
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
                     {
@@ -440,9 +386,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override AlgebraTerm HarshEvaluation()
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
                         _exData[i][j] = (_exData[i][j] as AlgebraTerm).HarshEvaluation();
@@ -454,9 +400,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override bool HasVariablePowers(AlgebraComp varFor)
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm && (_exData[i][j] as AlgebraTerm).HasVariablePowers(varFor))
                         return true;
@@ -473,9 +419,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override bool IsUndefined()
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm && (_exData[i][j] as AlgebraTerm).IsUndefined())
                         return true;
@@ -489,12 +435,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         {
             return false;
         }
-        
+
         public override ExComp MakeWorkable()
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
                         _exData[i][j] = (_exData[i][j] as AlgebraTerm).MakeWorkable();
@@ -506,9 +452,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override AlgebraTerm Order()
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
                         _exData[i][j] = (_exData[i][j] as AlgebraTerm).Order();
@@ -520,9 +466,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override AlgebraTerm RemoveOneCoeffs()
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
                         _exData[i][j] = (_exData[i][j] as AlgebraTerm).RemoveOneCoeffs();
@@ -532,11 +478,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             return this;
         }
 
-        public override ExComp RemoveRedundancies(bool postWorkable = false)
+        public override ExComp RemoveRedundancies(bool postWorkable)
         {
-            for (int i = 0; i < Rows; ++i)
+            if (!postWorkable && GetRows() == 1 && GetCols() == 1)
+                return _exData[0][0];
+
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
                         _exData[i][j] = (_exData[i][j] as AlgebraTerm).RemoveRedundancies(postWorkable);
@@ -548,9 +497,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override AlgebraTerm RemoveZeros()
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
                         _exData[i][j] = (_exData[i][j] as AlgebraTerm).RemoveZeros();
@@ -562,9 +511,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override AlgebraTerm Substitute(ExComp subOut, ExComp subIn)
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     _exData[i][j] = _exData[i][j].ToAlgTerm().Substitute(subOut, subIn);
                 }
@@ -575,9 +524,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
         public override AlgebraTerm Substitute(ExComp subOut, ExComp subIn, ref bool success)
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     _exData[i][j] = _exData[i][j].ToAlgTerm().Substitute(subOut, subIn, ref success);
                 }
@@ -599,16 +548,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             }
         }
 
-        public override ExComp Clone()
+        public override ExComp CloneEx()
         {
-            ExComp[][] clonedExData = new ExComp[Rows][];
+            ExComp[][] clonedExData = new ExComp[GetRows()][];
             for (int i = 0; i < clonedExData.Length; ++i)
-                clonedExData[i] = new ExComp[Cols];
-            for (int i = 0; i < Rows; ++i)
+                clonedExData[i] = new ExComp[GetCols()];
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
-                    clonedExData[i][j] = _exData[i][j].Clone();
+                    clonedExData[i][j] = _exData[i][j].CloneEx();
                 }
             }
 
@@ -620,14 +569,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             return 1.0;
         }
 
-        public override ExComp WeakMakeWorkable(ref List<string> pParseErrors)
+        public override ExComp WeakMakeWorkable(ref List<string> pParseErrors, ref TermType.EvalData pEvalData)
         {
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraTerm)
-                        _exData[i][j] = (_exData[i][j] as AlgebraTerm).WeakMakeWorkable(ref pParseErrors);
+                        _exData[i][j] = (_exData[i][j] as AlgebraTerm).WeakMakeWorkable(ref pParseErrors, ref pEvalData);
                 }
             }
 
@@ -639,11 +588,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             if (ex is ExMatrix)
             {
                 ExMatrix mat = ex as ExMatrix;
-                if (this.Rows != mat.Rows || this.Cols != mat.Cols)
+                if (this.GetRows() != mat.GetRows() || this.GetCols() != mat.GetCols())
                     return false;
-                for (int i = 0; i < this.Rows; ++i)
+                for (int i = 0; i < this.GetRows(); ++i)
                 {
-                    for (int j = 0; j < this.Cols; ++j)
+                    for (int j = 0; j < this.GetCols(); ++j)
                     {
                         if (_exData[i][j] == mat._exData[i][j])
                             continue;
@@ -671,7 +620,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             string totalStr = "[";
             for (int i = 0; i < _exData.Length; ++i)
             {
-                if (Rows != 1)
+                if (GetRows() != 1)
                     totalStr += "[";
                 for (int j = 0; j < _exData[i].Length; ++j)
                 {
@@ -684,7 +633,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                         totalStr += ",";
                 }
 
-                if (Rows != 1)
+                if (GetRows() != 1)
                     totalStr += "]";
                 if (i != _exData.Length - 1)
                     totalStr += ",";
@@ -697,21 +646,21 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         public override string ToAsciiString()
         {
             string totalStr = "[";
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                if (Rows != 1)
+                if (GetRows() != 1)
                     totalStr += "[";
                 for (int j = 0; j < _exData[i].Length; ++j)
                 {
                     totalStr += _exData[i][j].ToAsciiString();
 
-                    if (j != Cols - 1)
+                    if (j != GetCols() - 1)
                         totalStr += ",";
                 }
 
-                if (Rows != 1)
+                if (GetRows() != 1)
                     totalStr += "]";
-                if (i != Rows - 1)
+                if (i != GetRows() - 1)
                     totalStr += ",";
             }
             totalStr += "]";
@@ -734,7 +683,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             string totalStr = "[";
             for (int i = 0; i < _exData.Length; ++i)
             {
-                if (Rows != 1)
+                if (GetRows() != 1)
                     totalStr += "[";
                 for (int j = 0; j < _exData[i].Length; ++j)
                 {
@@ -747,7 +696,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                         totalStr += ",";
                 }
 
-                if (Rows != 1)
+                if (GetRows() != 1)
                     totalStr += "]";
                 if (i != _exData.Length - 1)
                     totalStr += ",";
@@ -762,7 +711,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             string totalStr = "[";
             for (int i = 0; i < _exData.Length; ++i)
             {
-                if (Rows != 1)
+                if (GetRows() != 1)
                     totalStr += "[";
                 for (int j = 0; j < _exData[i].Length; ++j)
                 {
@@ -772,7 +721,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                         totalStr += ",";
                 }
 
-                if (Rows != 1)
+                if (GetRows() != 1)
                     totalStr += "]";
                 if (i != _exData.Length - 1)
                     totalStr += ",";
@@ -782,12 +731,41 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             return totalStr;
         }
 
+        public override void CallFunction(FunctionDefinition funcDef, ExComp def, ref EvalData pEvalData, bool callSubTerms)
+        {
+            for (int i = 0; i < GetRows(); ++i)
+            {
+                for (int j = 0; j < GetCols(); ++j)
+                {
+                    AlgebraTerm data = _exData[i][j].ToAlgTerm();
+                    data.CallFunction(funcDef, def, ref pEvalData, callSubTerms);
+                    _exData[i][j] = data;
+                }
+            }
+        }
+
+        public override bool CallFunctions(ref TermType.EvalData pEvalData)
+        {
+            for (int i = 0; i < GetRows(); ++i)
+            {
+                for (int j = 0; j < GetCols(); ++j)
+                {
+                    AlgebraTerm data = _exData[i][j].ToAlgTerm();
+                    if (!data.CallFunctions(ref pEvalData))
+                        return false;
+                    _exData[i][j] = data;
+                }
+            }
+
+            return true;
+        }
+
         public override List<Restriction> GetDomain(AlgebraVar varFor, AlgebraSolver agSolver, ref TermType.EvalData pEvalData)
         {
             List<Restriction> allDomain = new List<Restriction>();
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraFunction)
                     {
@@ -797,15 +775,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
                 }
             }
 
-            return Restriction.CompoundRestrictions(allDomain, ref pEvalData);
+            List<Restriction> compoundedDomain = Restriction.CompoundRestrictions(allDomain, ref pEvalData);
+            return compoundedDomain;
         }
 
         public override ExComp Evaluate(bool harshEval, ref TermType.EvalData pEvalData)
         {
             // A matrix cannot 'evaluate' as it isn't technically a function.
-            for (int i = 0; i < Rows; ++i)
+            for (int i = 0; i < GetRows(); ++i)
             {
-                for (int j = 0; j < Cols; ++j)
+                for (int j = 0; j < GetCols(); ++j)
                 {
                     if (_exData[i][j] is AlgebraFunction)
                         _exData[i][j] = (_exData[i][j] as AlgebraFunction).Evaluate(harshEval, ref pEvalData);

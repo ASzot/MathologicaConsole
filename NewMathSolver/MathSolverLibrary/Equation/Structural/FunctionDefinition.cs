@@ -1,6 +1,7 @@
 ﻿using MathSolverWebsite.MathSolverLibrary.Equation.Term;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using MathSolverWebsite.MathSolverLibrary.TermType;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation
 {
@@ -11,60 +12,78 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         private AlgebraComp _iden;
         private bool _funcNotation = true;
         private int _funcDefIndex = -1;
+        private bool _isVectorFunc = false;
 
         /// <summary>
         /// The supplied arguments to the function.
         /// They are not defined they are given.
         /// Example is f(2) but not f(x)
         /// </summary>
-        public ExComp[] CallArgs
+        public void SetCallArgs(ExComp[] value)
         {
-            set { _callArgs = value; }
-            get { return _callArgs; }
+            _callArgs = value;
         }
 
-        public int FuncDefIndex
+        /// <summary>
+        /// The supplied arguments to the function.
+        /// They are not defined they are given.
+        /// Example is f(2) but not f(x)
+        /// </summary>
+        public ExComp[] GetCallArgs()
         {
-            get { return _funcDefIndex; }
-            set { _funcDefIndex = value; }
+            return _callArgs;
         }
 
-        public bool HasValidInputArgs
+        public void SetFuncDefIndex(int value)
         {
-            get 
+            _funcDefIndex = value;
+        }
+
+        public int GetFuncDefIndex()
+        {
+            return _funcDefIndex;
+        }
+
+        public bool GetHasValidInputArgs()
+        {
+            if (_args == null)
+                return false;
+            foreach (AlgebraComp arg in _args)
             {
-                foreach (AlgebraComp arg in _args)
-                {
-                    if (arg.IsTrash)
-                        return false;
-                }
-                return true; 
+                if (arg.GetIsTrash())
+                    return false;
             }
+            return true;
         }
 
-        public bool HasCallArgs
+        public bool GetHasCallArgs()
         {
-            get { return _callArgs != null; }
+            return _callArgs != null;
         }
 
-        public bool FuncNotation
+        public bool GetFuncNotation()
         {
-            get { return _funcNotation; }
+            return _funcNotation;
         }
 
-        public AlgebraComp Iden
+        public AlgebraComp GetIden()
         {
-            get { return _iden; }
+            return _iden;
         }
 
-        public int InputArgCount
+        public int GetInputArgCount()
         {
-            get { return _args == null ? 0 : _args.Length; }
+            return _args == null ? 0 : _args.Length;
         }
 
-        public bool IsMultiValued
+        public bool GetIsMultiValued()
         {
-            get { return _args.Length != 1; }
+            return _args.Length != 1;
+        }
+
+        public void SetIsVectorFunc(bool value)
+        {
+            _isVectorFunc = value;
         }
 
         /// <summary>
@@ -72,9 +91,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         /// These are not supplied.
         /// Example is f(x) but not f(2)
         /// </summary>
-        public AlgebraComp[] InputArgs
+        public AlgebraComp[] GetInputArgs()
         {
-            get { return _args; }
+            return _args;
         }
 
         public FunctionDefinition()
@@ -94,14 +113,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return "w_" + (dimen + 1).ToString();
         }
 
-        /// <summary>
+        ///  <summary>
         /// 
-        /// </summary>
+        ///  </summary>
         /// <param name="iden">The identifier of the function.</param>
         /// <param name="args">The definition of the arguments. Null is not acceptable.</param>
         /// <param name="callArgs">What the user is inputting. These are not defined. Null is acceptable.</param>
         /// <param name="funcNotation">True means the function will output like y(x). False means the function will output just y.</param>
-        public FunctionDefinition(AlgebraComp iden, AlgebraComp[] args, ExComp[] callArgs, bool funcNotation = true)
+        public FunctionDefinition(AlgebraComp iden, AlgebraComp[] args, ExComp[] callArgs, bool funcNotation)
         {
             _iden = iden;
             _args = args;
@@ -109,12 +128,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             _funcNotation = funcNotation;
         }
 
-        public ExComp CallFunc(ref TermType.EvalData pEvalData)
+        public ExComp CallFunc(KeyValuePair<FunctionDefinition, ExComp> def, ref EvalData pEvalData, bool callSubFuncs)
         {
-            KeyValuePair<FunctionDefinition, ExComp> def = pEvalData.FuncDefs.GetDefinition(this);
             if (def.Value == null)
             {
-                if (CallArgs != null && InputArgs == null)
+                if (GetCallArgs() != null && GetInputArgs() == null)
                     return null;
                 return this;
             }
@@ -131,30 +149,33 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
 
             AlgebraTerm thisDefTerm = thisDef.ToAlgTerm();
 
-            if (_callArgs.Length != _args.Length)
+            if (_callArgs.Length != def.Key._args.Length)
                 return null;
 
             for (int i = 0; i < _args.Length; ++i)
             {
-                AlgebraComp varParameter = _args[i];
+                AlgebraComp varParameter = def.Key._args[i];
                 AlgebraTerm input = _callArgs[i].ToAlgTerm();
                 // The input for some reason isn't weak workable most of the time.
-                ExComp inputEx = input.WeakMakeWorkable();
+                ExComp inputEx = input.WeakMakeWorkable(ref pEvalData);
                 if (inputEx == null)
                     return null;
-                if (inputEx is AlgebraTerm)
+                if (callSubFuncs)
                 {
-                    if (!(inputEx as AlgebraTerm).CallFunctions(ref pEvalData))
-                        return null;
+                    if (inputEx is AlgebraTerm)
+                    {
+                        if (!(inputEx as AlgebraTerm).CallFunctions(ref pEvalData))
+                            return null;
+                    }
+                    else if (inputEx is FunctionDefinition)
+                        inputEx = (inputEx as FunctionDefinition).CallFunc(ref pEvalData);
                 }
-                else if (inputEx is FunctionDefinition)
-                    inputEx = (inputEx as FunctionDefinition).CallFunc(ref pEvalData);
 
                 thisDefTerm = thisDefTerm.Substitute(varParameter, inputEx);
             }
 
             thisDefTerm.EvaluateFunctions(false, ref pEvalData);
-            thisDefTerm = thisDefTerm.EvaluatePowers(ref pEvalData);
+            thisDefTerm = AdvAlgebraTerm.EvaluatePowers(thisDefTerm, ref pEvalData);
             thisDefTerm = thisDefTerm.ApplyOrderOfOperations();
             ExComp workable = thisDefTerm.MakeWorkable();
             if (workable == null)
@@ -162,7 +183,13 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return workable;
         }
 
-        public override ExComp Clone()
+        public ExComp CallFunc(ref TermType.EvalData pEvalData)
+        {
+            KeyValuePair<FunctionDefinition, ExComp> def = pEvalData.GetFuncDefs().GetDefinition(this);
+            return CallFunc(def, ref pEvalData, true);
+        }
+
+        public override ExComp CloneEx()
         {
             return new FunctionDefinition(_iden, _args, _callArgs, _funcNotation);
         }
@@ -171,7 +198,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             foreach (AlgebraComp arg in _args)
             {
-                if (arg.Var.Var == argIden)
+                if (arg.GetVar().GetVar() == argIden)
                     return true;
             }
 
@@ -190,6 +217,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
                 FunctionDefinition funcDef = ex as FunctionDefinition;
                 if (!funcDef._iden.IsEqualTo(_iden))
                     return false;
+
+                if (funcDef._args == null || _args == null)
+                {
+                    return funcDef._args == null && _args == null;
+                }
 
                 if (funcDef._args.Length != _args.Length)
                     return false;
@@ -240,7 +272,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             if (!_funcNotation || (_args == null || _args.Length == 0))
                 return _iden.ToAsciiString();
-            string funcStr = _iden.ToAsciiString() + "(";
+
+            string funcStr = "";
+            if (_isVectorFunc)
+                funcStr += "\\vec{";
+            funcStr += _iden.ToAsciiString();
+            if (_isVectorFunc)
+                funcStr += "}";
+            funcStr += "(";
+
             for (int i = 0; i < _args.Length; ++i)
             {
                 if (_callArgs != null && _callArgs.Length > i)
@@ -285,7 +325,15 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
         {
             if (!_funcNotation || (_args == null || _args.Length == 0))
                 return _iden.ToTexString();
-            string funcStr = _iden.ToTexString() + "(";
+
+            string funcStr = "";
+            if (_isVectorFunc)
+                funcStr += "\\vec{";
+            funcStr += _iden.ToAsciiString();
+            if (_isVectorFunc)
+                funcStr += "}";
+            funcStr += "(";
+
             for (int i = 0; i < _args.Length; ++i)
             {
                 if (_callArgs != null && _callArgs.Length > i)

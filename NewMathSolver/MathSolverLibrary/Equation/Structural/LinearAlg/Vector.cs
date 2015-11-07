@@ -1,41 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
+﻿using MathSolverWebsite.MathSolverLibrary.Equation.Operators;
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 {
-    class ExVector : ExMatrix
+    internal class ExVector : ExMatrix
     {
-        public const string I = "\\bar{i}";
-        public const string J = "\\bar{j}";
-        public const string K = "\\bar{k}";
+        public const string I = "\\vec{i}";
+        public const string J = "\\vec{j}";
+        public const string K = "\\vec{k}";
 
-        public int Length
+        public virtual int GetLength()
         {
-            get { return base.Cols; }
+            return base.GetCols();
         }
 
-        public ExComp X
+        public ExComp GetX()
         {
-            get { return Get(0); }
+            return 0 < GetLength() ? Get(0) : ExNumber.GetZero();
         }
 
-        public ExComp Y
+        public ExComp GetY()
         {
-            get { return Get(1); }
+            return 1 < GetLength() ? Get(1) : ExNumber.GetZero();
         }
 
-        public ExComp Z
+        public ExComp GetZ()
         {
-            get 
-            {
-                // Not all vectors will have Z component whereas 
-                // they are garunteed to have a least an x and y component.
-                return 2 < Length ? Get(2) : Number.Zero; 
-            }
+            // Not all vectors will have Z component whereas
+            // they are garunteed to have a least an x and y component.
+            return 2 < GetLength() ? Get(2) : ExNumber.GetZero();
         }
 
         public ExComp[] Components
@@ -49,32 +41,30 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
         public ExVector(int length)
             : base(1, length)
         {
-
         }
 
         public ExVector(params ExComp[] exs)
             : base(exs)
         {
-
         }
 
-        public ExComp Get(int index)
+        public virtual ExComp Get(int index)
         {
             return Get(0, index);
         }
 
-        public void Set(int index, ExComp val)
+        public virtual void Set(int index, ExComp val)
         {
             Set(0, index, val);
         }
 
         public static ExComp Dot(ExVector vec0, ExVector vec1)
         {
-            if (vec0.Length != vec1.Length)
-                return Number.Undefined;
+            if (vec0.GetLength() != vec1.GetLength())
+                return ExNumber.GetUndefined();
 
-            ExComp totalSum = Number.Zero;
-            for (int i = 0; i < vec0.Length; ++i)
+            ExComp totalSum = ExNumber.GetZero();
+            for (int i = 0; i < vec0.GetLength(); ++i)
             {
                 ExComp prod = MulOp.StaticCombine(vec0.Get(i), vec1.Get(i));
                 totalSum = AddOp.StaticCombine(prod, totalSum);
@@ -82,25 +72,46 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             return totalSum;
         }
 
+        public virtual ExVector CreateEmptyBody()
+        {
+            return new ExVector(GetLength());
+        }
+
+        public virtual ExVector CreateVec(params ExComp[] exs)
+        {
+            return new ExVector(exs);
+        }
+
         public ExComp GetVecLength()
         {
-            ExComp sum = Number.Zero;
-            for (int i = 0; i < this.Length; ++i)
+            ExComp sum = ExNumber.GetZero();
+            for (int i = 0; i < this.GetLength(); ++i)
             {
-                sum = AddOp.StaticCombine(PowOp.StaticCombine(Get(i), new Number(2.0)), sum);
+                sum = AddOp.StaticCombine(PowOp.StaticCombine(Get(i), new ExNumber(2.0)), sum);
             }
 
-            return PowOp.StaticCombine(sum, AlgebraTerm.FromFraction(Number.One, new Number(2.0)));
+            return PowOp.StaticCombine(sum, AlgebraTerm.FromFraction(ExNumber.GetOne(), new ExNumber(2.0)));
+        }
+
+        public override ExComp CloneEx()
+        {
+            ExVector vec = new ExVector(this.GetLength());
+            for (int i = 0; i < this.GetLength(); ++i)
+            {
+                vec.Set(i, this.Get(i).CloneEx());
+            }
+
+            return vec;
         }
 
         public ExVector Normalize()
         {
-            ExVector vec = new ExVector(this.Length);
+            ExVector vec = this.CreateEmptyBody();
             ExComp vecLength = GetVecLength();
 
-            for (int i = 0; i < this.Length; ++i)
+            for (int i = 0; i < this.GetLength(); ++i)
             {
-                ExComp setVal = DivOp.StaticCombine(this.Get(i), vecLength);
+                ExComp setVal = DivOp.StaticCombine(this.Get(i), vecLength.CloneEx());
                 vec.Set(i, setVal);
             }
 
