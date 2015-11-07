@@ -127,8 +127,8 @@ namespace MathSolverWebsite
                     _useRad = false;
                     Console.WriteLine("Set to use degrees");
                 }
-
-                UserFriendlyDisplay(inputStr, funcDefHelper);
+                else
+                    UserFriendlyDisplay(inputStr, funcDefHelper);
             }
         }
 

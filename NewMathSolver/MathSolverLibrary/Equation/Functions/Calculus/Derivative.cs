@@ -966,6 +966,9 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             if (ex is AlgebraTerm)
                 ex = (ex as AlgebraTerm).RemoveRedundancies(false);
 
+            if (ex.ToAlgTerm().IsUndefined())
+                return ExNumber.GetUndefined();
+
             if (ca_derivSymb == null)
             {
                 ca_derivSymb = "d/(" + GetNotationIden() + _withRespectTo.ToDispString() + ")";

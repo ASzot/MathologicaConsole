@@ -32,7 +32,16 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         public SimplifyGenTermType(ExComp term, List<TypePair<LexemeType, string>> lt, Dictionary<string, int> solveVars, string probSolveVar, Type startingType, bool isFuncDef)
             : base()
         {
+            _agSolver = new AlgebraSolver();
+            _agSolver.CreateUSubTable(solveVars);
             _term = term;
+
+            // Don't do anything with undefined inputs.
+            if (_term.ToAlgTerm().IsUndefined())
+            {
+                _cmds = new string[1] { KEY_SIMPLIFY };
+                return;
+            }
 
             if (_term is AlgebraTerm)
             {
@@ -160,9 +169,6 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                 tmpCmds.Add("Graph");
 
             _cmds = tmpCmds.ToArray();
-
-            _agSolver = new AlgebraSolver();
-            _agSolver.CreateUSubTable(solveVars);
         }
 
         public override void AttachMultiLineHelper(MultiLineHelper mlh)
