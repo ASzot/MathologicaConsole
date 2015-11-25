@@ -147,51 +147,54 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 
 		//TODO:
 		// Implement Reduced Row Echelon Form for matices.
-		//public ExMatrix GetRREF()
-		//{
-		//	int lead = 0;
-		//	int rowCount = GetRows();
-		//	int colCount = GetCols();
+		public ExMatrix GetRREF()
+		{
+			int lead = 0;
+			int rowCount = GetRows();
+			int colCount = GetCols();
 
-		//	for (int r = 0; r < rowCount; r++)
-		//	{
-		//		if (colCount <= lead) break;
-		//		int i = r;
-		//		while (matrix[i, lead] == 0)
-		//		{
-		//			i++;
-		//			if (i == rowCount)
-		//			{
-		//				i = r;
-		//				lead++;
-		//				if (colCount == lead)
-		//				{
-		//					lead--;
-		//					break;
-		//				}
-		//			}
-		//		}
-		//		for (int j = 0; j < colCount; j++)
-		//		{
-		//			int temp = matrix[r, j];
-		//			matrix[r, j] = matrix[i, j];
-		//			matrix[i, j] = temp;
-		//		}
-		//		int div = matrix[r, lead];
-		//		if (div != 0)
-		//			for (int j = 0; j < colCount; j++) matrix[r, j] /= div;
-		//		for (int j = 0; j < rowCount; j++)
-		//		{
-		//			if (j != r)
-		//			{
-		//				int sub = matrix[j, lead];
-		//				for (int k = 0; k < colCount; k++) matrix[j, k] -= (sub * matrix[r, k]);
-		//			}
-		//		}
-		//		lead++;
-		//	}
-		//	return matrix;
-		//}
+			for (int r = 0; r < rowCount; r++)
+			{
+				if (colCount <= lead) break;
+				int i = r;
+				while (Get(i, lead).IsEqualTo(ExNumber.GetZero()))
+				{
+					i++;
+					if (i == rowCount)
+					{
+						i = r;
+						lead++;
+						if (colCount == lead)
+						{
+							lead--;
+							break;
+						}
+					}
+				}
+				for (int j = 0; j < colCount; j++)
+				{
+					int temp = matrix[r, j];
+					matrix[r, j] = matrix[i, j];
+					matrix[i, j] = temp;
+				}
+				int div = matrix[r, lead];
+				if (div != 0)
+					for (int j = 0; j < colCount; j++)
+					{
+						matrix[r, j] /= div;
+					}
+				for (int j = 0; j < rowCount; j++)
+				{
+					if (j != r)
+					{
+						int sub = matrix[j, lead];
+						for (int k = 0; k < colCount; k++) matrix[j, k] -= (sub * matrix[r, k]);
+					}
+				}
+				lead++;
+			}
+			return matrix;
+		}
 
         public ExMatrix Transpose()
         {
