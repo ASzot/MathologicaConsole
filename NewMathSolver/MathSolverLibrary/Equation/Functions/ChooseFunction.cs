@@ -1,4 +1,7 @@
-﻿namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 {
     internal class ChooseFunction : AppliedFunction_NArgs
     {
@@ -89,6 +92,20 @@
 
             return this;
         }
+
+		public override System.Collections.Generic.List<string> GetAllAlgebraCompsStr()
+		{
+			// Combine the lists for the top and bottom. 
+			AlgebraTerm topTerm = GetTopTerm();
+			AlgebraTerm bottomTerm = GetBottomTerm();
+
+			List<string> totalAlgebraComps = new List<string>();
+
+			totalAlgebraComps.AddRange(topTerm.GetAllAlgebraCompsStr());
+			totalAlgebraComps.AddRange(bottomTerm.GetAllAlgebraCompsStr());
+
+			return totalAlgebraComps.Distinct().ToList();
+		}
 
         public override string ToAsciiString()
         {

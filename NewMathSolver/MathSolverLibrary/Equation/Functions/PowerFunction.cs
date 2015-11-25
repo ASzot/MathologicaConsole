@@ -325,6 +325,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return false;
         }
 
+		public override List<string> GetAllAlgebraCompsStr()
+		{
+			// Combine the lists for the base and power term. 
+			AlgebraTerm baseTerm = GetBase().ToAlgTerm();
+			AlgebraTerm powerTerm = GetPower().ToAlgTerm();
+
+			List<string> totalAlgebraComps = new List<string>();
+
+			totalAlgebraComps.AddRange(baseTerm.GetAllAlgebraCompsStr());
+			totalAlgebraComps.AddRange(powerTerm.GetAllAlgebraCompsStr());
+
+			return totalAlgebraComps.Distinct().ToList();
+		}
+
         public override AlgebraTerm ConvertImaginaryToVar()
         {
             ExComp baseEx = GetBase() is AlgebraTerm ? (GetBase() as AlgebraTerm).ConvertImaginaryToVar() : GetBase();

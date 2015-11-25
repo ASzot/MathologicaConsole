@@ -7,7 +7,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
     {
         private const int MAX_GCF_TERM_COUNT = 50;
 
-        public List<string> GetAllAlgebraCompsStr()
+        public virtual List<string> GetAllAlgebraCompsStr()
         {
             List<string> varStrs = new List<string>();
 

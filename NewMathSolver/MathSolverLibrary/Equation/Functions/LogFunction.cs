@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+
 
 namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
 {
@@ -97,6 +99,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
         {
             return GetInnerTerm().Contains(varFor) || GetBase().ToAlgTerm().Contains(varFor);
         }
+
+		public override List<string> GetAllAlgebraCompsStr()
+		{
+			// Combine the lists for the base and inner term. 
+			AlgebraTerm baseTerm = GetBase().ToAlgTerm();
+			AlgebraTerm innerTerm = GetInnerTerm();
+
+			List<string> totalAlgebraComps = new List<string>();
+
+			totalAlgebraComps.AddRange(baseTerm.GetAllAlgebraCompsStr());
+			totalAlgebraComps.AddRange(innerTerm.GetAllAlgebraCompsStr());
+
+			return totalAlgebraComps.Distinct().ToList();
+		}
 
         public override ExComp CancelWith(ExComp innerEx, ref TermType.EvalData evalData)
         {

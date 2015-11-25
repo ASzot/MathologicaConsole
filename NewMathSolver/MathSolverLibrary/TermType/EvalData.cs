@@ -193,7 +193,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
             if (_graphEqStrs == null)
             {
                 _graphVar = graphVar;
-                AlgebraTerm term = graphEx.ToAlgTerm();
+                AlgebraTerm term = new AlgebraTerm(graphEx);
                 List<string> vars = term.GetAllAlgebraCompsStr();
                 if (vars.Count != 1)
                     return false;

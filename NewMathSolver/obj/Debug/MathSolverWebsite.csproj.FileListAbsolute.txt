@@ -19,11 +19,6 @@ C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\obj\De
 C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\bin\Debug\NewMathSolver.exe
 C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\bin\Debug\NewMathSolver.pdb
 C:\Users\Andrew\Documents\Projects\Mathologica\Main Console\NewMathSolver\obj\Debug\MathSolverWebsite.csprojResolveAssemblyReference.cache
-C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.exe.config
-C:\Users\728812\Desktop\mathologica-console\NewMathSolver\obj\Debug\NewMathSolver.exe
-C:\Users\728812\Desktop\mathologica-console\NewMathSolver\obj\Debug\NewMathSolver.pdb
-C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.exe
-C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\NewMathSolver.pdb
 C:\Users\728812\Desktop\mathologica-console\NewMathSolver\obj\Debug\MathSolverWebsite.csprojResolveAssemblyReference.cache
 C:\Users\Andrew\Desktop\Mathologica\mathologica-console\NewMathSolver\obj\Debug\MathSolverWebsite.csprojResolveAssemblyReference.cache
 C:\Users\Andrew\Documents\Projects\Mathologica\MainConsole\NewMathSolver\bin\Debug\NewMathSolver.exe.config
@@ -53,3 +48,9 @@ C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver
 C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.application
 C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.exe
 C:\Users\Andrew\Documents\Projects\Mathologica\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.pdb
+C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\Mathologica Console.exe.manifest
+C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\Mathologica Console.application
+C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\Mathologica Console.exe
+C:\Users\728812\Desktop\mathologica-console\NewMathSolver\bin\Debug\Mathologica Console.pdb
+C:\Users\728812\Desktop\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.exe.manifest
+C:\Users\728812\Desktop\mathologica-console\NewMathSolver\obj\Debug\Mathologica Console.application
