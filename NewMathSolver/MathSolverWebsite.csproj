@@ -77,6 +77,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsoleHelper.cs" />
     <Compile Include="MathSolverLibrary\AlgebraSolver.cs" />
     <Compile Include="MathSolverLibrary\Core.cs" />
     <Compile Include="MathSolverLibrary\EquationInformation.cs" />
@@ -196,6 +197,7 @@
     <Compile Include="MathSolverLibrary\TermType\SimplifyGenTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\SinusodalGenTermType.cs" />
     <Compile Include="MathSolverLibrary\TermType\SolveGenTermType.cs" />
+    <Compile Include="MathTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
