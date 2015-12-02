@@ -115,7 +115,8 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
                     {
                         tmpCmds.Add("Find inverse");
                         tmpCmds.Add("Find determinant");
-                    }
+					}
+					tmpCmds.Add("Reduced row echelon form");
                     tmpCmds.Add("Transpose");
                 }
             }
@@ -325,73 +326,85 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 
                 return SolveResult.Simplified(mat.Transpose());
             }
-            else if (command == "Factor")
-            {
-                ExComp factorized = AdvAlgebraTerm.FactorizeTerm(_term.CloneEx().ToAlgTerm(), ref pEvalData, true);
-                if (factorized is AlgebraTerm)
-                    factorized = (factorized as AlgebraTerm).RemoveRedundancies(false);
+			else if (command == "Reduced row echelon form")
+			{
+				ExMatrix mat = _term as ExMatrix;
+				if (mat == null)
+					return SolveResult.Failure();
 
-                return SolveResult.Simplified(factorized);
-            }
-            else if (command.StartsWith("Derivative d/d"))
-            {
-                string varForKey = command.Substring("Derivative d/d".Length, command.Length - "Derivative d/d".Length);
+				ExMatrix rref = mat.GetRREF();
+				if (rref == null)
+					return SolveResult.Failure();
 
-                Equation.Functions.Calculus.Derivative deriv = new Equation.Functions.Calculus.Derivative(_term);
-                deriv.SetWithRespectTo(new AlgebraComp(varForKey));
+				return SolveResult.Simplified(rref);
+			}
+			else if (command == "Factor")
+			{
+				ExComp factorized = AdvAlgebraTerm.FactorizeTerm(_term.CloneEx().ToAlgTerm(), ref pEvalData, true);
+				if (factorized is AlgebraTerm)
+					factorized = (factorized as AlgebraTerm).RemoveRedundancies(false);
 
-                SolveResult derivResult = SolveResult.Simplified(deriv.Evaluate(false, ref pEvalData));
-                return derivResult;
-            }
-            else if (command == "Condense logs")
-            {
-                return SolveResult.Simplified(AdvAlgebraTerm.CompoundLogs(_term.ToAlgTerm(), null));
-            }
-            else if (command == "Expand logs")
-            {
-                return SolveResult.Simplified(AdvAlgebraTerm.ExpandLogs(_term.ToAlgTerm()));
-            }
-            else if (command == "Divide" && _numPolyInfo != null && _denPolyInfo != null)
-            {
-                ExComp divided = Equation.Operators.DivOp.AttemptPolyDiv(_numPolyInfo.Clone(), _denPolyInfo.Clone(), ref pEvalData);
-                if (divided != null)
-                    return SolveResult.Simplified(divided);
-                else
-                    return SolveResult.Failure();
-            }
-            else if (command.StartsWith("Domain of "))
-            {
-                string varForKey = command.Substring("Domain of ".Length, command.Length - "Domain of ".Length);
-                AlgebraVar varFor = new AlgebraVar(varForKey);
+				return SolveResult.Simplified(factorized);
+			}
+			else if (command.StartsWith("Derivative d/d"))
+			{
+				string varForKey = command.Substring("Derivative d/d".Length, command.Length - "Derivative d/d".Length);
 
-                SolveResult domainResult = _agSolver.CalculateDomain(_term, varFor, ref pEvalData);
-                return domainResult;
-            }
-            else if (command == "Graph")
-            {
-                if (_term == null && _multiLineHelper.GetShouldGraph())
-                {
-                    pEvalData.AttemptSetGraphData(_multiLineHelper.GetGraphStrs(), _multiLineHelper.GetGraphVar());
-                    return SolveResult.Solved();
-                }
-                string graphStr = _term.ToAlgTerm().GetAllAlgebraCompsStr()[0];
-                if (pEvalData.AttemptSetGraphData(_term, graphStr))
-                    return SolveResult.Solved();
-                else
-                    return SolveResult.Failure();
-            }
-            else if (command == "Test for convergence")
-            {
-                SumFunction sum = _term as SumFunction;
-                ExComp result = null;
-                bool? converges = sum.Converges(ref pEvalData, out result);
-                if (converges == null)
-                    return SolveResult.Failure("Cannot determine convergence or divergence", ref pEvalData);
+				Equation.Functions.Calculus.Derivative deriv = new Equation.Functions.Calculus.Derivative(_term);
+				deriv.SetWithRespectTo(new AlgebraComp(varForKey));
 
-                pEvalData.AddMsg(converges.Value ? "Converges" : "Diverges");
+				SolveResult derivResult = SolveResult.Simplified(deriv.Evaluate(false, ref pEvalData));
+				return derivResult;
+			}
+			else if (command == "Condense logs")
+			{
+				return SolveResult.Simplified(AdvAlgebraTerm.CompoundLogs(_term.ToAlgTerm(), null));
+			}
+			else if (command == "Expand logs")
+			{
+				return SolveResult.Simplified(AdvAlgebraTerm.ExpandLogs(_term.ToAlgTerm()));
+			}
+			else if (command == "Divide" && _numPolyInfo != null && _denPolyInfo != null)
+			{
+				ExComp divided = Equation.Operators.DivOp.AttemptPolyDiv(_numPolyInfo.Clone(), _denPolyInfo.Clone(), ref pEvalData);
+				if (divided != null)
+					return SolveResult.Simplified(divided);
+				else
+					return SolveResult.Failure();
+			}
+			else if (command.StartsWith("Domain of "))
+			{
+				string varForKey = command.Substring("Domain of ".Length, command.Length - "Domain of ".Length);
+				AlgebraVar varFor = new AlgebraVar(varForKey);
 
-                return result == null ? SolveResult.Solved() : SolveResult.Simplified(result);
-            }
+				SolveResult domainResult = _agSolver.CalculateDomain(_term, varFor, ref pEvalData);
+				return domainResult;
+			}
+			else if (command == "Graph")
+			{
+				if (_term == null && _multiLineHelper.GetShouldGraph())
+				{
+					pEvalData.AttemptSetGraphData(_multiLineHelper.GetGraphStrs(), _multiLineHelper.GetGraphVar());
+					return SolveResult.Solved();
+				}
+				string graphStr = _term.ToAlgTerm().GetAllAlgebraCompsStr()[0];
+				if (pEvalData.AttemptSetGraphData(_term, graphStr))
+					return SolveResult.Solved();
+				else
+					return SolveResult.Failure();
+			}
+			else if (command == "Test for convergence")
+			{
+				SumFunction sum = _term as SumFunction;
+				ExComp result = null;
+				bool? converges = sum.Converges(ref pEvalData, out result);
+				if (converges == null)
+					return SolveResult.Failure("Cannot determine convergence or divergence", ref pEvalData);
+
+				pEvalData.AddMsg(converges.Value ? "Converges" : "Diverges");
+
+				return result == null ? SolveResult.Solved() : SolveResult.Simplified(result);
+			}
 
             SolveResult invalidResult = SolveResult.InvalidCmd(ref pEvalData);
             return invalidResult;

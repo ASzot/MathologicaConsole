@@ -145,19 +145,21 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
             return new ExMatrix(comps);
         }
 
-		//TODO:
-		// Implement Reduced Row Echelon Form for matices.
 		public ExMatrix GetRREF()
 		{
+			ExMatrix rref = (ExMatrix)this.CloneEx();
+
 			int lead = 0;
-			int rowCount = GetRows();
-			int colCount = GetCols();
+			int rowCount = rref.GetRows();
+			int colCount = rref.GetCols();
 
 			for (int r = 0; r < rowCount; r++)
 			{
-				if (colCount <= lead) break;
+				if (colCount <= lead) 
+					break;
+
 				int i = r;
-				while (Get(i, lead).IsEqualTo(ExNumber.GetZero()))
+				while (rref.Get(i, lead).IsEqualTo(ExNumber.GetZero()))
 				{
 					i++;
 					if (i == rowCount)
@@ -171,29 +173,39 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Structural.LinearAlg
 						}
 					}
 				}
+
 				for (int j = 0; j < colCount; j++)
 				{
-					int temp = matrix[r, j];
-					matrix[r, j] = matrix[i, j];
-					matrix[i, j] = temp;
+					ExComp temp = rref.Get(r, j);
+					rref.Set(r, j, rref.Get(i, j));
+					rref.Set(i, j, temp);
 				}
-				int div = matrix[r, lead];
-				if (div != 0)
+
+				ExComp div = rref.Get(r, lead);
+				if (!div.IsEqualTo(ExNumber.GetZero()))
+				{
 					for (int j = 0; j < colCount; j++)
 					{
-						matrix[r, j] /= div;
+						rref.Set(r, j, DivOp.StaticCombine(rref.Get(r, j), div));
 					}
+				}
+
 				for (int j = 0; j < rowCount; j++)
 				{
 					if (j != r)
 					{
-						int sub = matrix[j, lead];
-						for (int k = 0; k < colCount; k++) matrix[j, k] -= (sub * matrix[r, k]);
+						ExComp sub = rref.Get(j, lead);
+						for (int k = 0; k < colCount; k++)
+						{
+							rref.Set(j, k, SubOp.StaticCombine(rref.Get(j, k), MulOp.StaticCombine(sub, rref.Get(r, k))));
+						}
 					}
 				}
+
 				lead++;
 			}
-			return matrix;
+
+			return rref;
 		}
 
         public ExMatrix Transpose()

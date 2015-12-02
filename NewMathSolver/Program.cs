@@ -115,6 +115,8 @@ namespace MathSolverWebsite
 
 
 				var termEval = ParseInput(inputStr, ref funcDefHelper, ref evalData);
+				if (termEval == null)
+					continue;
 
 				// Display the possible methods of evaluation to the user.
 				Console.WriteLine("Input desired evaluation option:");
