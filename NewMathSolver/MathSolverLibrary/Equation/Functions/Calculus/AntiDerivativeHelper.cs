@@ -231,6 +231,42 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 if (den != null && den.Length == 1)
                 {
                     ExComp[] num = GroupHelper.GetNumerator(gp);
+
+					// Try a basic simplify by multiplying the numerator and denominator by any potential radicals in the denominator.
+					if (den[0] is PowerFunction && (den[0] as PowerFunction).IsSqrt())
+					{
+						// Multiply the top and bottom by the sqrt function. 
+						// An example is \int (x+1)/(\sqrt(x)) dx
+
+						AlgebraTerm numTerm = GroupHelper.ToAlgTerm(num);
+						ExComp denTerm = GroupHelper.ToAlgTerm(den).RemoveRedundancies(false);
+
+						string numStr = numTerm.ToDispString();
+						string denStr = WorkMgr.ToDisp(denTerm);
+
+						pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "\\int \\frac{" + numStr + " * " + denStr + "}{" + denStr + "*" + denStr + "} d" + dVar.ToDispString() + WorkMgr.EDM,
+							"Multiply the numerator and denominator by the reciprocal.");
+
+						ExComp numResult = MulOp.StaticCombine(numTerm, denTerm);
+
+						// This should never happen. It should always be a PowerFunction here.
+						if (!(denTerm is PowerFunction))
+							return null;
+
+						ExComp denResult = (denTerm as PowerFunction).GetBase();
+
+						pEvalData.GetWorkMgr().FromFormatted(WorkMgr.STM + "\\int \\frac{ " + WorkMgr.ToDisp(numResult) + "}{" + WorkMgr.ToDisp(denResult) + "} d" + dVar.ToDispString());
+
+						if (!(denResult is PowerFunction))
+						{ 
+							ExComp newExp = DivOp.StaticCombine(numResult, denResult);
+							return Integral.TakeAntiDeriv(newExp, dVar, ref pEvalData);
+						}
+
+
+					}
+
+					// Next attempt partial fractions.
                     if (num.Length == 1)
                     {
                         int prePFWorkStepCount = ArrayFunc.GetCount(pEvalData.GetWorkMgr().GetWorkSteps());
@@ -239,6 +275,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                             return atmpt;
                         pEvalData.GetWorkMgr().PopStepsCount(prePFWorkStepCount);
                     }
+
                 }
             }
 

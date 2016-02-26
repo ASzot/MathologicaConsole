@@ -1174,6 +1174,11 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation
             return PushGroups(groups);
         }
 
+		/// <summary>
+		/// Simplifies redundant algebra term enclosing.
+		/// </summary>
+		/// <param name="postWorkable">In the majority of cases should be false.</param>
+		/// <returns></returns>
         public virtual ExComp RemoveRedundancies(bool postWorkable)
         {
             if (_subComps.Count == 1)

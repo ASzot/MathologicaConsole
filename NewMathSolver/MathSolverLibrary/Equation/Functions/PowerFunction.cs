@@ -807,6 +807,17 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions
             return false;
         }
 
+		public bool IsSqrt()
+		{
+			if (_power is ExNumber && ExNumber.OpEqual(_power as ExNumber, 0.5))
+				return true;
+			AlgebraTerm[] numDen = (_power as AlgebraTerm).GetNumDenFrac();
+			if (_power is AlgebraTerm && numDen != null && numDen[0].RemoveRedundancies(false).IsEqualTo(ExNumber.GetOne()) && numDen[1].RemoveRedundancies(false).IsEqualTo(new ExNumber(2.0)))
+				return true;
+
+			return false;
+		}
+
         public override bool IsUndefined()
         {
             if (GetBase() is ExNumber && (GetBase() as ExNumber).IsUndefined())

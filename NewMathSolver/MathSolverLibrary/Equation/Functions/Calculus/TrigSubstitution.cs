@@ -294,11 +294,16 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     AlgebraTerm subTerm = group[i] as AlgebraTerm;
 
                     List<ExComp[]> subGps = subTerm.GetGroupsNoOps();
-                    if (subGps.Count == 1 && subGps[0].Length == 1 && subGps[0][0] == subTerm)
+                    if (subGps.Count == 1 && subGps[0].Length == 1 && subGps[0][0].IsEqualTo(subTerm))
                     {
                         // This is something that returns itself as a group.
                         subGps = (new AlgebraTerm(subTerm.GetSubComps().ToArray())).GetGroupsNoOps();
                     }
+					//if (subGps.Count == 1 && subGps[0] == subTerm)
+					//{
+					//	// This will result in a stack overflow if it is not stopped. 
+					//}
+
                     ExComp subSubbedResult = null;
                     int subSubbedIndex = -1;
                     for (int j = 0; j < subGps.Count; ++j)
