@@ -17,7 +17,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             AlgebraTerm subbedResult;
             ExComp subOut;
 
-            ExComp subIn = TrigSubstitutionGetSub(group, dVar, out subVar, out subOut, out subbedResult, ref pEvalData);
+            ExComp subIn = TrigSubstitutionGetSub(GroupHelper.CloneGroup(group), dVar, out subVar, out subOut, out subbedResult, ref pEvalData);
             if (subIn == null || subbedResult == null || subVar == null || subOut == null)
                 return null;
 
@@ -278,6 +278,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 dispGp = group;
         }
 
+        /// <summary>
+        /// Null is returned in the case of there being no substitution to make.
+        /// </summary>
+        /// <param name="group"></param>
+        /// <param name="dVar"></param>
+        /// <param name="subVar"></param>
+        /// <param name="subOut"></param>
+        /// <param name="subbedResult"></param>
+        /// <param name="pEvalData"></param>
+        /// <param name="dispGp"></param>
+        /// <param name="dispSubGps"></param>
+        /// <param name="index"></param>
+        /// <param name="subIndex"></param>
+        /// <returns></returns>
         private static ExComp TrigSubstitutionGetSub(ExComp[] group, AlgebraComp dVar, out AlgebraComp subVar, out ExComp subOut, out AlgebraTerm subbedResult, ref EvalData pEvalData,
             ExComp[] dispGp, List<ExComp[]> dispSubGps, int index, int subIndex)
         {
@@ -298,6 +312,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                     {
                         // This is something that returns itself as a group.
                         subGps = (new AlgebraTerm(subTerm.GetSubComps().ToArray())).GetGroupsNoOps();
+                        if (subGps.Count > 1)
+                            return null;
                     }
 					//if (subGps.Count == 1 && subGps[0] == subTerm)
 					//{

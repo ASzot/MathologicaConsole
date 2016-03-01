@@ -109,7 +109,7 @@ namespace MathSolverWebsite
 				if (ProcessSpecialCommand(inputStr))
 					continue;
 				else if (inputStr == "test")
-					inputStr = "\\int (x+1)/(\\sqrt(x)) dx";
+					inputStr = "int sqrt(1+sec(t)) dt";
 
 				// The temporary data necessary for the math evaluation engine. 
 				// Necessary in the parsing stage to determine the context and meaning of the expression. 

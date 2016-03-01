@@ -350,6 +350,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
                 return this;
 
             int order = (int)(_order as ExNumber).GetRealComp();
+            if (order < 1)
+                return ExNumber.GetUndefined();
 
             if (order > MAX_DERIV)
                 return this;

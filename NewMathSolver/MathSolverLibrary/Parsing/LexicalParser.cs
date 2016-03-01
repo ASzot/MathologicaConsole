@@ -1013,8 +1013,14 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             return true;
         }
 
+        /// <summary>
+        /// Basic replace functionality to make the input more usable.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
         private string CleanTexInput(string str)
         {
+            // Replace the formatted LaTeX math with the ASCII represenation for easier parsing.
             str = str.Replace(@"\cdot", "*");
             str = str.Replace(@"\left", "");
             str = str.Replace(@"\right", "");
@@ -1027,9 +1033,20 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             str = str.Replace("sqrt[", "root(");
             str = str.Replace('{', '(');
             str = str.Replace('}', ')');
-            // Remove the empty group identifier.
+
+
             if (!MathSolver.PLAIN_TEXT)
+            {
+                // Remove the empty group identifier. This is used for formatting purposes on the web.
                 str = str.Replace(MATH_EMPTY_GP, "");
+            }
+            else
+            {
+                str = Regex.Replace(str, @"(?<!(\\|o))int", "\\int ");
+                str = Regex.Replace(str, @"(?<!\\)oint", "\\oint");
+            }
+
+
             if (str.Contains("\\int") || str.Contains("\\oint"))
             {
                 _rulesets[DIFF_RULE_INDEX] = new TypePair<string, LexemeType>("d(" + IDEN_MATCH + ")",
@@ -2321,6 +2338,8 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 top = topSymbMatch.Value;
                 bottom = bottomSymbMatch.Value;
             }
+            else
+                indexOfDeriv = 1;
 
             if (top.Length != 0)
             {

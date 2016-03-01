@@ -9,7 +9,18 @@ namespace MathSolverWebsite.MathSolverLibrary
     internal static class MathSolver
     {
         public const bool USE_TEX_DEBUG = true;
-        public const bool PLAIN_TEXT = false;
+        
+        /// <summary>
+        /// Whether the input text is in latex or plain text.
+        /// Integrals, derivatives are parsed differently.
+        /// When TRUE
+        ///     Derivatives are (d)/(dx)
+        ///     Integrals can be entered like 'int x dx'
+        /// When FALSE
+        ///     Derivatives are \frac{d}{dx}
+        ///     Integrals can be entered like \int x dx
+        /// </summary>
+        public const bool PLAIN_TEXT = true;
 
         public static TermType.GenTermType DetermineSingularEqSet(EqSet singularEqSet, List<TypePair<LexemeType, string>> completeLexemeTable,
             Dictionary<string, int> solveVars, MultiLineHelper mlh, ref TermType.EvalData pEvalData)
