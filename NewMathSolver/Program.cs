@@ -114,7 +114,7 @@ namespace MathSolverWebsite
 				// The temporary data necessary for the math evaluation engine. 
 				// Necessary in the parsing stage to determine the context and meaning of the expression. 
 				MathSolverLibrary.TermType.EvalData evalData = new MathSolverLibrary.TermType.EvalData(_useRad, new WorkMgr(), funcDefHelper);
-
+                evalData.SetPlainTextInput(true);
 
 				var termEval = ParseInput(inputStr, ref funcDefHelper, ref evalData);
 				if (termEval == null)

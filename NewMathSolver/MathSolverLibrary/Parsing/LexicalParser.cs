@@ -37,7 +37,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
         public const int DIFF_RULE_INDEX = 24;
         private readonly List<string> _definedFuncs = new List<string>();
 
-        private readonly TypePair<string, LexemeType>[] _rulesets =
+        private TypePair<string, LexemeType>[] _rulesets =
             new TypePair<string, LexemeType>[]
         {
             new TypePair<string, LexemeType>(@"\+|\-|\^|\/|\*|circ|text\(P\)|text\(C\)|" + CrossProductOp.IDEN,
@@ -64,12 +64,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             new TypePair<string, LexemeType>(@"<", LexemeType.Less),
             new TypePair<string, LexemeType>(@"<=", LexemeType.LessEqual),
             new TypePair<string, LexemeType>(@",", LexemeType.Comma),
-            new TypePair<string, LexemeType>(MathSolver.PLAIN_TEXT
-                ? @"\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\/\(((partial)|d)(" + IDEN_MATCH +
-                  @")(\^(" + NUM_MATCH + @"))?\)"
-                : @"frac\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\(((partial)|d)(" + IDEN_MATCH +
-                  @")(\^(" + NUM_MATCH + @"))?\)",
-                LexemeType.Derivative),
+            new TypePair<string, LexemeType>("", LexemeType.Derivative),
             new TypePair<string, LexemeType>(
                 "(" + IDEN_MATCH + @")(((\')+)|((\^((" + NUM_MATCH + @")|(" + IDEN_MATCH + @")))\((" + IDEN_MATCH +
                 @")\)))", LexemeType.FuncDeriv),
@@ -92,6 +87,12 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
         public LexicalParser(EvalData pEvalData)
         {
             p_EvalData = pEvalData;
+            // Index 19 should be the index of the Derivative LexemeType. 
+            _rulesets[19] = new TypePair<string, LexemeType>(p_EvalData.GetPlainTextInput()
+                ? @"\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\/\(((partial)|d)(" + IDEN_MATCH +
+                  @")(\^(" + NUM_MATCH + @"))?\)"
+                : @"frac\(((partial)|d)(\^(" + NUM_MATCH + "))?(" + IDEN_MATCH + @")?\)\(((partial)|d)(" + IDEN_MATCH +
+                  @")(\^(" + NUM_MATCH + @"))?\)", LexemeType.Derivative);
         }
 
         private void ResetDiffParsing()
@@ -456,7 +457,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             for (int i = 0; i < orderedTolkensList.Count; ++i)
             {
                 TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> tolken = orderedTolkensList[i];
-                if (!MathSolver.PLAIN_TEXT)
+                if (!p_EvalData.GetPlainTextInput())
                 {
                     if (tolken.GetData1() == LexemeType.Derivative)
                     {
@@ -616,7 +617,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                 if (setLexemeTable == null || setLexemeTable.Count == 0)
                     return null;
 
-                if (!MathSolver.PLAIN_TEXT && !CheckCoeffCorrectness(setLexemeTable, ref pParseErrors))
+                if (!p_EvalData.GetPlainTextInput() && !CheckCoeffCorrectness(setLexemeTable, ref pParseErrors))
                 {
                     return null;
                 }
@@ -1035,7 +1036,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
             str = str.Replace('}', ')');
 
 
-            if (!MathSolver.PLAIN_TEXT)
+            if (!p_EvalData.GetPlainTextInput())
             {
                 // Remove the empty group identifier. This is used for formatting purposes on the web.
                 str = str.Replace(MATH_EMPTY_GP, "");
@@ -1571,7 +1572,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
                                 split[1] = split[1].Substring(1, split[1].Length - 2);
                             if (funcDef.IsArg(split[1]))
                             {
-                                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> insertLex = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Derivative, MathSolver.PLAIN_TEXT
+                                TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string> insertLex = new TypePair<MathSolverWebsite.MathSolverLibrary.Parsing.LexemeType, string>(LexemeType.Derivative, p_EvalData.GetPlainTextInput()
                                     ? "(partial" + funcIden + ")/(partial" + split[1] + ")"
                                     : "frac(partial" + funcIden + ")(partial" + split[1] + ")");
                                 ArrayFunc.RemoveIndex(lt, i);
@@ -2268,7 +2269,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Parsing
 
         private AlgebraTerm ParseDerivative(ref int currentIndex, List<TypePair<LexemeType,string>> lt, ref List<string> pParseErrors)
         {
-            if (MathSolver.PLAIN_TEXT)
+            if (p_EvalData.GetPlainTextInput())
             {
                 AlgebraTerm parsedDerivText = ParseDerivativePlainText(ref currentIndex, lt, ref pParseErrors);
                 return parsedDerivText;

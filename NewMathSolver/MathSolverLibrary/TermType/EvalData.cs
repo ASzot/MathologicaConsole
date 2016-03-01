@@ -7,8 +7,7 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
 {
     internal class EvalData
     {
-        private const int MAX_TRIG_SUB_REPEAT_COUNT = 3;
-        private int _trigSubRepeatCount = 0;
+        private bool _plainTextInput = false;
         private bool _checkSolutions = false;
         private List<string> _failureMsgs = new List<string>();
         private List<string> _msgs = null;
@@ -26,31 +25,41 @@ namespace MathSolverWebsite.MathSolverLibrary.TermType
         private List<AndRestriction> _variableRestrictions = null;
 
         /// <summary>
+        /// Whether the input text is in latex or plain text.
+        /// Integrals, derivatives are parsed differently.
+        /// When TRUE
+        ///     Derivatives are (d)/(dx)
+        ///     Integrals can be entered like 'int x dx'
+        /// When FALSE
+        ///     Derivatives are \frac{d}{dx}
+        ///     Integrals can be entered like \int x dx
+        /// </summary>
+        public void SetPlainTextInput(bool plainTextInput)
+        {
+            _plainTextInput = plainTextInput;
+        }
+
+        /// <summary>
+        /// Whether the input text is in latex or plain text.
+        /// Integrals, derivatives are parsed differently.
+        /// When TRUE
+        ///     Derivatives are (d)/(dx)
+        ///     Integrals can be entered like 'int x dx'
+        /// When FALSE
+        ///     Derivatives are \frac{d}{dx}
+        ///     Integrals can be entered like \int x dx
+        /// </summary>
+        public bool GetPlainTextInput()
+        {
+            return _plainTextInput;
+        }
+
+        /// <summary>
         /// Can return null if the input type is invalid.
         /// </summary>
         public string GetInputTypeStr()
         {
             return InputTypeHelper.ToDescStr(_inputType, _inputAddType);
-        }
-
-        public int GetTrigSubRepeatCount()
-        {
-            return _trigSubRepeatCount;
-        }
-
-        public void IncrementTrigSubRepeatCount()
-        {
-            _trigSubRepeatCount++;
-        }
-
-        public void ResetTrigSubRepeatCount()
-        {
-            _trigSubRepeatCount = 0;
-        }
-
-        public bool TrigSubRepeatCountExceededMax()
-        {
-            return _trigSubRepeatCount >= MAX_TRIG_SUB_REPEAT_COUNT;
         }
 
         public void SetQuadSolveMethod(QuadraticSolveMethod value)
