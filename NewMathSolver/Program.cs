@@ -109,7 +109,7 @@ namespace MathSolverWebsite
 				if (ProcessSpecialCommand(inputStr))
 					continue;
 				else if (inputStr == "test")
-					inputStr = "int sqrt(1+sec(t)) dt";
+					inputStr = "sin(x)=cos(x)";
 
 				// The temporary data necessary for the math evaluation engine. 
 				// Necessary in the parsing stage to determine the context and meaning of the expression. 

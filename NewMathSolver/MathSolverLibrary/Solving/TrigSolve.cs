@@ -378,7 +378,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Solving
             // Try to divide to remove one of the trig functions.
             if (groups.Count == 2)
             {
-                TypePair<int, ExComp>[] complexitiesArr = (TypePair<int, ExComp>[]) (new object[trigFuncs.Count]);
+                TypePair<int, ExComp>[] complexitiesArr = new TypePair<int, ExComp>[trigFuncs.Count];
                 for (int i = 0; i < trigFuncs.Count; ++i)
                     complexitiesArr[i] = new TypePair<int, ExComp>(TrigFunction.GetTrigFuncComplexity(trigFuncs[i]), trigFuncs[i]);
 
