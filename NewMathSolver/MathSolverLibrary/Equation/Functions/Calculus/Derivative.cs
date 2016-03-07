@@ -359,7 +359,7 @@ namespace MathSolverWebsite.MathSolverLibrary.Equation.Functions.Calculus
             if (_isPartial)
                 pEvalData.AttemptSetInputType(TermType.InputType.PartialDerivative);
 
-            ca_derivSymb = "d/(d" + _withRespectTo.ToDispString() + ")";
+            ca_derivSymb =  GetNotationIden() + "/(" + GetNotationIden() + _withRespectTo.ToDispString() + ")";
 
             ExComp finalInnerEx = GetInnerEx();
 
